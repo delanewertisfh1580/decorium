@@ -1,0 +1,160 @@
+/* =============================================================================
+   feedbackPanel.css — Стили экрана результатов.
+   Пастельная палитра, мягкие тени, минимализм (согласно GDD).
+   ============================================================================= */
+
+   .fp-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 24px 16px;
+    background: rgba(18, 24, 32, 0.92);
+    backdrop-filter: blur(6px);
+    overflow-y: auto;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color: #e8eef4;
+  }
+  
+  .fp-header {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+  }
+  
+  /* --- Звёзды --- */
+  .fp-stars {
+    display: flex;
+    gap: 4px;
+    font-size: 32px;
+  }
+  
+  .fp-star {
+    color: #4a5a6a;
+    transition: color 0.3s;
+  }
+  
+  .fp-star--filled {
+    color: #f5c542;
+    text-shadow: 0 0 8px rgba(245, 197, 66, 0.5);
+  }
+  
+  /* --- Балл --- */
+  .fp-score {
+    font-size: 16px;
+    color: #a0b0c0;
+  }
+  
+  /* --- Диаграмма --- */
+  .fp-chart-wrap {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .fp-chart {
+    display: block;
+  }
+  
+  /* --- Подписи суб-оценок --- */
+  .fp-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    justify-content: center;
+    font-size: 13px;
+  }
+  
+  .fp-label b {
+    color: #50b48c;
+  }
+  
+  /* --- Заголовок-резюме --- */
+  .fp-summary {
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    max-width: 420px;
+    color: #d0dae4;
+  }
+  
+  /* --- Список комментариев --- */
+  .fp-feedback-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 460px;
+    width: 100%;
+  }
+  
+  .fp-feedback {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+    border-left: 3px solid transparent;
+  }
+  
+  .fp-feedback--critical {
+    background: rgba(220, 80, 80, 0.15);
+    border-left-color: #dc5050;
+    color: #f0b0b0;
+  }
+  
+  .fp-feedback--warning {
+    background: rgba(230, 180, 60, 0.12);
+    border-left-color: #e6b43c;
+    color: #e8d4a0;
+  }
+  
+  .fp-feedback--info {
+    background: rgba(120, 160, 220, 0.10);
+    border-left-color: #78a0dc;
+    color: #b0c8e8;
+  }
+  
+  .fp-feedback--positive {
+    background: rgba(80, 180, 140, 0.12);
+    border-left-color: #50b48c;
+    color: #a0d8c0;
+  }
+  
+  /* --- Кнопки --- */
+  .fp-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  
+  .fp-btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  
+  .fp-btn:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+  }
+  
+  .fp-btn:active {
+    transform: translateY(0);
+  }
+  
+  .fp-btn--retry {
+    background: #3a4a5a;
+    color: #e0e8f0;
+  }
+  
+  .fp-btn--continue {
+    background: #50b48c;
+    color: #ffffff;
+  }

@@ -1,236 +1,300 @@
 // =============================================================================
-// itemCatalog.js — Каталог игровых предметов Decorium.
-//
+// itemCatalog.js — Каталог игровых предметов Decorium с векторами признаков.
 // Каждый предмет содержит:
-//   dimensions      — габариты в метрах {x,y,z} для 3D-меша
-//   features_vector — нормализованный вектор признаков (см. features.js)
-//   tags            — стилевые/функциональные теги
-//
-// Функция getItemFeatures(item) возвращает вектор признаков для ЛЮБОГО предмета
-// движка: сначала смотрит на item.features_vector, затем ищет в каталоге
-// по item.catalogId / item.kind, иначе возвращает нейтральный вектор.
-// Это позволяет интегрироваться с существующим factory.js без его переписывания.
+//   - features_vector: нормализованный вектор признаков (см. features.js)
+//   - dimensions: габариты в метрах {x,y,z} для 3D-рендеринга
+//   - color: цвет меша (hex)
+//   - tags: стилевые/функциональные теги
+// Также здесь находится универсальный адаптер getItemFeaturesVector(item),
+// который умеет извлекать вектор как из игрового предмета, так и из
+// произвольного предмета существующего движка (по features_vector / decor / типу).
 // =============================================================================
 
-import { FEATURE_COUNT, FEATURE_KEYS, vectorFromObject, isValidVector } from './features.js';
+import { FEATURE_COUNT, FEATURE_INDEX, isValidVector } from './features.js';
 
-// -----------------------------------------------------------------------------
-// Каталоги предметов под каждый стиль (для MVP: 12 предметов)
-// Векторы построены так, чтобы игрок мог собрать как хороший, так и плохой интерьер
-// -----------------------------------------------------------------------------
+/**
+ * Вспомогательная функция сборки вектора по объекту {ключ_признака: значение}.
+ * Незаданные признаки = 0. Порядок соответствует features.js.
+ */
+function vec(values) {
+  const v = new Array(FEATURE_COUNT).fill(0);
+  for (const [key, val] of Object.entries(values)) {
+    const idx = FEATURE_INDEX[key];
+    if (idx !== undefined) v[idx] = val;
+  }
+  return v;
+}
+
+/**
+ * Каталог игровых предметов. Покрывает три стиля: Скандинавский, Лофт, Модерн.
+ * dimensions в метрах, согласованы с виртуальным боксом движка.
+ */
 export const ITEM_CATALOG = [
-  // --- Скандинавский ---
+  // ------------------------- Скандинавский -------------------------------
   {
-    catalogId: 'sofa_scandi',
+    id: 'sofa_scandi',
     name: 'Скандинавский диван',
     kind: 'sofa',
-    dimensions: { x: 2.0, y: 0.8, z: 0.9 },
+    styleTags: ['scandinavian'],
+    dimensions: { x: 2.0, y: 0.85, z: 0.95 },
     color: 0xd9c8a9,
-    tags: ['скандинавский', 'диван', 'мебель'],
-    features: vectorFromObject({
-      wood_ratio: 0.9, metal_ratio: 0.05, glass_ratio: 0.0, textile_ratio: 0.3,
-      warmth: 0.8, lightness: 0.8, angularity: 0.3, simplicity: 0.9,
-      scale: 0.8, price: 0.5,
+    price: 150,
+    features_vector: vec({
+      wood_ratio: 0.90, metal_ratio: 0.05, textile_ratio: 0.05,
+      warmth: 0.80, lightness: 0.80,
+      angularity: 0.30, simplicity: 0.90,
+      scale: 0.70, price: 0.50,
     }),
   },
   {
-    catalogId: 'table_scandi',
+    id: 'table_scandi',
     name: 'Деревянный стол',
     kind: 'table',
+    styleTags: ['scandinavian'],
     dimensions: { x: 1.4, y: 0.75, z: 0.8 },
-    color: 0xc9a877,
-    tags: ['скандинавский', 'стол', 'мебель'],
-    features: vectorFromObject({
-      wood_ratio: 0.95, metal_ratio: 0.05, glass_ratio: 0.0, textile_ratio: 0.0,
-      warmth: 0.75, lightness: 0.75, angularity: 0.4, simplicity: 0.85,
-      scale: 0.5, price: 0.35,
+    color: 0xc4a373,
+    price: 90,
+    features_vector: vec({
+      wood_ratio: 0.95, metal_ratio: 0.05,
+      warmth: 0.75, lightness: 0.75,
+      angularity: 0.50, simplicity: 0.85,
+      scale: 0.55, price: 0.35,
     }),
   },
   {
-    catalogId: 'armchair_scandi',
-    name: 'Кресло из ротанга',
-    kind: 'chair',
-    dimensions: { x: 0.8, y: 0.9, z: 0.8 },
-    color: 0xe0cda9,
-    tags: ['скандинавский', 'кресло', 'мебель'],
-    features: vectorFromObject({
-      wood_ratio: 0.8, metal_ratio: 0.0, glass_ratio: 0.0, textile_ratio: 0.4,
-      warmth: 0.85, lightness: 0.85, angularity: 0.2, simplicity: 0.8,
-      scale: 0.3, price: 0.3,
+    id: 'shelf_scandi',
+    name: 'Светлый стеллаж',
+    kind: 'shelf',
+    styleTags: ['scandinavian'],
+    dimensions: { x: 0.8, y: 1.8, z: 0.35 },
+    color: 0xe8dcc4,
+    price: 70,
+    features_vector: vec({
+      wood_ratio: 0.85, metal_ratio: 0.10,
+      warmth: 0.70, lightness: 0.85,
+      angularity: 0.55, simplicity: 0.85,
+      scale: 0.60, price: 0.30,
     }),
   },
 
-  // --- Лофт ---
+  // ------------------------------- Лофт ----------------------------------
   {
-    catalogId: 'shelf_metal',
+    id: 'shelf_metal',
     name: 'Металлический стеллаж',
     kind: 'shelf',
-    dimensions: { x: 1.2, y: 1.8, z: 0.4 },
-    color: 0x55595e,
-    tags: ['лофт', 'стеллаж', 'хранение'],
-    features: vectorFromObject({
-      wood_ratio: 0.1, metal_ratio: 0.9, glass_ratio: 0.05, textile_ratio: 0.0,
-      warmth: 0.3, lightness: 0.3, angularity: 0.8, simplicity: 0.35,
-      scale: 0.6, price: 0.4,
+    styleTags: ['loft'],
+    dimensions: { x: 1.0, y: 1.9, z: 0.4 },
+    color: 0x5a5a5a,
+    price: 110,
+    features_vector: vec({
+      metal_ratio: 0.90, wood_ratio: 0.05, glass_ratio: 0.05,
+      warmth: 0.40, lightness: 0.30,
+      angularity: 0.80, simplicity: 0.35,
+      scale: 0.65, price: 0.40,
     }),
   },
   {
-    catalogId: 'lamp_industrial',
+    id: 'lamp_industrial',
     name: 'Индустриальная лампа',
     kind: 'lamp',
-    dimensions: { x: 0.4, y: 1.5, z: 0.4 },
-    color: 0x3a3f44,
-    tags: ['лофт', 'освещение', 'лампа'],
-    features: vectorFromObject({
-      wood_ratio: 0.0, metal_ratio: 0.85, glass_ratio: 0.1, textile_ratio: 0.0,
-      warmth: 0.5, lightness: 0.35, angularity: 0.7, simplicity: 0.3,
-      scale: 0.2, price: 0.2,
+    styleTags: ['loft'],
+    dimensions: { x: 0.35, y: 1.5, z: 0.35 },
+    color: 0x3c3c3c,
+    price: 45,
+    features_vector: vec({
+      metal_ratio: 0.85, glass_ratio: 0.10,
+      warmth: 0.55, lightness: 0.35,
+      angularity: 0.70, simplicity: 0.30,
+      scale: 0.30, price: 0.20,
     }),
   },
   {
-    catalogId: 'sofa_leather',
+    id: 'sofa_leather',
     name: 'Кожаный диван',
     kind: 'sofa',
-    dimensions: { x: 2.2, y: 0.75, z: 0.95 },
+    styleTags: ['loft'],
+    dimensions: { x: 2.1, y: 0.8, z: 0.95 },
     color: 0x6b4a2f,
-    tags: ['лофт', 'диван', 'мебель'],
-    features: vectorFromObject({
-      wood_ratio: 0.2, metal_ratio: 0.2, glass_ratio: 0.0, textile_ratio: 0.6,
-      warmth: 0.5, lightness: 0.3, angularity: 0.5, simplicity: 0.4,
-      scale: 0.8, price: 0.7,
+    price: 180,
+    features_vector: vec({
+      metal_ratio: 0.15, textile_ratio: 0.10, wood_ratio: 0.10,
+      warmth: 0.55, lightness: 0.30,
+      angularity: 0.60, simplicity: 0.40,
+      scale: 0.72, price: 0.60,
     }),
   },
 
-  // --- Модерн ---
+  // ------------------------------- Модерн --------------------------------
   {
-    catalogId: 'table_glass',
+    id: 'table_glass',
     name: 'Стеклянный стол',
     kind: 'table',
-    dimensions: { x: 1.3, y: 0.7, z: 0.7 },
-    color: 0xa8c8d8,
-    tags: ['модерн', 'стол', 'мебель'],
-    features: vectorFromObject({
-      wood_ratio: 0.0, metal_ratio: 0.2, glass_ratio: 0.8, textile_ratio: 0.0,
-      warmth: 0.3, lightness: 0.7, angularity: 0.7, simplicity: 0.85,
-      scale: 0.5, price: 0.5,
+    styleTags: ['modern'],
+    dimensions: { x: 1.3, y: 0.72, z: 0.75 },
+    color: 0x9fc4d8,
+    price: 130,
+    features_vector: vec({
+      glass_ratio: 0.80, metal_ratio: 0.15,
+      warmth: 0.30, lightness: 0.70,
+      angularity: 0.70, simplicity: 0.85,
+      scale: 0.50, price: 0.45,
     }),
   },
   {
-    catalogId: 'chair_modern',
-    name: 'Стул минималистичный',
-    kind: 'chair',
-    dimensions: { x: 0.5, y: 0.9, z: 0.5 },
-    color: 0xe8e8e8,
-    tags: ['модерн', 'стул', 'мебель'],
-    features: vectorFromObject({
-      wood_ratio: 0.1, metal_ratio: 0.3, glass_ratio: 0.1, textile_ratio: 0.2,
-      warmth: 0.2, lightness: 0.8, angularity: 0.7, simplicity: 0.9,
-      scale: 0.25, price: 0.25,
-    }),
-  },
-  {
-    catalogId: 'media_panel',
+    id: 'media_panel',
     name: 'Медиа-панель',
-    kind: 'tv',
-    dimensions: { x: 1.8, y: 0.5, z: 0.4 },
-    color: 0x2b2b2b,
-    tags: ['модерн', 'техника', 'медиа'],
-    features: vectorFromObject({
-      wood_ratio: 0.1, metal_ratio: 0.3, glass_ratio: 0.5, textile_ratio: 0.0,
-      warmth: 0.2, lightness: 0.4, angularity: 0.75, simplicity: 0.8,
-      scale: 0.5, price: 0.6,
+    kind: 'media',
+    styleTags: ['modern'],
+    dimensions: { x: 1.6, y: 0.9, z: 0.3 },
+    color: 0x2f3640,
+    price: 160,
+    features_vector: vec({
+      glass_ratio: 0.50, metal_ratio: 0.35,
+      warmth: 0.20, lightness: 0.45,
+      angularity: 0.75, simplicity: 0.80,
+      scale: 0.60, price: 0.55,
+    }),
+  },
+  {
+    id: 'chair_modern',
+    name: 'Стул модерн',
+    kind: 'chair',
+    styleTags: ['modern'],
+    dimensions: { x: 0.5, y: 0.9, z: 0.5 },
+    color: 0xb0bec5,
+    price: 60,
+    features_vector: vec({
+      glass_ratio: 0.20, metal_ratio: 0.55, textile_ratio: 0.15,
+      warmth: 0.30, lightness: 0.60,
+      angularity: 0.70, simplicity: 0.75,
+      scale: 0.35, price: 0.25,
     }),
   },
 
-  // --- Декор (универсальный) ---
+  // --------------------------- Декор / нейтральные -----------------------
   {
-    catalogId: 'plant_pot',
-    name: 'Растение в горшке',
+    id: 'plant_pot',
+    name: 'Комнатное растение',
     kind: 'decor',
-    dimensions: { x: 0.4, y: 1.2, z: 0.4 },
-    color: 0x4a7c3a,
-    tags: ['декор', 'растение'],
-    features: vectorFromObject({
-      wood_ratio: 0.3, metal_ratio: 0.0, glass_ratio: 0.0, textile_ratio: 0.0,
-      warmth: 0.7, lightness: 0.6, angularity: 0.1, simplicity: 0.7,
-      scale: 0.15, price: 0.1,
+    styleTags: ['scandinavian', 'modern'],
+    dimensions: { x: 0.4, y: 1.0, z: 0.4 },
+    color: 0x4a7c59,
+    price: 25,
+    features_vector: vec({
+      wood_ratio: 0.30, textile_ratio: 0.10,
+      warmth: 0.75, lightness: 0.60,
+      angularity: 0.25, simplicity: 0.80,
+      scale: 0.25, price: 0.15,
     }),
   },
   {
-    catalogId: 'rug_soft',
+    id: 'rug_soft',
     name: 'Мягкий ковёр',
     kind: 'decor',
-    dimensions: { x: 2.0, y: 0.05, z: 1.4 },
-    color: 0xb8a898,
-    tags: ['декор', 'текстиль', 'ковёр'],
-    features: vectorFromObject({
-      wood_ratio: 0.0, metal_ratio: 0.0, glass_ratio: 0.0, textile_ratio: 0.95,
-      warmth: 0.7, lightness: 0.6, angularity: 0.0, simplicity: 0.6,
-      scale: 0.4, price: 0.2,
+    styleTags: ['scandinavian'],
+    dimensions: { x: 2.0, y: 0.03, z: 1.4 },
+    color: 0xcfb9a0,
+    price: 55,
+    features_vector: vec({
+      textile_ratio: 0.90,
+      warmth: 0.80, lightness: 0.75,
+      angularity: 0.15, simplicity: 0.85,
+      scale: 0.45, price: 0.25,
     }),
   },
   {
-    catalogId: 'floor_lamp',
+    id: 'floor_lamp',
     name: 'Торшер',
     kind: 'lamp',
+    styleTags: ['scandinavian', 'modern'],
     dimensions: { x: 0.35, y: 1.6, z: 0.35 },
-    color: 0xd8d0c0,
-    tags: ['декор', 'освещение'],
-    features: vectorFromObject({
-      wood_ratio: 0.2, metal_ratio: 0.4, glass_ratio: 0.1, textile_ratio: 0.3,
-      warmth: 0.6, lightness: 0.7, angularity: 0.3, simplicity: 0.7,
-      scale: 0.2, price: 0.2,
+    color: 0xdedede,
+    price: 40,
+    features_vector: vec({
+      metal_ratio: 0.45, textile_ratio: 0.30,
+      warmth: 0.65, lightness: 0.80,
+      angularity: 0.45, simplicity: 0.75,
+      scale: 0.30, price: 0.20,
     }),
   },
 ];
 
-// Нейтральный вектор (fallback): предмет без выраженного стиля
-const NEUTRAL_VECTOR = new Array(FEATURE_COUNT).fill(0.3);
+/** Нейтральный вектор (fallback для неизвестных предметов). */
+const FALLBACK_VECTOR = vec({
+  wood_ratio: 0.4, metal_ratio: 0.2, warmth: 0.5, lightness: 0.5,
+  angularity: 0.5, simplicity: 0.5, scale: 0.4, price: 0.3,
+});
 
-// Быстрый поиск предмета каталога по catalogId
-const CATALOG_BY_ID = Object.fromEntries(ITEM_CATALOG.map((it) => [it.catalogId, it]));
+/** Быстрый доступ к предмету каталога по id. */
+const CATALOG_BY_ID = Object.fromEntries(ITEM_CATALOG.map(i => [i.id, i]));
 
 /**
- * Возвращает список игровых предметов для библиотеки (инвентаря).
- * @returns {Array}
+ * Возвращает предмет каталога по id.
+ * @param {string} id
+ * @returns {object|undefined}
+ */
+export function getCatalogItem(id) {
+  return CATALOG_BY_ID[id];
+}
+
+/**
+ * Возвращает список всех предметов каталога (для библиотеки/инвентаря).
+ * @returns {Array<object>}
  */
 export function getCatalogItems() {
   return ITEM_CATALOG;
 }
 
 /**
- * Возвращает предмет каталога по catalogId.
- * @param {string} catalogId
- * @returns {Object|null}
+ * Универсальный адаптер: извлекает вектор признаков из любого предмета.
+ * Приоритеты:
+ *   1. item.features_vector (если задан явно и валиден)
+ *   2. item.decor?.features_vector
+ *   3. Поиск по item.catalogId / item.id в каталоге
+ *   4. Поиск по item.kind / item.type в каталоге (первый совпавший)
+ *   5. FALLBACK_VECTOR
+ * @param {object} item - предмет (из движка или из каталога)
+ * @returns {number[]} вектор признаков длины FEATURE_COUNT
  */
-export function getCatalogItem(catalogId) {
-  return CATALOG_BY_ID[catalogId] ?? null;
+export function getItemFeaturesVector(item) {
+  if (!item || typeof item !== 'object') return FALLBACK_VECTOR;
+
+  // 1. Явно заданный вектор
+  if (isValidVector(item.features_vector)) return item.features_vector;
+
+  // 2. Вложенный decor
+  if (item.decor && isValidVector(item.decor.features_vector)) {
+    return item.decor.features_vector;
+  }
+
+  // 3. По catalogId / id
+  const byId = CATALOG_BY_ID[item.catalogId] || CATALOG_BY_ID[item.id];
+  if (byId) return byId.features_vector;
+
+  // 4. По kind / type (первый предмет каталога с таким kind)
+  const kindKey = item.kind || item.type;
+  if (kindKey) {
+    const byKind = ITEM_CATALOG.find(i => i.kind === kindKey);
+    if (byKind) return byKind.features_vector;
+  }
+
+  // 5. Fallback
+  return FALLBACK_VECTOR;
 }
 
 /**
- * ГЛАВНАЯ ФУНКЦИЯ ЭТАПА 1: получить вектор признаков для предмета.
- *
- * Работает с ЛЮБЫМ предметом движка:
- *  1) если у предмета уже есть item.features_vector — используем его;
- *  2) если есть item.catalogId / item.kind — ищем в каталоге;
- *  3) иначе возвращаем нейтральный вектор.
- *
- * @param {Object} item — предмет из state.js / manager.js
- * @returns {number[]} вектор признаков длиной FEATURE_COUNT
+ * Создаёт экземпляр предмета для размещения в сцене.
+ * Возвращает новый объект (не ссылку на каталог), чтобы можно было
+ * мутировать позицию/поворот без влияния на каталог.
+ * @param {string} catalogId
+ * @returns {object|null}
  */
-export function getItemFeatures(item) {
-  if (!item) return NEUTRAL_VECTOR;
-
-  // 1) Явно заданный вектор на предмете
-  if (item.features_vector && isValidVector(item.features_vector)) {
-    return item.features_vector;
-  }
-
-  // 2) Привязка к каталогу по catalogId или kind
-  const key = item.catalogId ?? item.kind ?? item.type ?? item.name;
-  const preset = CATALOG_BY_ID[key];
-  if (preset?.features) return preset.features;
-
-  // 3) Fallback
-  return NEUTRAL_VECTOR;
+export function createGameItem(catalogId) {
+  const proto = CATALOG_BY_ID[catalogId];
+  if (!proto) return null;
+  return {
+    ...proto,
+    features_vector: [...proto.features_vector],
+    dimensions: { ...proto.dimensions },
+  };
 }

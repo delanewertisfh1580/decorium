@@ -1,81 +1,84 @@
 // =============================================================================
-// styles.js — Определения стилей интерьера для Decorium.
-//
-// Каждый стиль задаётся набором ЛИНЕЙНЫХ ОГРАНИЧЕНИЙ над вектором комнаты
-// (см. GDD: a_i · V_room >=< b_i). Каждое ограничение имеет:
-//   feature   — ключ признака из features.js
-//   operator  — '>=', '<=', '=='
-//   threshold — порог b_i в диапазоне [0..1]
-//   group     — группа для лепестковой диаграммы
-//   weight    — вес штрафа (важность ограничения)
+// styles.js — Определения стилей интерьера в виде набора линейных ограничений.
+// Каждое ограничение: { feature, operator, threshold, group, weight }.
+//   value = V_комнаты[feature]
+//   Ограничение выполнено, если:
+//     '>=': value >= threshold
+//     '<=': value <= threshold
+//     '==': |value - threshold| <= EPSILON
+//   Штраф = weight * величина нарушения (см. scoring.js).
 // =============================================================================
 
 export const STYLES = {
-  // ---------------------------------------------------------------------------
-  // СКАНДИНАВСКИЙ: светлые тона, натуральное дерево, простые формы, минимум металла
-  // ---------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
   scandinavian: {
     id: 'scandinavian',
     name: 'Скандинавский',
-    emoji: '🌿',
-    description: 'Светлые тона, натуральное дерево, простые и уютные формы.',
+    icon: '🪵',
+    description: 'Светлые тона, натуральное дерево, простые и функциональные формы.',
     constraints: [
-      { feature: 'wood_ratio',  operator: '>=', threshold: 0.6,  group: 'Материалы', weight: 1.0 },
-      { feature: 'lightness',   operator: '>=', threshold: 0.6,  group: 'Цвет',      weight: 1.0 },
-      { feature: 'warmth',      operator: '>=', threshold: 0.5,  group: 'Цвет',      weight: 0.8 },
-      { feature: 'simplicity',  operator: '>=', threshold: 0.6,  group: 'Геометрия', weight: 1.0 },
-      { feature: 'metal_ratio', operator: '<=', threshold: 0.2,  group: 'Материалы', weight: 0.6 },
+      { feature: 'wood_ratio',  operator: '>=', threshold: 0.60, group: 'Материалы', weight: 1.0 },
+      { feature: 'lightness',   operator: '>=', threshold: 0.60, group: 'Цвет',      weight: 1.0 },
+      { feature: 'simplicity',  operator: '>=', threshold: 0.60, group: 'Геометрия', weight: 1.0 },
+      { feature: 'warmth',      operator: '>=', threshold: 0.50, group: 'Цвет',      weight: 0.8 },
+      { feature: 'metal_ratio', operator: '<=', threshold: 0.20, group: 'Материалы', weight: 0.6 },
+      { feature: 'glass_ratio', operator: '<=', threshold: 0.25, group: 'Материалы', weight: 0.4 },
     ],
   },
 
-  // ---------------------------------------------------------------------------
-  // ЛОФТ: металл, индустриальные острые углы, приглушённые тона, грубые фактуры
-  // ---------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
   loft: {
     id: 'loft',
     name: 'Лофт',
-    emoji: '🏭',
-    description: 'Металл, индустриальный характер, приглушённые тона.',
+    icon: '🏭',
+    description: 'Металл, кирпич, индустриальный характер, грубые фактуры.',
     constraints: [
-      { feature: 'metal_ratio', operator: '>=', threshold: 0.5,  group: 'Материалы', weight: 1.0 },
-      { feature: 'angularity',  operator: '>=', threshold: 0.5,  group: 'Геометрия', weight: 0.8 },
-      { feature: 'simplicity',  operator: '<=', threshold: 0.45, group: 'Геометрия', weight: 0.7 },
-      { feature: 'lightness',   operator: '<=', threshold: 0.5,  group: 'Цвет',      weight: 0.6 },
-      { feature: 'glass_ratio', operator: '<=', threshold: 0.3,  group: 'Материалы', weight: 0.5 },
+      { feature: 'metal_ratio', operator: '>=', threshold: 0.50, group: 'Материалы', weight: 1.0 },
+      { feature: 'angularity',  operator: '>=', threshold: 0.55, group: 'Геометрия', weight: 1.0 },
+      { feature: 'warmth',      operator: '>=', threshold: 0.40, group: 'Цвет',      weight: 0.7 },
+      { feature: 'lightness',   operator: '<=', threshold: 0.45, group: 'Цвет',      weight: 0.8 },
+      { feature: 'simplicity',  operator: '<=', threshold: 0.45, group: 'Геометрия', weight: 0.8 },
+      { feature: 'textile_ratio', operator: '<=', threshold: 0.30, group: 'Материалы', weight: 0.4 },
     ],
   },
 
-  // ---------------------------------------------------------------------------
-  // МОДЕРН: стекло, прямые линии, холодная и чистая палитра
-  // ---------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
   modern: {
     id: 'modern',
     name: 'Модерн',
-    emoji: '✨',
-    description: 'Стекло, прямые линии, холодная и минималистичная палитра.',
+    icon: '🔷',
+    description: 'Стекло, прямые линии, холодная палитра, минимализм.',
     constraints: [
-      { feature: 'glass_ratio', operator: '>=', threshold: 0.4,  group: 'Материалы', weight: 1.0 },
-      { feature: 'simplicity',  operator: '>=', threshold: 0.7,  group: 'Геометрия', weight: 1.0 },
-      { feature: 'angularity',  operator: '>=', threshold: 0.6,  group: 'Геометрия', weight: 0.7 },
-      { feature: 'warmth',      operator: '<=', threshold: 0.4,  group: 'Цвет',      weight: 0.6 },
-      { feature: 'lightness',   operator: '>=', threshold: 0.4,  group: 'Цвет',      weight: 0.5 },
+      { feature: 'glass_ratio', operator: '>=', threshold: 0.40, group: 'Материалы', weight: 1.0 },
+      { feature: 'simplicity',  operator: '>=', threshold: 0.70, group: 'Геометрия', weight: 1.0 },
+      { feature: 'angularity',  operator: '>=', threshold: 0.60, group: 'Геометрия', weight: 0.8 },
+      { feature: 'lightness',   operator: '>=', threshold: 0.45, group: 'Цвет',      weight: 0.6 },
+      { feature: 'warmth',      operator: '<=', threshold: 0.40, group: 'Цвет',      weight: 0.9 },
+      { feature: 'wood_ratio',  operator: '<=', threshold: 0.35, group: 'Материалы', weight: 0.5 },
     ],
   },
 };
 
-// Список всех стилей (для UI-селектора)
-export const STYLE_LIST = Object.values(STYLES);
-
 /**
- * Получить стиль по идентификатору.
- * @param {string} styleId
- * @returns {Object|null}
+ * Список всех стилей (для UI-селектора).
+ * @returns {Array<{id:string, name:string, icon:string, description:string}>}
  */
-export function getStyle(styleId) {
-  return STYLES[styleId] ?? null;
+export function getStyleList() {
+  return Object.values(STYLES).map(({ id, name, icon, description }) => ({
+    id, name, icon, description,
+  }));
 }
 
 /**
- * Дефолтный стиль для MVP.
+ * Возвращает стиль по id.
+ * @param {string} styleId
+ * @returns {object|undefined}
+ */
+export function getStyle(styleId) {
+  return STYLES[styleId];
+}
+
+/**
+ * Возвращает id стиля по умолчанию (первый уровень — скандинавский).
  */
 export const DEFAULT_STYLE_ID = 'scandinavian';
