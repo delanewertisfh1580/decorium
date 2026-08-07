@@ -1,218 +1,188 @@
-// src/main.js (v2.4-StepA-resilient)
-// Decorium. Точка входа.
-// Устойчив к любому формату экспорта в модулях ядра движка (calc-3d).
-// Если именованный экспорт отсутствует — используется default или no-op stub.
+// =============================================================================
+// main.js — точка сборки Decorium, Шаг А («комната вместо куба»).
+// Бутстрап 1:1 по контрактам движка: initScene(canvas), initLibrary({onAdd,
+// onClear}), initControls({camera, domElement, orbit, manager, onSelect}),
+// createSizePanel({onResize, onShelfLevels, getItem}), animation — namespace.
+// virtualBox заменён на apartment (drop-in).
+// =============================================================================
 
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { getItems, getItem } from './domain/state.js';
+import { initScene } from './scene/renderer.js';
+import { createManager } from './items/manager.js';
+import * as animation from './items/animation.js';
+import { initControls } from './controls/drag.js';
+import { initDashboard } from './ui/dashboard.js';
+import { initLibrary } from './ui/library.js';
+import { createSizePanel } from './ui/sizePanel.js';
+import { runEvaluation } from './game/evaluator.js';
+import { createEvaluateButton } from './ui/evaluateButton.js';
+import { showFeedbackPanel, hideFeedbackPanel } from './ui/feedbackPanel.js';
 
-// === Импорт систем ===
-import * as StateModule from './domain/state.js';
-import * as ManagerModule from './items/manager.js';
-import * as AnimationModule from './items/animation.js';
-import * as DashboardModule from './ui/dashboard.js';
-import * as ControlsModule from './controls/drag.js';
-import * as LibraryModule from './ui/library.js';
-import * as EvalButtonModule from './ui/evaluateButton.js';
-import * as FeedbackModule from './ui/feedbackPanel.js';
-import * as EvaluatorModule from './game/evaluator.js';
-
-// === Импорт Decorium layer (Шаг А) ===
+// Decorium, Шаг А
 import { makeTask } from './level/task.js';
 import { createApartment } from './level/apartment.js';
 
-// ---------- Безопасные резолверы ----------
-// Ядро движка нам неподконтрольно. Ищем функции во всех возможных местах.
+// =============================================================================
+// 1. Сцена (родной канвас #scene — никаких вторых канвасов)
+// =============================================================================
+const canvas = document.getElementById('scene');
+const { renderer, scene, camera, orbit } = initScene(canvas);
 
-function resolveFn(mod, names, fallback = () => {}) {
-    if (!mod) return fallback;
-    for (const name of names) {
-        if (typeof mod[name] === 'function') return mod[name];
-    }
-    if (typeof mod.default === 'function') return mod.default;
-    return fallback;
-}
-
-function resolveObj(mod, names, fallback = {}) {
-    if (!mod) return fallback;
-    for (const name of names) {
-        if (mod[name] && typeof mod[name] === 'object') return mod[name];
-    }
-    if (mod.default && typeof mod.default === 'object') return mod.default;
-    return fallback;
-}
-
-const getItems = resolveFn(StateModule, ['getItems'], () => []);
-
-const createManager = resolveFn(
-    ManagerModule,
-    ['createManager'],
-    () => ({
-        addItem: () => {}, startDrag: () => {}, dragItem: () => {},
-        endDrag: () => {}, resizeItem: () => {}, setShelfLevels: () => {},
-        removeItem: () => {}, clear: () => {}, getMeshes: () => [],
-        getMeshById: () => null
-    })
-);
-
-function resolveAnimation() {
-    const factory = resolveFn(AnimationModule, ['createAnimation'], null);
-    if (factory) return factory();
-    if (AnimationModule.default) {
-        if (typeof AnimationModule.default === 'function') return AnimationModule.default();
-        if (typeof AnimationModule.default.update === 'function') return AnimationModule.default;
-    }
-    if (AnimationModule.animation && typeof AnimationModule.animation.update === 'function') {
-        return AnimationModule.animation;
-    }
-    console.warn('[main] items/animation.js: не найден update(dt), используется stub.');
-    return { update: () => {}, add: () => {}, remove: () => {}, startSpawn: () => {} };
-}
-
-const initDashboard = resolveFn(
-    DashboardModule,
-    ['initDashboard'],
-    () => ({ update: () => {}, hideLoader: () => {}, getCurrentStyle: () => 'scandinavian' })
-);
-
-const initControls = resolveFn(ControlsModule, ['initControls', 'setupControls', 'default'], () => {});
-const initLibrary = resolveFn(LibraryModule, ['initLibrary', 'setupLibrary', 'default'], () => {});
-
-const createEvaluateButton = resolveFn(
-    EvalButtonModule,
-    ['createEvaluateButton'],
-    () => ({})
-);
-
-const Feedback = resolveObj(
-    FeedbackModule,
-    ['default'],
-    { showFeedbackPanel: () => {}, hideFeedbackPanel: () => {} }
-);
-const showFeedbackPanel = typeof FeedbackModule.showFeedbackPanel === 'function'
-    ? FeedbackModule.showFeedbackPanel
-    : (typeof Feedback.showFeedbackPanel === 'function' ? Feedback.showFeedbackPanel : () => {});
-const hideFeedbackPanel = typeof FeedbackModule.hideFeedbackPanel === 'function'
-    ? FeedbackModule.hideFeedbackPanel
-    : (typeof Feedback.hideFeedbackPanel === 'function' ? Feedback.hideFeedbackPanel : () => {});
-
-const runEvaluation = resolveFn(
-    EvaluatorModule,
-    ['runEvaluation', 'evaluate'],
-    () => ({ totalScore: 0, stars: 1, styleScore: 0, ergonomicsScore: 0, violations: [], empty: true })
-);
-
-// ---------- 1. Сцена и рендерер ----------
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf0f2f5);
-
-const camera = new THREE.PerspectiveCamera(
-    45, window.innerWidth / window.innerHeight, 0.1, 100
-);
-camera.position.set(6, 5, 6);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-document.body.appendChild(renderer.domElement);
-
-const orbit = new OrbitControls(camera, renderer.domElement);
-orbit.enableDamping = true;
-orbit.target.set(0, 1, 0);
-
-const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-scene.add(ambient);
-
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-dirLight.position.set(5, 10, 5);
-dirLight.castShadow = true;
-dirLight.shadow.mapSize.set(2048, 2048);
-dirLight.shadow.camera.left = -10;
-dirLight.shadow.camera.right = 10;
-dirLight.shadow.camera.top = 10;
-dirLight.shadow.camera.bottom = -10;
-scene.add(dirLight);
-
-// ---------- 2. Генерация уровня (Шаг А) ----------
+// =============================================================================
+// 2. Уровень: TaskContract → комната
+// =============================================================================
 const task = makeTask({ clientId: 'user1', levelId: 1 });
 const apartment = createApartment(scene, task);
 
-// ---------- 3. Системы ----------
-const animation = resolveAnimation();
-
-let manager = null;
-
+// =============================================================================
+// 3. Дашборд качества (живой пересчёт)
+// =============================================================================
 const dashboard = initDashboard({
-    getItems: () => getItems(),
-    getMeshes: () => (manager ? manager.getMeshes() : []),
-    virtualBox: apartment // drop-in замена virtualBox
+    getItems,
+    getMeshes: () => manager.getMeshes(),
+    virtualBox: apartment
 });
 
-manager = createManager({
+// =============================================================================
+// 4. Менеджер предметов (ядро не тронуто)
+// =============================================================================
+const manager = createManager({
     scene,
     virtualBox: apartment,
     animation,
     onChanged: recompute
 });
 
-// initControls и initLibrary — опциональны, вызываем безопасно
-try { initControls({ camera, renderer, manager, orbit }); }
-catch (e) { console.warn('[main] initControls failed:', e.message); }
+// =============================================================================
+// 5. Панель размеров и полок
+// =============================================================================
+const sizePanel = createSizePanel({
+    onResize: manager.resizeItem,
+    onShelfLevels: manager.setShelfLevels,
+    getItem
+});
 
-try { initLibrary({ manager }); }
-catch (e) { console.warn('[main] initLibrary failed:', e.message); }
-
-try {
-    createEvaluateButton({
-        onEvaluate: () => {
-            const styleId = (dashboard && typeof dashboard.getCurrentStyle === 'function')
-                ? dashboard.getCurrentStyle()
-                : task.styleId;
-            const result = runEvaluation({
-                getItems: () => getItems(),
-                getMeshes: () => manager.getMeshes(),
-                virtualBox: apartment
-            }, styleId);
-            showFeedbackPanel(result, {
-                onRetry: () => hideFeedbackPanel(),
-                onContinue: () => hideFeedbackPanel()
-            });
+// =============================================================================
+// 6. Управление: drag, выбор кликом, удаление двойным кликом
+// =============================================================================
+initControls({
+    camera,
+    domElement: canvas,
+    orbit,
+    manager,
+    onSelect: (id) => {
+        if (id === null) {
+            sizePanel.close();
+            hideFeedbackPanel();
+            return;
         }
+        const record = getItem(id);
+        if (record) sizePanel.open(id, record);
+    }
+});
+
+// =============================================================================
+// 7. Библиотека
+// =============================================================================
+initLibrary({
+    onAdd: manager.addItem,
+    onClear: () => {
+        sizePanel.close();
+        hideFeedbackPanel();
+        manager.clear();
+    }
+});
+
+// =============================================================================
+// 8. Кнопка оценки дизайна
+// =============================================================================
+const evalButton = createEvaluateButton({
+    onEvaluate: () => {
+        const items = getItems();
+        if (items.length === 0) {
+            showEmptyHint();
+            return;
+        }
+        evalButton.setEnabled(false);
+
+        const styleId = dashboard.getCurrentStyle();
+        const result = runEvaluation(
+            { getItems, getMeshes: manager.getMeshes, virtualBox: apartment },
+            styleId
+        );
+
+        showFeedbackPanel(result, {
+            onRetry: () => evalButton.setEnabled(true),
+            onContinue: () => {
+                sizePanel.close();
+                manager.clear();
+                evalButton.setEnabled(true);
+            }
+        });
+    }
+});
+
+function showEmptyHint() {
+    const existing = document.getElementById('eval-empty-hint');
+    if (existing) existing.remove();
+
+    const hint = document.createElement('div');
+    hint.id = 'eval-empty-hint';
+    hint.textContent = 'Добавьте хотя бы один предмет из библиотеки, прежде чем оценивать дизайн.';
+    Object.assign(hint.style, {
+        position: 'fixed',
+        bottom: '90px',
+        right: '20px',
+        zIndex: '600',
+        padding: '10px 14px',
+        maxWidth: '280px',
+        background: 'rgba(30, 38, 48, 0.95)',
+        color: '#e0e8f0',
+        fontSize: '13px',
+        borderRadius: '10px',
+        borderLeft: '3px solid #50b48c',
+        boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+        fontFamily: 'system-ui, sans-serif'
     });
-} catch (e) {
-    console.warn('[main] evaluateButton failed:', e.message);
+    document.body.appendChild(hint);
+    setTimeout(() => hint.remove(), 3200);
 }
 
-// ---------- 4. Render-цикл (ЖЕЛЕЗНЫЙ КОНТРАКТ) ----------
-const clock = new THREE.Clock();
-function animate() {
-    requestAnimationFrame(animate);
-    let dt = clock.getDelta();
+// =============================================================================
+// 9. Render-цикл (ЖЕЛЕЗНЫЙ КОНТРАКТ: animation.update + apartment.update)
+// =============================================================================
+let last = performance.now();
+function render() {
+    const now = performance.now();
+    let dt = (now - last) / 1000;
+    last = now;
     dt = Math.max(0, Math.min(0.05, dt));
 
-    if (animation && typeof animation.update === 'function') animation.update(dt);
-    if (apartment && typeof apartment.update === 'function') apartment.update(dt);
+    animation.update(dt);
+    apartment.update(dt);
     orbit.update();
 
     renderer.render(scene, camera);
 }
+renderer.setAnimationLoop(render);
 
+// =============================================================================
+// 10. Рекомпозиция дашборда
+// =============================================================================
 function recompute() {
-    if (dashboard && typeof dashboard.update === 'function') dashboard.update();
+    dashboard.update();
 }
 
-// ---------- 5. Финализация ----------
 recompute();
-if (dashboard && typeof dashboard.hideLoader === 'function') dashboard.hideLoader();
-const loader = document.getElementById('loader');
-if (loader) loader.style.display = 'none';
+dashboard.hideLoader();
 
+// =============================================================================
+// 11. Resize
+// =============================================================================
 window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(w, h);
 });
-
-animate();
