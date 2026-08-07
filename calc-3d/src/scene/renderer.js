@@ -1,8 +1,8 @@
 // =============================================================================
 // scene/renderer.js — фабрика сцены (инфраструктурный слой).
 // Контракт сохранён: initScene(canvas) → { renderer, scene, camera, orbit }.
-// Фаза 3: лечим «мигание» — shadow bias/normalBias против shadow acne,
-// PCFSoftShadowMap, sRGB, ACES для пастельной картинки GDD.
+// Лечение «мигающего пола»: shadow.bias/normalBias против shadow acne,
+// PCFSoftShadowMap, sRGB + ACES для пастельной картинки GDD.
 // =============================================================================
 
 import * as THREE from 'three';
@@ -43,7 +43,7 @@ export function initScene(canvas) {
     orbit.minDistance = 3;
     orbit.maxDistance = 18;
 
-    // Мягкий «уютный» свет: hemisphere + тёплый directional с честными тенями.
+    // --- Мягкий «уютный» свет: hemisphere + тёплый directional ---
     const hemi = new THREE.HemisphereLight(0xffffff, 0xd8cfc4, 0.9);
     scene.add(hemi);
 

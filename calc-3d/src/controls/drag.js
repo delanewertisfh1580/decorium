@@ -1,9 +1,9 @@
 // =============================================================================
 // controls/drag.js — управление: перетаскивание, hover, выбор, удаление.
-// Фаза 3: DragControls (плоскость камеры → «ватность») заменён на собственный
-// raycast-drag по плоскости пола Y=0: предмет следует за курсором 1:1.
-// Публичный контракт сохранён: initControls({camera, domElement, orbit,
-// manager, onSelect}); hover/drag-подсветка через setEmissive из factory.
+// Фаза очистки: DragControls (плоскость камеры → «ватность») заменён на
+// собственный raycast-drag по плоскости пола Y=0: предмет следует за
+// курсором 1:1. Контракт сохранён: initControls({camera, domElement, orbit,
+// manager, onSelect}).
 // =============================================================================
 
 import * as THREE from 'three';
@@ -16,7 +16,7 @@ const CLICK_THRESHOLD_SQ = 25; // 5px — граница «клик vs пере�
  * @param {object} deps
  * @param {THREE.Camera} deps.camera
  * @param {HTMLElement} deps.domElement
- * @param {import('three/addons/controls/OrbitControls.js').OrbitControls} deps.orbit
+ * @param {object} deps.orbit
  * @param {object} deps.manager
  * @param {(id: number|null)=>void} [deps.onSelect]
  */
@@ -112,16 +112,14 @@ export function initControls({ camera, domElement, orbit, manager, onSelect }) {
             domElement.style.cursor = hoveredId !== null ? 'grab' : 'default';
             document.body.classList.remove('dragging');
 
-            // Клик без сдвига — выбор предмета (открытие панели размеров)
-            if (!moved && onSelect) onSelect(id);
+            if (!moved && onSelect) onSelect(id); // клик без сдвига — выбор
             return;
         }
 
-        // Клик в пустоту — снять выделение/панели
-        if (!moved && onSelect) onSelect(null);
+        if (!moved && onSelect) onSelect(null); // клик в пустоту
     });
 
-    // --- Отмена (Esc / потеря фокуса) — мягко завершаем drag ---
+    // --- Отмена (потеря фокуса) — мягко завершаем drag ---
     domElement.addEventListener('pointercancel', () => {
         if (draggingId !== null) {
             manager.endDrag(draggingId);
@@ -141,7 +139,6 @@ export function initControls({ camera, domElement, orbit, manager, onSelect }) {
     });
 
     return {
-        /** Текущий id под курсором (для отладки/UI). */
         getHoveredId: () => hoveredId,
         isDragging: () => draggingId !== null
     };

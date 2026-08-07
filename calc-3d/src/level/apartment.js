@@ -1,12 +1,13 @@
 // =============================================================================
 // level/apartment.js — квартира из BSP-layout. Drop-in замена virtualBox.
-// v3 (Фаза 3):
-//  - кеширование материалов (один материал на палитру-слот, а не на меш);
-//  - устранены копланарные грани (пол/потолок сдвинуты на EPS) — нет Z-fighting;
-//  - статичные меши с замороженными матрицами (matrixAutoUpdate=false);
-//  - pulse() — только по явному вызову, с затуханием, не трогает пол.
-// API: setTarget/update/pulse/getCur/getTarget/getBounds/getRooms/
-// getActiveRoom/setActiveRoom/roomAt/getFootprint.
+// v4 (DDD-миграция):
+//  - dollhouse: стены/потолок — плоскости с нормалями внутрь (снаружи невидимы);
+//  - все копланарные грани разведены на EPS (нет Z-fighting — «пол не мигает»);
+//  - материалы кешированы по слотам палитры; статичные меши с замороженными
+//    матрицами (matrixAutoUpdate=false) — меньше нагрузки на кадр;
+//  - НЕТ пер-кадровых мутаций материалов (pulse — только по явному вызову).
+// API (контракт virtualBox): setTarget(w,h,d), update(dt), pulse(), getCur(),
+// getTarget() + getBounds/getRooms/getActiveRoom/setActiveRoom/roomAt/getFootprint.
 // =============================================================================
 
 import * as THREE from 'three';
@@ -33,8 +34,8 @@ export function createApartment(scene, task) {
     // --- Кеш материалов: один материал на слот палитры ---
     const matCache = new Map();
     function makeMat(slot) {
-        const p = palette[slot];
         if (matCache.has(slot)) return matCache.get(slot);
+        const p = palette[slot] || palette.walls;
         const m = new THREE.MeshStandardMaterial({
             color: p.color, roughness: p.roughness, metalness: p.metalness
         });
@@ -50,19 +51,20 @@ export function createApartment(scene, task) {
         return mesh;
     }
 
-    // --- Пол и потолок (сдвинуты на EPS: ничто не копланарно стенам/плинтусам) ---
+    // --- Пол (нормаль вверх, опущен на EPS) ---
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), makeMat('floor'));
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = -EPS;
     floor.receiveShadow = true;
     addStatic(floor);
 
+    // --- Потолок (нормаль вниз, поднят на EPS) ---
     const ceil = new THREE.Mesh(new THREE.PlaneGeometry(W, D), makeMat('ceiling'));
     ceil.rotation.x = Math.PI / 2;
     ceil.position.y = H + EPS;
     addStatic(ceil);
 
-    // --- Внешние стены-плоскости, нормали внутрь (dollhouse) ---
+    // --- Внешние стены-плоскости, нормали внутрь ---
     const back = new THREE.Mesh(new THREE.PlaneGeometry(W, H), makeMat('walls'));
     back.position.set(0, H / 2, -D / 2);
     back.receiveShadow = true;
@@ -84,7 +86,7 @@ export function createApartment(scene, task) {
     right.position.set(W / 2, H / 2, 0);
     addStatic(right);
 
-    // --- Внутренние стены с проёмами (низ/верх с отступом EPS от пола/потолка) ---
+    // --- Внутренние стены с проёмами (низ/верх отведены от пола/потолка) ---
     const wallMat = makeMat('walls');
     const wallH = H - 2 * EPS;
     const wallY = EPS + wallH / 2;
@@ -115,7 +117,6 @@ export function createApartment(scene, task) {
         seg(door.lo, lo);
         seg(hi, door.hi);
 
-        // Перемычка над проёмом (верх не касается потолка: H-EPS)
         const lintelH = 0.5;
         if (door.axis === 'x') {
             const lintel = new THREE.Mesh(new THREE.BoxGeometry(WALL_T, lintelH, hi - lo), wallMat);
@@ -128,7 +129,7 @@ export function createApartment(scene, task) {
         }
     }
 
-    // --- Окно в гостиной (статичный emissive, без пер-кадровых мутаций) ---
+    // --- Окно в гостиной (задняя стена), статичный emissive ---
     const living = rooms.find((r) => r.type === 'living') || rooms[0];
     const winW = 1.8, winH = 1.4, winY = 1.6;
     const glassMat = new THREE.MeshStandardMaterial({
@@ -153,13 +154,13 @@ export function createApartment(scene, task) {
     fR.position.set(living.x + winW / 2 + ft / 2, winY, -D / 2 + 0.03);
     addStatic(fR);
 
-    // --- Входная дверь ---
+    // --- Входная дверь (передняя стена) ---
     const doorX = Math.max(-W / 2 + 1, Math.min(W / 2 - 1, living.x));
     const entry = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.1, 0.04), makeMat('door'));
     entry.position.set(doorX, 1.05, D / 2 - 0.03);
     addStatic(entry);
 
-    // --- Плинтусы (низ на EPS выше пола — не копланарны) ---
+    // --- Плинтусы по периметру ---
     const bbMat = makeMat('baseboard');
     const bbH = 0.08, bbT = 0.02, bbY = bbH / 2;
     const bb1 = new THREE.Mesh(new THREE.BoxGeometry(W, bbH, bbT), bbMat);
@@ -187,7 +188,6 @@ export function createApartment(scene, task) {
         setTarget(w, h, d) { /* статично на уровень */ },
 
         update(dt) {
-            // pulse — только по явному вызову, с плавным затуханием; пол не трогаем
             if (pulseT > 0) {
                 pulseT = Math.max(0, pulseT - dt);
                 glassMat.emissiveIntensity = 0.55 + 0.35 * Math.sin(pulseT * 12) * pulseT;
@@ -197,6 +197,7 @@ export function createApartment(scene, task) {
 
         pulse() { pulseT = 0.6; },
 
+        /** Габариты АКТИВНОЙ комнаты (мир центрирован по ней). */
         getCur() { return { w: active.w, h: H, d: active.d }; },
         getTarget() { return { w: active.w, h: H, d: active.d }; },
 

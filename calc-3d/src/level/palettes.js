@@ -1,3 +1,7 @@
+// =============================================================================
+// level/palettes.js — стилевые палитры отделки комнаты (данные, без логики).
+// =============================================================================
+
 export const STYLE_PALETTES = {
     scandinavian: {
         floor: { color: 0xd2b48c, roughness: 0.8, metalness: 0.0 },
@@ -22,6 +26,10 @@ export const STYLE_PALETTES = {
     }
 };
 
+/**
+ * Палитра по id стиля; неизвестный стиль → скандинавский (безопасный дефолт данных).
+ * @param {string} styleId
+ */
 export function getPalette(styleId) {
     return STYLE_PALETTES[styleId] || STYLE_PALETTES.scandinavian;
 }

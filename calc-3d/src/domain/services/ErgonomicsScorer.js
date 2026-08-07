@@ -1,7 +1,8 @@
 // =============================================================================
 // domain/services/ErgonomicsScorer.js — Domain Service оценки эргономики.
-// Типизированные Placement, три правила GDD: проходы ≥ 0.9 м, соотношение
-// высот, баланс визуального веса (сетка 3×3). score = exp(-λ·totalPenalty).
+// Работает строго с типизированными Placement (никаких адаптеров-угадаек).
+// Три правила GDD: проходы ≥ 0.9 м, соотношение высот, баланс (сетка 3×3).
+// score = exp(-λ·totalPenalty) — та же штрафная модель, что и у стиля.
 // =============================================================================
 
 import { LAMBDA } from '../scoringRules.js';
@@ -12,11 +13,11 @@ export const MIN_PASSAGE = 0.9;
 export class ErgonomicsScorer {
     /**
      * @param {object} [opts]
-     * @param {number} [opts.lambda]
-     * @param {number} [opts.minPassage]
-     * @param {number} [opts.heightTolerance]
-     * @param {number} [opts.balanceGrid]
-     * @param {number} [opts.balanceVarianceThreshold]
+     * @param {number} [opts.lambda] крутизна штрафной экспоненты
+     * @param {number} [opts.minPassage] минимальный зазор между кромками, м
+     * @param {number} [opts.heightTolerance] допуск «столик выше сиденья», м
+     * @param {number} [opts.balanceGrid] размер сетки баланса
+     * @param {number} [opts.balanceVarianceThreshold] порог нормированной дисперсии
      */
     constructor({
         lambda = LAMBDA,
@@ -35,7 +36,8 @@ export class ErgonomicsScorer {
     /**
      * Полная оценка эргономики для Item-сущностей.
      * @param {import('../entities/Item.js').Item[]} items
-     * @param {{minX,maxX,minZ,maxZ}|null} bounds
+     * @param {{minX:number,maxX:number,minZ:number,maxZ:number}|null} bounds
+     * @returns {{score:number, totalPenalty:number, violations:Array, checks:object, bounds:object}}
      */
     score(items, bounds = null) {
         if (!items || items.length === 0) {
@@ -104,7 +106,7 @@ export class ErgonomicsScorer {
             for (const sofa of sofas) {
                 if (table.placement.distanceTo(sofa.placement) > 1.5) continue;
 
-                const seatHeight = sofa.placement.h * 0.4;
+                const seatHeight = sofa.placement.h * 0.4; // сиденье ≈ 40% высоты дивана
                 const excess = table.placement.h - seatHeight - this.heightTolerance;
                 if (excess > 0) {
                     penalty += excess * 2;

@@ -1,6 +1,7 @@
 // =============================================================================
 // application/EvaluationService.js — Application Service: оркестрация оценки.
 // Зависит ТОЛЬКО от domain (сервисы, репозитории, scoringRules).
+// Формулы GDD: 0.7·стиль + 0.3·эргономика; exp(-λ·penalty); wishes поверх.
 // =============================================================================
 
 import { LAMBDA, STYLE_WEIGHT, ERGONOMICS_WEIGHT, scoreToStars } from '../domain/scoringRules.js';
@@ -9,7 +10,7 @@ import { FEATURE_INDEX } from '../domain/features.js';
 export class EvaluationService {
     /**
      * @param {object} deps
-     * @param {object} deps.itemRepository
+     * @param {object} deps.itemRepository репозиторий предметов (getAll)
      * @param {import('../domain/services/StyleScorer.js').StyleScorer} deps.styleScorer
      * @param {import('../domain/services/ErgonomicsScorer.js').ErgonomicsScorer} deps.ergonomicsScorer
      * @param {import('../domain/repositories/StyleRepository.js').StyleRepository} deps.styleRepository
@@ -30,12 +31,13 @@ export class EvaluationService {
      * Полная оценка дизайна.
      * @param {object} params
      * @param {string} params.styleId
-     * @param {object|null} [params.bounds]
-     * @param {object[]} [params.wishes]
-     * @param {object[]|null} [params.rooms]
-     * @param {Function|null} [params.roomAt]
-     * @param {object|null} [params.active]
+     * @param {object|null} [params.bounds] границы активной комнаты
+     * @param {object[]} [params.wishes] пожелания клиента
+     * @param {object[]|null} [params.rooms] комнаты (мультикомнатность)
+     * @param {Function|null} [params.roomAt] (x,z)=>roomId
+     * @param {object|null} [params.active] активная комната
      * @param {boolean} [params.useAreaWeights]
+     * @returns {object} результат оценки (форма совместима с UI)
      */
     evaluate({ styleId, bounds = null, wishes = [], rooms = null, roomAt = null, active = null, useAreaWeights = false }) {
         const items = this.itemRepository.getAll();
@@ -55,6 +57,7 @@ export class EvaluationService {
         return this._applyWishes(base, items, wishes);
     }
 
+    /** Оценка одной комнаты. */
     _evaluateSingle(items, style, bounds, useAreaWeights) {
         const styleResult = this.styleScorer.score(items, style, useAreaWeights);
         const ergoResult = this.ergonomicsScorer.score(items, bounds);
@@ -79,6 +82,7 @@ export class EvaluationService {
         };
     }
 
+    /** Мультикомнатность: per-room оценка, итог взвешен по площадям. */
     _evaluateApartment(items, style, rooms, roomAt, active, useAreaWeights) {
         const perRoom = [];
         const violations = [];
@@ -143,6 +147,7 @@ export class EvaluationService {
         };
     }
 
+    /** Пожелания клиента: доп. штрафы exp(-λ·p) поверх базы. */
     _applyWishes(base, items, wishes) {
         if (!Array.isArray(wishes) || wishes.length === 0) {
             return { ...base, wishes: [] };

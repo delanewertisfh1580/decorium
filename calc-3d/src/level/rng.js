@@ -1,12 +1,13 @@
-/**
- * Детерминированный ГПСЧ для процедурной генерации.
- * Использует cyrb53 для хеширования seed и mulberry32 для генерации.
- */
+// =============================================================================
+// level/rng.js — детерминированный ГПСЧ (статья о персонализации: stateless,
+// прямой доступ, воспроизводимость). Один seed — одна последовательность.
+// =============================================================================
 
-export function hashString(str) {
-    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+/** cyrb53: строка → 53-битный хеш. */
+export function hashString(str, seed = 0) {
+    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
     for (let i = 0; i < str.length; i++) {
-        let ch = str.charCodeAt(i);
+        const ch = str.charCodeAt(i);
         h1 = Math.imul(h1 ^ ch, 2654435761);
         h2 = Math.imul(h2 ^ ch, 1597334677);
     }
@@ -15,24 +16,32 @@ export function hashString(str) {
     return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 }
 
-export function mulberry32(seed) {
-    let a = seed;
-    return function() {
-        a |= 0; a = a + 0x6D2B79F5 | 0;
-        let t = Math.imul(a ^ a >>> 15, 1 | a);
-        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-        return ((t ^ t >>> 14) >>> 0) / 4294967296;
-    }
+/** mulberry32: быстрый статистически надёжный генератор. */
+export function mulberry32(a) {
+    return function () {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
 }
 
+/** Seeded-поток: range/irange/pick/shuffle. Без Math.random(). */
 export class Rng {
-    constructor(seedString) {
-        this.seed = typeof seedString === 'string' ? hashString(seedString) : seedString;
+    /** @param {string|number} seed */
+    constructor(seed) {
+        this.seed = typeof seed === 'string' ? hashString(seed) : seed;
         this.next = mulberry32(this.seed);
     }
+
+    /** [min, max) */
     range(min, max) { return min + this.next() * (max - min); }
+
+    /** [min, max] целое */
     irange(min, max) { return Math.floor(this.range(min, max + 1)); }
+
     pick(arr) { return arr[this.irange(0, arr.length - 1)]; }
+
     shuffle(arr) {
         const a = [...arr];
         for (let i = a.length - 1; i > 0; i--) {

@@ -1,6 +1,6 @@
 // =============================================================================
-// level/task.js — TaskContract из seed (stateless, детерминированно).
-// Шаг В: rooms = BSP-layout; число комнат по тиру GDD.
+// level/task.js — генерация TaskContract из seed (stateless, детерминированно).
+// Тиры сложности по GDD: 1–5 одна комната, 6–15 две, 16–35 до трёх, 36+ до четырёх.
 // =============================================================================
 
 import { Rng } from './rng.js';
@@ -18,6 +18,7 @@ const ANIM_POOL = ['tv', 'cat', 'floorlamp', 'plant', 'dog'];
 /**
  * Собирает TaskContract. Один seed — один уровень.
  * @param {{clientId?: string, levelId?: number}} opts
+ * @returns {object} TaskContract
  */
 export function makeTask({ clientId = 'default', levelId = 1 }) {
     const seed = `${clientId}·level${levelId}`;
@@ -25,7 +26,6 @@ export function makeTask({ clientId = 'default', levelId = 1 }) {
 
     const styleId = rng.pick(Object.keys(STYLES));
 
-    // Тиры GDD: 1–5 одна комната, 6–15 две, 16–35 до трёх, 36+ до четырёх.
     let roomCount;
     if (levelId <= 5) roomCount = 1;
     else if (levelId <= 15) roomCount = 2;
