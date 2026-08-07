@@ -1,11 +1,13 @@
 // =============================================================================
-// main.js — точка сборки Decorium, Шаг В («мультикомнатность»).
-// Активная комната центрирована в нуле мира; табы комнат; плавный переезд
-// камеры; per-room оценка. Ядро (manager/stacking/state/drag) не тронуто.
+// main.js — точка сборки Decorium, Шаг Г («декларативные уровни +
+// персонализация»). Пайплайн: seed → генератор → JSON → схема → сцена.
+// Персональный стиль (вариация ±0.1) и wishes клиента подключены к оценке.
+// Ядро (manager/stacking/state/drag) и domain/scoring.js не переписаны.
 // =============================================================================
 
 import * as THREE from 'three';
 import { getItems, getItem, updateItem } from './domain/state.js';
+import { STYLES } from './domain/styles.js';
 import { initScene } from './scene/renderer.js';
 import { createManager } from './items/manager.js';
 import * as animation from './items/animation.js';
@@ -18,10 +20,13 @@ import { createEvaluateButton } from './ui/evaluateButton.js';
 import { showFeedbackPanel, hideFeedbackPanel } from './ui/feedbackPanel.js';
 
 // Decorium
-import { makeTask } from './level/task.js';
+import { makeLevel } from './level/levelLoader.js';
+import { registerVariedStyle } from './level/variation.js';
+import { pickClientPersona, clientTier } from './level/tone.js';
 import { createApartment } from './level/apartment.js';
 import { createProps } from './items/animated.js';
 import { createRoomTabs } from './ui/roomTabs.js';
+import { createClientBrief } from './ui/clientBrief.js';
 import { Rng } from './level/rng.js';
 
 // =============================================================================
@@ -32,26 +37,31 @@ const { renderer, scene, camera, orbit } = initScene(canvas);
 orbit.target.set(0, 1, 0);
 
 // =============================================================================
-// 2. Уровень: ?level=N (дефолт 8 — сразу две комнаты)
+// 2. Декларативный уровень: ?client=...&level=... → JSON → схема → TaskContract
 // =============================================================================
 const params = new URLSearchParams(location.search);
 const levelId = Math.max(1, parseInt(params.get('level') || '8', 10) || 8);
+const clientId = params.get('client') || 'user1';
 
-const task = makeTask({ clientId: 'user1', levelId });
+const { task } = makeLevel({ clientId, levelId });
+
 const apartment = createApartment(scene, task);
 
-// Пропы — в активной при загрузке комнате (гостиная)
 const props = createProps(task.anims, apartment.getBounds(), new Rng(task.seed + '·props'));
 scene.add(props.group);
 
 // =============================================================================
-// 3. Дашборд качества
+// 3. Дашборд (инициализируется ДО регистрации персонального стиля —
+//    селект стилей остаётся чистым)
 // =============================================================================
 const dashboard = initDashboard({
     getItems,
     getMeshes: () => manager.getMeshes(),
     virtualBox: apartment
 });
+
+// Персональные пороги клиента: b_i += rand[-0.1, +0.1] (GDD)
+const variedStyleId = registerVariedStyle(task.styleId, new Rng(task.seed + '·var'));
 
 // =============================================================================
 // 4. Менеджер
@@ -104,7 +114,7 @@ initLibrary({
 });
 
 // =============================================================================
-// 8. Табы комнат + переключение (сдвиг мира + синхронизация мешей/пропов)
+// 8. Табы комнат
 // =============================================================================
 let camGoal = null;
 
@@ -144,7 +154,19 @@ else tabs.setActive(apartment.getActiveRoom().id);
 camGoal = goalFor(apartment.getActiveRoom());
 
 // =============================================================================
-// 9. Кнопка оценки
+// 9. Бриф клиента (персонализация: тон-шаблоны + wishes)
+// =============================================================================
+const persona = pickClientPersona(clientId, new Rng(clientId + '·persona'));
+createClientBrief({
+    clientName: persona.clientName,
+    tier: clientTier(levelId),
+    styleLabel: (STYLES[task.styleId] && STYLES[task.styleId].label) || task.styleId,
+    toneKey: persona.toneKey,
+    wishes: task.wishes
+});
+
+// =============================================================================
+// 10. Кнопка оценки (стиль — персональный, wishes — в scoring и фидбек)
 // =============================================================================
 const evalButton = createEvaluateButton({
     onEvaluate: () => {
@@ -155,10 +177,10 @@ const evalButton = createEvaluateButton({
         }
         evalButton.setEnabled(false);
 
-        const styleId = dashboard.getCurrentStyle();
         const result = runEvaluation(
             { getItems, getMeshes: manager.getMeshes, virtualBox: apartment },
-            styleId
+            variedStyleId,
+            task.wishes
         );
 
         showFeedbackPanel(result, {
@@ -190,7 +212,7 @@ function showEmptyHint() {
 }
 
 // =============================================================================
-// 10. Render-цикл: animation + apartment + props + tween камеры + orbit
+// 11. Render-цикл
 // =============================================================================
 let last = performance.now();
 let elapsed = 0;
@@ -217,14 +239,15 @@ function render() {
 renderer.setAnimationLoop(render);
 
 // =============================================================================
-// 11. Рекомпозиция: дашборд (активная комната) + звёзды по комнатам на табах
+// 12. Рекомпозиция: дашборд (базовый стиль) + табы (per-room, персональный стиль)
 // =============================================================================
 function recompute() {
     dashboard.update();
     if (apartment.getRooms().length > 1) {
         const res = runEvaluation(
             { getItems, getMeshes: manager.getMeshes, virtualBox: apartment },
-            dashboard.getCurrentStyle()
+            variedStyleId,
+            task.wishes
         );
         tabs.setScores(res.perRoom);
     }
@@ -234,7 +257,7 @@ recompute();
 dashboard.hideLoader();
 
 // =============================================================================
-// 12. Resize
+// 13. Resize
 // =============================================================================
 window.addEventListener('resize', () => {
     const w = window.innerWidth;
