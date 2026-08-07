@@ -1,23 +1,15 @@
 // src/items/factory.js
 // Decorium. Фабрика предметов: параметрические префабы вместо простых боксов.
-// Сохраняем основной контракт: createItemMesh, disposeMesh, rebuildItemGeometry.
-// Дополнительно возвращаем setEmissive для controls/drag.js (подсветка при drag/hover).
+// Контракт: createItemMesh, disposeMesh, rebuildItemGeometry.
+// setEmissive — под реальный контракт drag.js: (mesh, intensity),
+// 0 — выкл, 0.35 — hover, 0.5 — drag.
 
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { ITEM_TYPES } from '../config.js';
 
-/**
- * Создаёт клон геометрии и трансформирует её матрицей поворота/позиции.
- * @param {THREE.BufferGeometry} geo Исходная геометрия.
- * @param {number} x Позиция X.
- * @param {number} y Позиция Y.
- * @param {number} z Позиция Z.
- * @param {number} rx Поворот по X.
- * @param {number} ry Поворот по Y.
- * @param {number} rz Поворот по Z.
- * @returns {THREE.BufferGeometry}
- */
+const HIGHLIGHT_COLOR = 0x4d8dff; // спокойный синий подсветки
+
 function geoAt(geo, x, y, z, rx = 0, ry = 0, rz = 0) {
     const g = geo.clone();
     const m = new THREE.Matrix4();
@@ -27,14 +19,6 @@ function geoAt(geo, x, y, z, rx = 0, ry = 0, rz = 0) {
     return g;
 }
 
-/**
- * Безопасно мерджит геометрии. Если merge не удался — возвращаем обычный box.
- * @param {THREE.BufferGeometry[]} geos
- * @param {number} w
- * @param {number} d
- * @param {number} h
- * @returns {THREE.BufferGeometry}
- */
 function safeMerge(geos, w, d, h) {
     try {
         const merged = mergeGeometries(geos, false);
@@ -53,14 +37,11 @@ function buildTable(w, d, h) {
     const offZ = Math.max(0.01, d / 2 - legW / 2 - 0.02);
 
     const geos = [];
-
     geos.push(geoAt(new THREE.BoxGeometry(w, topH, d), 0, h - topH / 2, 0));
-
     geos.push(geoAt(new THREE.BoxGeometry(legW, legH, legW), -offX, legH / 2, -offZ));
     geos.push(geoAt(new THREE.BoxGeometry(legW, legH, legW), offX, legH / 2, -offZ));
     geos.push(geoAt(new THREE.BoxGeometry(legW, legH, legW), -offX, legH / 2, offZ));
     geos.push(geoAt(new THREE.BoxGeometry(legW, legH, legW), offX, legH / 2, offZ));
-
     return safeMerge(geos, w, d, h);
 }
 
@@ -71,18 +52,11 @@ function buildSofa(w, d, h) {
     const armW = Math.min(0.15, Math.max(0.05, w * 0.08));
 
     const geos = [];
-
-    // База
     geos.push(geoAt(new THREE.BoxGeometry(w, baseH, d), 0, baseH / 2, 0));
-
-    // Спинка
     geos.push(geoAt(new THREE.BoxGeometry(w, backH, backT), 0, baseH + backH / 2, -d / 2 + backT / 2));
-
-    // Подлокотники
     geos.push(geoAt(new THREE.BoxGeometry(armW, backH * 0.6, d), -w / 2 + armW / 2, baseH + backH * 0.3, 0));
     geos.push(geoAt(new THREE.BoxGeometry(armW, backH * 0.6, d), w / 2 - armW / 2, baseH + backH * 0.3, 0));
 
-    // Подушки сиденья
     const cushionH = Math.max(0.04, baseH * 0.25);
     const cushionD = Math.max(0.2, d - backT - 0.05);
     const cushionW = Math.max(0.2, (w - armW * 2) / 2 - 0.02);
@@ -93,7 +67,6 @@ function buildSofa(w, d, h) {
         baseH + cushionH / 2,
         backT / 2
     ));
-
     geos.push(geoAt(
         new THREE.BoxGeometry(cushionW, cushionH, cushionD),
         cushionW / 2 + 0.005,
@@ -111,30 +84,21 @@ function buildLamp(w, d, h) {
     const poleH = Math.max(0.01, h - shadeH - baseH);
 
     const geos = [];
-
     geos.push(geoAt(new THREE.CylinderGeometry(w / 2, w / 2, baseH, 16), 0, baseH / 2, 0));
     geos.push(geoAt(new THREE.CylinderGeometry(poleR, poleR, poleH, 8), 0, baseH + poleH / 2, 0));
     geos.push(geoAt(new THREE.CylinderGeometry(w / 4, w / 2, shadeH, 16, 1, true), 0, baseH + poleH + shadeH / 2, 0));
-
     return safeMerge(geos, w, d, h);
 }
 
 function buildFridge(w, d, h) {
     const geos = [];
-
-    // Корпус
     geos.push(geoAt(new THREE.BoxGeometry(w, h, d), 0, h / 2, 0));
 
-    // Передние панели в стиле media-panel / шкафа
     const panelT = 0.02;
     const panelZ = d / 2 + panelT / 2 - 0.001;
-
     geos.push(geoAt(new THREE.BoxGeometry(w * 0.88, h * 0.42, panelT), 0, h * 0.72, panelZ));
     geos.push(geoAt(new THREE.BoxGeometry(w * 0.88, h * 0.42, panelT), 0, h * 0.26, panelZ));
-
-    // Ручка
     geos.push(geoAt(new THREE.BoxGeometry(0.03, h * 0.18, 0.03), w * 0.35, h * 0.72, panelZ + panelT));
-
     return safeMerge(geos, w, d, h);
 }
 
@@ -143,153 +107,63 @@ function buildShelf(w, d, h, shelfLevels = 3) {
     const levels = Math.max(1, Math.floor(shelfLevels || 3));
 
     const geos = [];
-
-    // Боковины
     geos.push(geoAt(new THREE.BoxGeometry(t, h, d), -w / 2 + t / 2, h / 2, 0));
     geos.push(geoAt(new THREE.BoxGeometry(t, h, d), w / 2 - t / 2, h / 2, 0));
-
-    // Задняя стенка
     geos.push(geoAt(new THREE.BoxGeometry(w, h, t), 0, h / 2, -d / 2 + t / 2));
 
-    // Полки
     for (let i = 0; i <= levels; i += 1) {
         const y = (h / levels) * i;
         geos.push(geoAt(new THREE.BoxGeometry(w, t, d), 0, y + t / 2, 0));
     }
-
     return safeMerge(geos, w, d, h);
 }
 
 function getGeometry(type, w, d, h, shelfLevels) {
     switch (type) {
-        case 'box':
-            return buildTable(w, d, h);
-        case 'sofa':
-            return buildSofa(w, d, h);
-        case 'bike':
-            return buildLamp(w, d, h);
-        case 'fridge':
-            return buildFridge(w, d, h);
-        case 'shelf':
-            return buildShelf(w, d, h, shelfLevels);
-        default:
-            return new THREE.BoxGeometry(w, h, d);
+        case 'box': return buildTable(w, d, h);
+        case 'sofa': return buildSofa(w, d, h);
+        case 'bike': return buildLamp(w, d, h);
+        case 'fridge': return buildFridge(w, d, h);
+        case 'shelf': return buildShelf(w, d, h, shelfLevels);
+        default: return new THREE.BoxGeometry(w, h, d);
     }
 }
 
 /**
- * Устанавливает emissive для одного материала.
- * Поддерживает варианты вызова:
- * - setEmissive(mesh, 0x33ff33)
- * - setEmissive(mesh, 0x33ff33, 0.5)
- * - setEmissive(mesh, true)
- * - setEmissive(mesh, false)
- * - setEmissive(mesh, { color: 0x33ff33, intensity: 0.5 })
- * @param {THREE.Material} mat
- * @param {*} color
- * @param {number} [intensity]
- */
-function setMaterialEmissive(mat, color, intensity) {
-    if (!mat || !mat.emissive) return;
-
-    const clear = () => {
-        mat.emissive.set(0x000000);
-        mat.emissiveIntensity = 0;
-        mat.needsUpdate = true;
-    };
-
-    if (
-        color === false ||
-        color === null ||
-        color === undefined ||
-        color === 0 ||
-        color === '' ||
-        color === 'off' ||
-        color === 'none'
-    ) {
-        clear();
-        return;
-    }
-
-    if (color === true) {
-        mat.emissive.set(0x3366ff);
-        mat.emissiveIntensity = typeof intensity === 'number' ? intensity : 0.35;
-        mat.needsUpdate = true;
-        return;
-    }
-
-    if (typeof color === 'object' && color !== null && !color.isColor) {
-        if ('color' in color && color.color !== undefined) {
-            mat.emissive.set(color.color);
-        } else if ('r' in color && 'g' in color && 'b' in color) {
-            mat.emissive.setRGB(color.r, color.g, color.b);
-        } else if (mat.emissive.getHex() === 0) {
-            mat.emissive.set(0x3366ff);
-        }
-
-        if (typeof color.intensity === 'number') {
-            mat.emissiveIntensity = color.intensity;
-        } else if (typeof intensity === 'number') {
-            mat.emissiveIntensity = intensity;
-        } else if (mat.emissiveIntensity === 0) {
-            mat.emissiveIntensity = 0.3;
-        }
-
-        mat.needsUpdate = true;
-        return;
-    }
-
-    mat.emissive.set(color);
-
-    if (typeof intensity === 'number') {
-        mat.emissiveIntensity = intensity;
-    } else if (mat.emissiveIntensity === 0) {
-        mat.emissiveIntensity = 0.3;
-    }
-
-    mat.needsUpdate = true;
-}
-
-/**
- * Включает/выключает emissive-подсветку меша или группы мешей.
- * Используется drag.js для hover/drag подсветки.
+ * Подсветка предмета по контракту drag.js: setEmissive(mesh, intensity).
+ * intensity 0 — выкл; 0.35 — hover; 0.5 — перетаскивание.
  * @param {THREE.Object3D|THREE.Mesh} mesh
- * @param {*} color Цвет, объект {color,intensity}, true/false.
- * @param {number} [intensity]
+ * @param {number} intensity
  */
-export function setEmissive(mesh, color, intensity) {
+export function setEmissive(mesh, intensity) {
     if (!mesh) return;
+    const value = typeof intensity === 'number' ? intensity : (intensity ? 0.35 : 0);
 
-    const applyToObject = (obj) => {
+    const apply = (obj) => {
         if (!obj || !obj.isMesh || !obj.material) return;
-
         const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-        mats.forEach((mat) => setMaterialEmissive(mat, color, intensity));
+        for (const mat of mats) {
+            if (!mat || !mat.emissive) continue;
+            if (value <= 0) {
+                mat.emissive.setHex(0x000000);
+                mat.emissiveIntensity = 1;
+            } else {
+                mat.emissive.setHex(HIGHLIGHT_COLOR);
+                mat.emissiveIntensity = value;
+            }
+        }
     };
 
-    if (mesh.isMesh) {
-        applyToObject(mesh);
-    }
-
+    apply(mesh);
     if (typeof mesh.traverse === 'function') {
         mesh.traverse((child) => {
-            if (child !== mesh && child.isMesh) {
-                applyToObject(child);
-            }
+            if (child !== mesh) apply(child);
         });
     }
 }
 
 /**
- * Создаёт меш предмета.
- * Контракт движка: mesh.userData.id обязан существовать.
- * @param {string} type
- * @param {string|number} id
- * @param {number} w
- * @param {number} d
- * @param {number} h
- * @param {number} [shelfLevels]
- * @returns {THREE.Mesh}
+ * Создаёт меш предмета. mesh.userData.id — контракт движка.
  */
 export function createItemMesh(type, id, w, d, h, shelfLevels) {
     const config = ITEM_TYPES[type] || ITEM_TYPES.box;
@@ -300,7 +174,7 @@ export function createItemMesh(type, id, w, d, h, shelfLevels) {
         roughness: config.roughness !== undefined ? config.roughness : 0.5,
         metalness: config.metalness !== undefined ? config.metalness : 0.1,
         emissive: 0x000000,
-        emissiveIntensity: 0,
+        emissiveIntensity: 1,
         side: THREE.DoubleSide
     });
 
@@ -318,55 +192,33 @@ export function createItemMesh(type, id, w, d, h, shelfLevels) {
 
 /**
  * Освобождает геометрию/материалы меша.
- * @param {THREE.Object3D|THREE.Mesh} mesh
  */
 export function disposeMesh(mesh) {
     if (!mesh) return;
 
     const disposeSingle = (obj) => {
         if (!obj || !obj.isMesh) return;
-
-        if (obj.geometry) {
-            obj.geometry.dispose();
-        }
-
+        if (obj.geometry) obj.geometry.dispose();
         if (obj.material) {
-            if (Array.isArray(obj.material)) {
-                obj.material.forEach((m) => m.dispose());
-            } else {
-                obj.material.dispose();
-            }
+            if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
+            else obj.material.dispose();
         }
     };
 
-    if (mesh.isMesh) {
-        disposeSingle(mesh);
-    }
-
+    disposeSingle(mesh);
     if (typeof mesh.traverse === 'function') {
         mesh.traverse((child) => {
-            if (child !== mesh && child.isMesh) {
-                disposeSingle(child);
-            }
+            if (child !== mesh) disposeSingle(child);
         });
     }
 }
 
 /**
- * Перестраивает геометрию существующего меша при resize.
- * @param {THREE.Mesh} mesh
- * @param {string} type
- * @param {number} w
- * @param {number} d
- * @param {number} h
- * @param {number} [shelfLevels]
+ * Перестраивает геометрию существующего меша при ресайзе.
  */
 export function rebuildItemGeometry(mesh, type, w, d, h, shelfLevels) {
     if (!mesh) return;
-
-    if (mesh.geometry) {
-        mesh.geometry.dispose();
-    }
+    if (mesh.geometry) mesh.geometry.dispose();
 
     const newGeo = getGeometry(type, w, d, h, shelfLevels);
     mesh.geometry = newGeo;

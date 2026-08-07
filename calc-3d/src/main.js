@@ -1,9 +1,7 @@
 // =============================================================================
-// main.js — точка сборки Decorium, Шаг А («комната вместо куба»).
-// Бутстрап 1:1 по контрактам движка: initScene(canvas), initLibrary({onAdd,
-// onClear}), initControls({camera, domElement, orbit, manager, onSelect}),
-// createSizePanel({onResize, onShelfLevels, getItem}), animation — namespace.
-// virtualBox заменён на apartment (drop-in).
+// main.js — точка сборки Decorium, Шаг Б («живая сцена»).
+// Бутстрап 1:1 по контрактам движка; virtualBox заменён на apartment;
+// живые пропы (items/animated.js) подключены в render-цикл.
 // =============================================================================
 
 import { getItems, getItem } from './domain/state.js';
@@ -18,24 +16,29 @@ import { runEvaluation } from './game/evaluator.js';
 import { createEvaluateButton } from './ui/evaluateButton.js';
 import { showFeedbackPanel, hideFeedbackPanel } from './ui/feedbackPanel.js';
 
-// Decorium, Шаг А
+// Decorium
 import { makeTask } from './level/task.js';
 import { createApartment } from './level/apartment.js';
+import { createProps } from './items/animated.js';
+import { Rng } from './level/rng.js';
 
 // =============================================================================
-// 1. Сцена (родной канвас #scene — никаких вторых канвасов)
+// 1. Сцена (родной канвас #scene)
 // =============================================================================
 const canvas = document.getElementById('scene');
 const { renderer, scene, camera, orbit } = initScene(canvas);
 
 // =============================================================================
-// 2. Уровень: TaskContract → комната
+// 2. Уровень: TaskContract → комната → живые пропы
 // =============================================================================
 const task = makeTask({ clientId: 'user1', levelId: 1 });
 const apartment = createApartment(scene, task);
 
+const props = createProps(task.anims, apartment.getBounds(), new Rng(task.seed + '·props'));
+scene.add(props.group);
+
 // =============================================================================
-// 3. Дашборд качества (живой пересчёт)
+// 3. Дашборд качества
 // =============================================================================
 const dashboard = initDashboard({
     getItems,
@@ -44,7 +47,7 @@ const dashboard = initDashboard({
 });
 
 // =============================================================================
-// 4. Менеджер предметов (ядро не тронуто)
+// 4. Менеджер предметов
 // =============================================================================
 const manager = createManager({
     scene,
@@ -63,7 +66,7 @@ const sizePanel = createSizePanel({
 });
 
 // =============================================================================
-// 6. Управление: drag, выбор кликом, удаление двойным кликом
+// 6. Управление
 // =============================================================================
 initControls({
     camera,
@@ -149,17 +152,21 @@ function showEmptyHint() {
 }
 
 // =============================================================================
-// 9. Render-цикл (ЖЕЛЕЗНЫЙ КОНТРАКТ: animation.update + apartment.update)
+// 9. Render-цикл: animation + apartment + props + orbit
 // =============================================================================
 let last = performance.now();
+let elapsed = 0;
+
 function render() {
     const now = performance.now();
     let dt = (now - last) / 1000;
     last = now;
     dt = Math.max(0, Math.min(0.05, dt));
+    elapsed += dt;
 
     animation.update(dt);
     apartment.update(dt);
+    props.update(dt, elapsed);
     orbit.update();
 
     renderer.render(scene, camera);
