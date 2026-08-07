@@ -1,9 +1,10 @@
 // =============================================================================
-// evaluator.js — Оркестратор оценки Decorium для движка calc-3d.
+// evaluator.js — оркестратор оценки Decorium для движка calc-3d.
 // Связывает доменные модули (scoring, ergonomics, feedback) с живым состоянием
 // движка: извлекает предметы из state, обогащает их 3D-позициями из мешей,
 // преобразует type → features_vector и запускает evaluateRoom.
-// Модуль не импортирует three — работает с мешами как с объектами с .position/.scale.
+// v2.0.1: маппинг приведён в соответствие с реальными типами config.js
+//         (box, sofa, bike, fridge, shelf).
 // =============================================================================
 
 import { evaluateRoom } from '../domain/scoring.js';
@@ -11,25 +12,24 @@ import { DEFAULT_STYLE_ID } from '../domain/styles.js';
 import { getCatalogItems, createGameItem } from '../domain/itemCatalog.js';
 
 /**
- * Маппинг типов движка (из config.js ITEM_TYPES) к catalogId в itemCatalog.
- * Если для типа нет прямого соответствия — подбирается первый предмет
- * с таким же kind в каталоге.
+ * Маппинг типов движка (ITEM_TYPES из config.js) к catalogId в itemCatalog.
+ * Подобран по материалу/характеру предмета:
+ *   box    — картон ≈ дерево/тёплый/простой
+ *   sofa   — мягкий диван
+ *   bike   — металл, индустриальный характер
+ *   fridge — холодный металл/стекло, модерн
+ *   shelf  — нейтральный стеллаж
  */
 const TYPE_TO_CATALOG_ID = {
-  box: 'table_scandi',      // базовый бокс → стол (нейтральный декор)
-  shelf: 'shelf_scandi',
-  bed: 'sofa_scandi',
+  box: 'table_scandi',
   sofa: 'sofa_scandi',
-  chair: 'chair_modern',
-  table: 'table_scandi',
-  lamp: 'floor_lamp',
-  rug: 'rug_soft',
-  plant: 'plant_pot',
+  bike: 'lamp_industrial',
+  fridge: 'media_panel',
+  shelf: 'shelf_scandi',
 };
 
 /**
- * Преобразует предмет state движка в объект, совместимый с itemCatalog
- * (с features_vector, dimensions и position для эргономики).
+ * Преобразует предмет state движка в объект, совместимый с itemCatalog.
  * @param {object} stateItem - предмет из getItems()
  * @param {object|null} mesh - Three.js mesh (опционально)
  * @returns {object} обогащённый предмет
@@ -38,11 +38,11 @@ function adaptItem(stateItem, mesh) {
   const type = stateItem.type;
   let catalogId = TYPE_TO_CATALOG_ID[type];
 
-  // Fallback: если нет прямого маппинга, ищем первый предмет каталога с таким kind
+  // Fallback: ищем первый предмет каталога с таким же kind
   if (!catalogId) {
     const byKind = getCatalogItems().find(i => i.kind === type);
     if (byKind) catalogId = byKind.id;
-    else catalogId = 'sofa_scandi'; // абсолютный fallback
+    else catalogId = 'sofa_scandi';
   }
 
   const catalogItem = createGameItem(catalogId);
@@ -50,7 +50,7 @@ function adaptItem(stateItem, mesh) {
     ? catalogItem.dimensions
     : { x: stateItem.w, y: stateItem.h, z: stateItem.d };
 
-  // Позиция: центр предмета (y берём из mesh, чтобы учесть support/падение)
+  // Позиция: из меша (учитывает падение/опору), иначе из state
   let position = null;
   if (mesh && mesh.position) {
     position = {
@@ -59,17 +59,13 @@ function adaptItem(stateItem, mesh) {
       z: mesh.position.z,
     };
   } else if (typeof stateItem.x === 'number') {
-    position = {
-      x: stateItem.x,
-      y: stateItem.y ?? 0,
-      z: stateItem.z,
-    };
+    position = { x: stateItem.x, y: stateItem.y ?? 0, z: stateItem.z };
   }
 
   return {
     ...stateItem,
     id: stateItem.id,
-    name: stateItem.name || catalogItem?.name || type,
+    name: stateItem.name || (catalogItem && catalogItem.name) || type,
     kind: type,
     dimensions: {
       x: stateItem.w ?? dimensions.x,
@@ -77,14 +73,14 @@ function adaptItem(stateItem, mesh) {
       z: stateItem.d ?? dimensions.z,
     },
     position,
-    features_vector: catalogItem?.features_vector,
-    price: catalogItem?.price ?? 0,
+    features_vector: catalogItem ? catalogItem.features_vector : undefined,
+    price: catalogItem ? catalogItem.price : 0,
   };
 }
 
 /**
- * Вычисляет границы комнаты по текущему виртуальному боксу (для эргономики).
- * @param {object} virtualBox - экземпляр virtualBox из движка
+ * Границы комнаты по целевому боксу (для эргономики и баланса 3×3).
+ * @param {object} virtualBox
  * @returns {{minX,maxX,minZ,maxZ}}
  */
 function computeRoomBounds(virtualBox) {
@@ -95,29 +91,19 @@ function computeRoomBounds(virtualBox) {
 
   const w = box.w ?? 3;
   const d = box.d ?? 3;
-  // Центр комнаты в (0,0), границы — ±половина размера
-  return {
-    minX: -w / 2,
-    maxX: w / 2,
-    minZ: -d / 2,
-    maxZ: d / 2,
-  };
+  return { minX: -w / 2, maxX: w / 2, minZ: -d / 2, maxZ: d / 2 };
 }
 
 /**
  * Запускает полную оценку комнаты Decorium.
- * @param {object} ctx - контекст движка
- * @param {Function} ctx.getItems - () => Array<stateItem>
- * @param {Function} ctx.getMeshes - () => Array<THREE.Mesh>
- * @param {object} ctx.virtualBox - виртуальный бокс движка
- * @param {string} styleId - целевой стиль (по умолчанию скандинавский)
- * @returns {object} результат оценки (totalScore, stars, violations, ...) + items, styleId
+ * @param {object} ctx - { getItems, getMeshes, virtualBox }
+ * @param {string} styleId - целевой стиль
+ * @returns {object} результат оценки + служебные поля
  */
 export function runEvaluation(ctx, styleId = DEFAULT_STYLE_ID) {
   const stateItems = ctx.getItems();
   const meshes = ctx.getMeshes();
 
-  // Индекс мешей по id для быстрого доступа
   const meshById = new Map();
   for (const m of meshes) {
     if (m.userData && m.userData.id != null) {
@@ -125,7 +111,6 @@ export function runEvaluation(ctx, styleId = DEFAULT_STYLE_ID) {
     }
   }
 
-  // Адаптируем все предметы: state-запись + 3D-позиция из меша
   const adaptedItems = stateItems.map(item => {
     const mesh = meshById.get(item.id) || null;
     return adaptItem(item, mesh);
@@ -142,7 +127,4 @@ export function runEvaluation(ctx, styleId = DEFAULT_STYLE_ID) {
   };
 }
 
-/**
- * Возвращает список доступных стилей для UI.
- */
 export { getStyleList } from '../domain/styles.js';
