@@ -1,8 +1,12 @@
+// src/main.js (v2.3-StepA-fix)
+// Decorium. Точка входа. Интеграция apartment вместо virtualBox.
+// Безопасный резолвинг animation из ядра движка.
+
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as state from './domain/state.js';
 import { createManager } from './items/manager.js';
-import { createAnimation } from './items/animation.js';
+import * as AnimationModule from './items/animation.js';
 import { initDashboard } from './ui/dashboard.js';
 import { initSizePanel } from './ui/sizePanel.js';
 import { initControls } from './controls/drag.js';
@@ -13,7 +17,36 @@ import { runEvaluation } from './game/evaluator.js';
 import { makeTask } from './level/task.js';
 import { createApartment } from './level/apartment.js';
 
-// 1. Сцена
+/**
+ * Безопасно извлекает систему анимации из items/animation.js,
+ * независимо от того, как именно она экспортируется (createAnimation, default, animation).
+ * @returns {object} Объект с методом update(dt).
+ */
+function resolveAnimation() {
+    if (typeof AnimationModule.createAnimation === 'function') {
+        return AnimationModule.createAnimation();
+    }
+    if (typeof AnimationModule.default === 'function') {
+        return AnimationModule.default();
+    }
+    if (AnimationModule.default && typeof AnimationModule.default.update === 'function') {
+        return AnimationModule.default;
+    }
+    if (AnimationModule.animation && typeof AnimationModule.animation.update === 'function') {
+        return AnimationModule.animation;
+    }
+    
+    console.warn('[main.js] Не удалось найти стандартный экспорт в items/animation.js. Используется fallback.');
+    return { 
+        update: () => {}, 
+        add: () => {}, 
+        spawn: () => {}, 
+        startSpawn: () => {},
+        remove: () => {}
+    };
+}
+
+// 1. Сцена и рендерер
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf0f2f5);
 
@@ -33,6 +66,7 @@ orbit.target.set(0, 1, 0);
 
 const ambient = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambient);
+
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
 dirLight.position.set(5, 10, 5);
 dirLight.castShadow = true;
@@ -48,12 +82,13 @@ const task = makeTask({ clientId: 'user1', levelId: 1 });
 const apartment = createApartment(scene, task);
 
 // 3. Системы
-const animation = createAnimation();
+const animation = resolveAnimation();
 
+// Инициализируем dashboard с ленивым доступом к meshes
 const dashboard = initDashboard({
     getItems: () => state.getItems(),
     getMeshes: () => manager.getMeshes(),
-    virtualBox: apartment // Drop-in
+    virtualBox: apartment // Drop-in замена
 });
 
 const manager = createManager({
@@ -79,6 +114,7 @@ const evalBtn = createEvaluateButton({
             getMeshes: () => manager.getMeshes(),
             virtualBox: apartment
         }, styleId);
+        
         showFeedbackPanel(result, {
             onRetry: () => hideFeedbackPanel(),
             onContinue: () => hideFeedbackPanel()
@@ -86,12 +122,12 @@ const evalBtn = createEvaluateButton({
     }
 });
 
-// 4. Render-цикл
+// 4. Render-цикл (ЖЕЛЕЗНЫЙ КОНТРАКТ)
 const clock = new THREE.Clock();
 function animate() {
     requestAnimationFrame(animate);
     let dt = clock.getDelta();
-    dt = Math.max(0, Math.min(0.05, dt));
+    dt = Math.max(0, Math.min(0.05, dt)); // clamp
 
     animation.update(dt);
     apartment.update(dt);
