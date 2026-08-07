@@ -35,8 +35,35 @@ export const FEATURE_INDEX = Object.fromEntries(
 // Список ключей (удобно для итераций)
 export const FEATURE_KEYS = FEATURES.map(f => f.key);
 
-// Уникальные группы признаков (для лепестковой диаграммы): Материалы, Цвет, Геометрия, Структура
+// Уникальные группы признаков (для лепестковой диаграммы)
 export const FEATURE_GROUPS = [...new Set(FEATURES.map(f => f.group))];
 
 // Имена признаков по индексу (для отладки/вывода)
 export const FEATURE_NAMES = FEATURES.map(f => f.name);
+
+/**
+ * Возвращает нулевой вектор признаков.
+ * @returns {number[]} массив из FEATURE_COUNT нулей
+ */
+export function zeroVector() {
+  return new Array(FEATURE_COUNT).fill(0);
+}
+
+/**
+ * Проверяет валидность вектора признаков.
+ * @param {number[]} v
+ * @returns {boolean}
+ */
+export function isValidVector(v) {
+  return Array.isArray(v) && v.length === FEATURE_COUNT &&
+    v.every(x => typeof x === 'number' && Number.isFinite(x));
+}
+
+/**
+ * Ограничивает значения вектора диапазоном [0..1].
+ * @param {number[]} v
+ * @returns {number[]}
+ */
+export function clampVector(v) {
+  return v.map(x => Math.min(1, Math.max(0, x)));
+}
