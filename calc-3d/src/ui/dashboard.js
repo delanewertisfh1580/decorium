@@ -1,104 +1,135 @@
 // =============================================================================
-// ui/dashboard.js — дашборд расчёта: метрики, рекомендация, цена, warning.
+// ui/dashboard.js — дашборд метрик качества дизайна (Decorium MVP).
+// В отличие от старой версии (расчёт стоимости Self-Storage), показывает:
+//   - звёзды (1-5) и итоговый балл /100;
+//   - баллы за стиль и эргономику;
+//   - суб-оценки по группам (Цвет, Материалы, Геометрия, Структура);
+//   - число нарушений и топ-комментарий клиента.
 // Обновляется ТОЛЬКО по изменению состава — не в render-цикле.
 // Модуль не импортирует three.
 // =============================================================================
 
-// Число с десятичной запятой; лишние нули в дробной части отбрасываются
-function formatNumber(value, digits = 2) {
-  return parseFloat(value.toFixed(digits)).toString().replace('.', ',');
-}
+import { runEvaluation } from '../game/evaluator.js';
+import { getStyleList, DEFAULT_STYLE_ID } from '../domain/styles.js';
+import { generateFeedback } from '../domain/feedback.js';
+import './dashboard.css';
 
-export function initDashboard() {
-  // Кэш DOM-элементов (id из index.html)
+export function initDashboard(deps) {
+  // deps: { getItems, getMeshes, virtualBox } — передаются из main.js
   const el = {
+    styleSelect: document.getElementById('q-style-select'),
+    stars: document.getElementById('q-stars'),
+    total: document.getElementById('q-total'),
+    styleVal: document.getElementById('q-style-val'),
+    styleBar: document.getElementById('q-style-bar'),
+    ergoVal: document.getElementById('q-ergo-val'),
+    ergoBar: document.getElementById('q-ergo-bar'),
+    gColor: document.getElementById('q-g-color'),
+    gMaterials: document.getElementById('q-g-materials'),
+    gGeometry: document.getElementById('q-g-geometry'),
+    gStructure: document.getElementById('q-g-structure'),
+    violCount: document.getElementById('q-viol-count'),
+    violText: document.getElementById('q-viol-text'),
     count: document.getElementById('m-count'),
-    vol: document.getElementById('m-vol'),
-    cap: document.getElementById('m-cap'),
-    fill: document.getElementById('m-fill'),
-    fillBar: document.getElementById('m-fill-bar'),
-    rec: document.getElementById('m-rec'),
-    recName: document.getElementById('m-rec-name'),
-    recDims: document.getElementById('m-rec-dims'),
-    price: document.getElementById('m-price'),
-    warning: document.getElementById('warning'),
-    hint: document.getElementById('hint'),
-    loader: document.getElementById('loader')
+    loader: document.getElementById('loader'),
+    hint: document.getElementById('hint')
   };
 
-  const priceFmt = new Intl.NumberFormat('ru-RU'); // «7 000» — пробел в тысячах
-  let lastBadge = null; // текст бейджа — для анимации смены
+  let currentStyleId = DEFAULT_STYLE_ID;
   let hintDimmed = false;
 
-  // --- Мобильное раскрытие дашборда по тапу ---
-  // На ≤860px дашборд свёрнут в плашку с цифрами; тап раскрывает и сворачивает.
-  // Клики по кнопкам и ссылкам внутри не перехватываем.
+  // --- Селектор стиля клиента ---
+  for (const s of getStyleList()) {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = `${s.icon} ${s.name}`;
+    el.styleSelect.appendChild(opt);
+  }
+  el.styleSelect.addEventListener('change', (e) => {
+    currentStyleId = e.target.value;
+    refresh();
+  });
+
+  // --- Мобильное раскрытие дашборда по тапу (как в старой версии) ---
   const root = document.querySelector('.dashboard');
   root.addEventListener('click', (event) => {
     if (!window.matchMedia('(max-width: 860px)').matches) return;
-    if (event.target.closest('button, a')) return;
+    if (event.target.closest('button, a, select')) return;
     root.classList.toggle('open');
   });
 
-  // Смена бейджа с анимацией .pop (перезапуск через reflow)
-  function setBadge(text, dataS) {
-    if (lastBadge === text) return;
-    lastBadge = text;
-    el.rec.textContent = text;
-    if (dataS) el.rec.setAttribute('data-s', dataS);
-    else el.rec.removeAttribute('data-s');
-    el.rec.classList.remove('pop');
-    void el.rec.offsetWidth; // reflow — иначе анимация не перезапустится
-    el.rec.classList.add('pop');
+  // --- Хелперы отрисовки ---
+  function setBar(barEl, valEl, value) {
+    const pct = Math.round((value || 0) * 100);
+    valEl.textContent = `${pct}%`;
+    barEl.style.width = `${pct}%`;
+    // Низкий балл подсвечиваем «тревожным» цветом (класс hot из styles.css)
+    barEl.classList.toggle('hot', pct < 40);
   }
 
-  // Основной апдейт: вызывается только при изменении состава
-  function update(items, totalVolume, rec) {
-    el.count.textContent = items.length;
-    el.vol.textContent = formatNumber(totalVolume, 2);
+  function renderEmpty() {
+    el.count.textContent = '0';
+    el.stars.textContent = '☆☆☆☆☆';
+    el.stars.className = 'q-stars';
+    el.total.textContent = '— / 100';
+    setBar(el.styleBar, el.styleVal, 0);
+    setBar(el.ergoBar, el.ergoVal, 0);
+    el.gColor.textContent = '—';
+    el.gMaterials.textContent = '—';
+    el.gGeometry.textContent = '—';
+    el.gStructure.textContent = '—';
+    el.violCount.textContent = '0';
+    el.violText.textContent = 'Добавьте предметы, чтобы увидеть оценку.';
+    el.violText.className = 'q-viol-text';
+  }
 
-    if (rec.type === 'empty') {
-      // Пустая сцена: всё в нулях, бокс L 3×3×3 остаётся визуальным фоном
-      el.cap.textContent = '';
-      el.fill.textContent = '0%';
-      el.fillBar.style.width = '0%';
-      el.fillBar.classList.remove('hot');
-      setBadge('—', null);
-      el.recName.textContent = 'Добавьте вещи';
-      el.recDims.textContent = 'Нажмите на предмет из библиотеки';
-      el.price.textContent = '0 ₽';
-      el.warning.classList.remove('show');
+  function render(result) {
+    el.count.textContent = String(result.itemCount);
+
+    if (result.empty) {
+      renderEmpty();
       return;
     }
 
-    if (rec.type === 'box') {
-      const box = rec.box;
-      el.cap.textContent = ` · из ${formatNumber(box.volume, 1)} м³`;
-      // Заполненность — от объёма РЕКОМЕНДОВАННОГО бокса
-      const pct = Math.min(100, Math.round((totalVolume / box.volume) * 100));
-      el.fill.textContent = `${pct}%`;
-      el.fillBar.style.width = `${pct}%`;
-      el.fillBar.classList.toggle('hot', pct > 85); // оранжевая при >85%
-      setBadge(box.id, box.id);
-      el.recName.textContent = `Бокс ${box.id}`;
-      el.recDims.textContent =
-        `${formatNumber(box.w)} × ${formatNumber(box.d)} × ${formatNumber(box.h)} м` +
-        ` · до ${formatNumber(box.volume, 1)} м³`;
-      el.price.textContent = `${priceFmt.format(box.price)} ₽/мес`;
-      el.warning.classList.remove('show');
-      return;
-    }
+    // Звёзды и итог
+    el.stars.textContent = '★'.repeat(result.stars) + '☆'.repeat(5 - result.stars);
+    el.stars.className =
+      'q-stars' +
+      (result.stars >= 4 ? ' q-stars--good' : result.stars <= 2 ? ' q-stars--bad' : '');
+    el.total.textContent = `${Math.round(result.totalScore * 100)} / 100`;
 
-    // rec.type === 'xl': объём больше 27 м³
-    el.cap.textContent = ' · из 27 м³';
-    el.fill.textContent = '100%';
-    el.fillBar.style.width = '100%';
-    el.fillBar.classList.add('hot');
-    setBadge('XL', 'XL');
-    el.recName.textContent = 'Нестандартный бокс';
-    el.recDims.textContent = 'Объём больше 27 м³';
-    el.price.textContent = 'По запросу';
-    el.warning.classList.add('show');
+    // Стиль / эргономика
+    setBar(el.styleBar, el.styleVal, result.styleScore);
+    setBar(el.ergoBar, el.ergoVal, result.ergonomicsScore);
+
+    // Суб-оценки
+    const g = result.groupScores || {};
+    el.gColor.textContent = `${Math.round((g['Цвет'] ?? 0) * 100)}%`;
+    el.gMaterials.textContent = `${Math.round((g['Материалы'] ?? 0) * 100)}%`;
+    el.gGeometry.textContent = `${Math.round((g['Геометрия'] ?? 0) * 100)}%`;
+    el.gStructure.textContent = `${Math.round((g['Структура'] ?? 0) * 100)}%`;
+
+    // Нарушения
+    const problems = result.violations.length;
+    el.violCount.textContent = String(problems);
+    if (problems === 0) {
+      el.violText.textContent = 'Нет нарушений — отличная работа!';
+      el.violText.className = 'q-viol-text q-viol-text--ok';
+    } else {
+      const feedback = generateFeedback(result);
+      const top = feedback.find(f => f.severity > 0);
+      el.violText.textContent = top
+        ? `«${top.text}»`
+        : 'Есть нарушения — нажмите «Оценить дизайн» для деталей.';
+      el.violText.className = 'q-viol-text';
+    }
+  }
+
+  // --- Пересчёт оценки (вызывается по изменению состава и смене стиля) ---
+  function refresh() {
+    const result = runEvaluation(deps, currentStyleId);
+    render(result);
+    return result;
   }
 
   // Скрыть лоадер (после первого кадра) и запланировать затухание подсказки
@@ -110,5 +141,12 @@ export function initDashboard() {
     }
   }
 
-  return { update, hideLoader };
+  // Первичная отрисовка пустого состояния
+  renderEmpty();
+
+  return {
+    update: () => refresh(),          // совместимый API для recompute в main.js
+    hideLoader,
+    getCurrentStyle: () => currentStyleId
+  };
 }

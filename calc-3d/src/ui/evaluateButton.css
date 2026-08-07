@@ -1,5 +1,6 @@
 /* =============================================================================
-   evaluateButton.css — Стили плавающей кнопки оценки Decorium.
+   evaluateButton.css — стили плавающей кнопки оценки Decorium.
+   v2.1: селектор стиля убран (живёт в дашборде).
    ============================================================================= */
 
    .eval-wrap {
@@ -11,24 +12,6 @@
     flex-direction: column;
     gap: 8px;
     align-items: stretch;
-  }
-  
-  .eval-select {
-    padding: 8px 10px;
-    border: 1px solid #5a6b7a;
-    border-radius: 8px;
-    background: rgba(30, 38, 48, 0.9);
-    color: #e0e8f0;
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-    outline: none;
-    backdrop-filter: blur(4px);
-  }
-  
-  .eval-select:hover,
-  .eval-select:focus {
-    border-color: #50b48c;
   }
   
   .eval-btn {
@@ -60,9 +43,8 @@
     box-shadow: none;
   }
   
-  .eval-disabled .eval-select {
+  .eval-disabled .eval-btn {
     opacity: 0.5;
-    cursor: not-allowed;
   }
   
   /* Адаптив под мобильные (dashboard на ≤860px) */

@@ -1,0 +1,106 @@
+/* =============================================================================
+   dashboard.css — стили дашборда метрик качества дизайна (Decorium MVP).
+   Базовые классы (.dashboard, .panel, .fill-bar, .stat-row...) приходят из
+   styles.css; здесь только новые элементы q-*.
+   ============================================================================= */
+
+/* --- Селектор стиля --- */
+.q-style select {
+    width: 100%;
+    margin-top: 6px;
+    padding: 9px 10px;
+    border: 1px solid #5a6b7a;
+    border-radius: 8px;
+    background: rgba(30, 38, 48, 0.9);
+    color: #e0e8f0;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+  }
+  
+  .q-style select:hover,
+  .q-style select:focus {
+    border-color: #50b48c;
+  }
+  
+  /* --- Звёзды и итог --- */
+  .q-stars-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  
+  .q-stars {
+    font-size: 24px;
+    letter-spacing: 2px;
+    color: #6a7a8a;
+  }
+  
+  .q-stars--good {
+    color: #f5c542;
+    text-shadow: 0 0 8px rgba(245, 197, 66, 0.45);
+  }
+  
+  .q-stars--bad {
+    color: #dc5050;
+  }
+  
+  .q-stars-row b {
+    font-size: 18px;
+    color: #e0e8f0;
+  }
+  
+  /* --- Бары стиль/эргономика --- */
+  .q-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .q-bar-block .fill-head {
+    margin-bottom: 4px;
+  }
+  
+  /* --- Суб-оценки --- */
+  .q-group-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  
+  .q-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 12px;
+    color: #b0c0d0;
+  }
+  
+  .q-group b {
+    color: #50b48c;
+    font-size: 12px;
+  }
+  
+  /* --- Нарушения --- */
+  .q-viol-text {
+    margin-top: 6px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border-left: 3px solid #e6b43c;
+    background: rgba(230, 180, 60, 0.10);
+    color: #e8d4a0;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  
+  .q-viol-text--ok {
+    border-left-color: #50b48c;
+    background: rgba(80, 180, 140, 0.12);
+    color: #a0d8c0;
+  }

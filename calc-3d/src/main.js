@@ -1,12 +1,8 @@
 // =============================================================================
 // main.js — точка сборки приложения (Decorium MVP).
 // Направление зависимостей: config ← domain ← (items, scene, controls, ui) ← main.
-// v1.1: панель размеров предметов.
-// v1.1.1: настройка полок стеллажа, исправлено пересечение предметов на полках.
-// v2.0 (Decorium MVP): векторная оценка стиля и эргономики, лепестковая
-//        диаграмма, обратная связь от «клиента», кнопка оценки.
-// v2.0.1: ИСПРАВЛЕН render-цикл — добавлены покадровые animation.update(dt)
-//        и virtualBox.update(dt); исправлена сигнатура setTarget(w, h, d).
+// v2.1: дашборд переделан из расчёта стоимости в метрики качества дизайна;
+//       селектор стиля живёт в дашборде; кнопка оценки только запускает панель.
 // =============================================================================
 
 import * as THREE from 'three';
@@ -36,9 +32,14 @@ const { renderer, scene, camera, orbit } = initScene(canvas);
 const virtualBox = createVirtualBox(scene); // стартовый размер 3×3×3 (MAX_BOX)
 
 // =============================================================================
-// 2. Дашборд
+// 2. Дашборд метрик качества дизайна
+// deps передаются лениво: getMeshes замыкается на manager (создаётся ниже)
 // =============================================================================
-const dashboard = initDashboard();
+const dashboard = initDashboard({
+  getItems,
+  getMeshes: () => manager.getMeshes(),
+  virtualBox,
+});
 
 // =============================================================================
 // 3. Менеджер предметов
@@ -66,7 +67,7 @@ initControls({
     // null — клик в пустоту или предмет удалён: панель закрываем
     if (id === null) {
       sizePanel.close();
-      hideFeedbackPanel(); // Decorium MVP: закрываем и панель оценки
+      hideFeedbackPanel();
       return;
     }
     const record = getItem(id);
@@ -87,10 +88,11 @@ initLibrary({
 });
 
 // =============================================================================
-// 7. Decorium MVP: кнопка оценки дизайна и запуск scoring-пайплайна
+// 7. Decorium MVP: кнопка оценки дизайна
+// Стиль берётся из дашборда (dashboard.getCurrentStyle)
 // =============================================================================
 const evalButton = createEvaluateButton({
-  onEvaluate: (styleId) => {
+  onEvaluate: () => {
     const items = getItems();
     if (items.length === 0) {
       showEmptyHint();
@@ -105,7 +107,7 @@ const evalButton = createEvaluateButton({
         getMeshes: manager.getMeshes,
         virtualBox,
       },
-      styleId
+      dashboard.getCurrentStyle()
     );
 
     showFeedbackPanel(result, {
@@ -161,11 +163,7 @@ hintStyle.textContent = `
 document.head.appendChild(hintStyle);
 
 // =============================================================================
-// 8. Render-цикл — ИСПРАВЛЕНО (v2.0.1)
-// Покадровые обновления обязательны:
-//   animation.update(dt)  — рост спавна (scale 0.01→1) и падение предметов;
-//   virtualBox.update(dt) — плавная подгонка бокса к целевому размеру.
-// Без них сцена «умирает»: предметы невидимы, бокс не меняется.
+// 8. Render-цикл — покадровые обновления обязательны (v2.0.1)
 // =============================================================================
 let lastTime = performance.now();
 
@@ -181,8 +179,8 @@ function render(now) {
 renderer.setAnimationLoop(render);
 
 // =============================================================================
-// 9. Рекомпозиция дашборда при изменении состава
-// ИСПРАВЛЕНО (v2.0.1): setTarget принимает (w, h, d) числами, а не объект.
+// 9. Рекомпозиция при изменении состава
+// virtualBox.setTarget(w, h, d) — числа; дашборд пересчитывает качество сам
 // =============================================================================
 function recompute() {
   const items = getItems();
@@ -192,11 +190,10 @@ function recompute() {
   if (rec.type === 'box') {
     virtualBox.setTarget(rec.box.w, rec.box.h, rec.box.d);
   } else {
-    // 'empty' и 'xl' — показываем максимальный бокс 3×3×3
     virtualBox.setTarget(MAX_BOX.w, MAX_BOX.h, MAX_BOX.d);
   }
 
-  dashboard.update(items, totalVolume, rec);
+  dashboard.update();
 }
 
 // Первичный вызов — до первого кадра
