@@ -1,212 +1,118 @@
-// =============================================================================
-// main.js — точка сборки приложения (Decorium MVP).
-// Направление зависимостей: config ← domain ← (items, scene, controls, ui) ← main.
-// v2.1: дашборд переделан из расчёта стоимости в метрики качества дизайна;
-//       селектор стиля живёт в дашборде; кнопка оценки только запускает панель.
-// =============================================================================
-
 import * as THREE from 'three';
-import { MAX_BOX } from './config.js';
-import { getItems, getTotalVolume, getItem, subscribe } from './domain/state.js';
-import { computeRecommendation } from './domain/pricing.js';
-import { initScene } from './scene/renderer.js';
-import { createVirtualBox } from './scene/virtualBox.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import * as state from './domain/state.js';
 import { createManager } from './items/manager.js';
-import * as animation from './items/animation.js';
-import { initControls } from './controls/drag.js';
+import { createAnimation } from './items/animation.js';
 import { initDashboard } from './ui/dashboard.js';
+import { initSizePanel } from './ui/sizePanel.js';
+import { initControls } from './controls/drag.js';
 import { initLibrary } from './ui/library.js';
-import { createSizePanel } from './ui/sizePanel.js';
-
-// === Decorium MVP: интеграция новой логики оценки ===
-import { runEvaluation } from './game/evaluator.js';
 import { createEvaluateButton } from './ui/evaluateButton.js';
 import { showFeedbackPanel, hideFeedbackPanel } from './ui/feedbackPanel.js';
+import { runEvaluation } from './game/evaluator.js';
+import { makeTask } from './level/task.js';
+import { createApartment } from './level/apartment.js';
 
-// =============================================================================
-// 1. Сцена и виртуальный бокс
-// =============================================================================
-const canvas = document.getElementById('scene');
-const { renderer, scene, camera, orbit } = initScene(canvas);
+// 1. Сцена
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf0f2f5);
 
-const virtualBox = createVirtualBox(scene); // стартовый размер 3×3×3 (MAX_BOX)
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(6, 5, 6);
 
-// =============================================================================
-// 2. Дашборд метрик качества дизайна
-// deps передаются лениво: getMeshes замыкается на manager (создаётся ниже)
-// =============================================================================
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const orbit = new OrbitControls(camera, renderer.domElement);
+orbit.enableDamping = true;
+orbit.target.set(0, 1, 0);
+
+const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambient);
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+dirLight.position.set(5, 10, 5);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(2048, 2048);
+dirLight.shadow.camera.left = -10;
+dirLight.shadow.camera.right = 10;
+dirLight.shadow.camera.top = 10;
+dirLight.shadow.camera.bottom = -10;
+scene.add(dirLight);
+
+// 2. Генерация уровня (Шаг А)
+const task = makeTask({ clientId: 'user1', levelId: 1 });
+const apartment = createApartment(scene, task);
+
+// 3. Системы
+const animation = createAnimation();
+
 const dashboard = initDashboard({
-  getItems,
-  getMeshes: () => manager.getMeshes(),
-  virtualBox,
+    getItems: () => state.getItems(),
+    getMeshes: () => manager.getMeshes(),
+    virtualBox: apartment // Drop-in
 });
 
-// =============================================================================
-// 3. Менеджер предметов
-// =============================================================================
-const manager = createManager({ scene, virtualBox, animation, onChanged: recompute });
-
-// =============================================================================
-// 4. Панель размеров и полок (v1.1 / v1.1.1)
-// =============================================================================
-const sizePanel = createSizePanel({
-  onResize: manager.resizeItem,
-  onShelfLevels: manager.setShelfLevels,
-  getItem
+const manager = createManager({
+    scene,
+    virtualBox: apartment,
+    animation,
+    onChanged: recompute
 });
 
-// =============================================================================
-// 5. Управление: перетаскивание, выбор кликом, удаление двойным кликом
-// =============================================================================
-initControls({
-  camera,
-  domElement: canvas,
-  orbit,
-  manager,
-  onSelect: (id) => {
-    // null — клик в пустоту или предмет удалён: панель закрываем
-    if (id === null) {
-      sizePanel.close();
-      hideFeedbackPanel();
-      return;
+const sizePanel = initSizePanel({
+    virtualBox: apartment,
+    onChanged: recompute
+});
+
+initControls({ camera, renderer, manager, orbit });
+initLibrary({ manager });
+
+const evalBtn = createEvaluateButton({
+    onEvaluate: () => {
+        const styleId = dashboard.getCurrentStyle();
+        const result = runEvaluation({
+            getItems: () => state.getItems(),
+            getMeshes: () => manager.getMeshes(),
+            virtualBox: apartment
+        }, styleId);
+        showFeedbackPanel(result, {
+            onRetry: () => hideFeedbackPanel(),
+            onContinue: () => hideFeedbackPanel()
+        });
     }
-    const record = getItem(id);
-    if (record) sizePanel.open(id, record);
-  }
 });
 
-// =============================================================================
-// 6. Библиотека предметов
-// =============================================================================
-initLibrary({
-  onAdd: manager.addItem,
-  onClear: () => {
-    sizePanel.close();
-    hideFeedbackPanel();
-    manager.clear();
-  }
-});
+// 4. Render-цикл
+const clock = new THREE.Clock();
+function animate() {
+    requestAnimationFrame(animate);
+    let dt = clock.getDelta();
+    dt = Math.max(0, Math.min(0.05, dt));
 
-// =============================================================================
-// 7. Decorium MVP: кнопка оценки дизайна
-// Стиль берётся из дашборда (dashboard.getCurrentStyle)
-// =============================================================================
-const evalButton = createEvaluateButton({
-  onEvaluate: () => {
-    const items = getItems();
-    if (items.length === 0) {
-      showEmptyHint();
-      return;
-    }
+    animation.update(dt);
+    apartment.update(dt);
+    orbit.update();
 
-    evalButton.setEnabled(false);
-
-    const result = runEvaluation(
-      {
-        getItems,
-        getMeshes: manager.getMeshes,
-        virtualBox,
-      },
-      dashboard.getCurrentStyle()
-    );
-
-    showFeedbackPanel(result, {
-      onRetry: () => {
-        evalButton.setEnabled(true);
-      },
-      onContinue: () => {
-        sizePanel.close();
-        manager.clear();
-        evalButton.setEnabled(true);
-      },
-    });
-  },
-});
-
-// Плашка-подсказка для пустой сцены (вместо alert)
-function showEmptyHint() {
-  const existing = document.getElementById('eval-empty-hint');
-  if (existing) existing.remove();
-
-  const hint = document.createElement('div');
-  hint.id = 'eval-empty-hint';
-  hint.textContent = 'Добавьте хотя бы один предмет из библиотеки, прежде чем оценивать дизайн.';
-  Object.assign(hint.style, {
-    position: 'fixed',
-    bottom: '90px',
-    right: '20px',
-    zIndex: '600',
-    padding: '10px 14px',
-    maxWidth: '280px',
-    background: 'rgba(30, 38, 48, 0.95)',
-    color: '#e0e8f0',
-    fontSize: '13px',
-    borderRadius: '10px',
-    borderLeft: '3px solid #50b48c',
-    boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
-    fontFamily: 'system-ui, sans-serif',
-    animation: 'evalHintFade 3s forwards',
-  });
-  document.body.appendChild(hint);
-  setTimeout(() => hint.remove(), 3200);
+    renderer.render(scene, camera);
 }
 
-const hintStyle = document.createElement('style');
-hintStyle.textContent = `
-  @keyframes evalHintFade {
-    0%   { opacity: 0; transform: translateY(8px); }
-    10%  { opacity: 1; transform: translateY(0); }
-    80%  { opacity: 1; }
-    100% { opacity: 0; transform: translateY(-4px); }
-  }
-`;
-document.head.appendChild(hintStyle);
-
-// =============================================================================
-// 8. Render-цикл — покадровые обновления обязательны (v2.0.1)
-// =============================================================================
-let lastTime = performance.now();
-
-function render(now) {
-  const dt = Math.max(0, Math.min(0.05, (now - lastTime) / 1000));
-  lastTime = now;
-
-  animation.update(dt);
-  virtualBox.update(dt);
-  orbit.update();
-  renderer.render(scene, camera);
-}
-renderer.setAnimationLoop(render);
-
-// =============================================================================
-// 9. Рекомпозиция при изменении состава
-// virtualBox.setTarget(w, h, d) — числа; дашборд пересчитывает качество сам
-// =============================================================================
 function recompute() {
-  const items = getItems();
-  const totalVolume = getTotalVolume();
-  const rec = computeRecommendation(items, totalVolume);
-
-  if (rec.type === 'box') {
-    virtualBox.setTarget(rec.box.w, rec.box.h, rec.box.d);
-  } else {
-    virtualBox.setTarget(MAX_BOX.w, MAX_BOX.h, MAX_BOX.d);
-  }
-
-  dashboard.update();
+    dashboard.update();
 }
 
-// Первичный вызов — до первого кадра
+// 5. Финализация
 recompute();
-dashboard.hideLoader();
+const loader = document.getElementById('loader');
+if (loader) loader.style.display = 'none';
 
-// =============================================================================
-// 10. Resize
-// =============================================================================
 window.addEventListener('resize', () => {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+animate();
