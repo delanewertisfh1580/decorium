@@ -7,9 +7,12 @@
 //   - число нарушений и топ-комментарий клиента.
 // Обновляется ТОЛЬКО по изменению состава — не в render-цикле.
 // Модуль не импортирует three.
+//
+// Фаза очистки: использует фасад evaluateRoom из domain/scoring.js вместо
+// удалённого game/evaluator.js. Оценивает активную комнату (одноместный режим).
 // =============================================================================
 
-import { runEvaluation } from '../game/evaluator.js';
+import { evaluateRoom } from '../domain/scoring.js';
 import { getStyleList, DEFAULT_STYLE_ID } from '../domain/styles.js';
 import { generateFeedback } from '../domain/feedback.js';
 import './dashboard.css';
@@ -63,7 +66,6 @@ export function initDashboard(deps) {
     const pct = Math.round((value || 0) * 100);
     valEl.textContent = `${pct}%`;
     barEl.style.width = `${pct}%`;
-    // Низкий балл подсвечиваем «тревожным» цветом (класс hot из styles.css)
     barEl.classList.toggle('hot', pct < 40);
   }
 
@@ -91,25 +93,21 @@ export function initDashboard(deps) {
       return;
     }
 
-    // Звёзды и итог
     el.stars.textContent = '★'.repeat(result.stars) + '☆'.repeat(5 - result.stars);
     el.stars.className =
       'q-stars' +
       (result.stars >= 4 ? ' q-stars--good' : result.stars <= 2 ? ' q-stars--bad' : '');
     el.total.textContent = `${Math.round(result.totalScore * 100)} / 100`;
 
-    // Стиль / эргономика
     setBar(el.styleBar, el.styleVal, result.styleScore);
     setBar(el.ergoBar, el.ergoVal, result.ergonomicsScore);
 
-    // Суб-оценки
     const g = result.groupScores || {};
     el.gColor.textContent = `${Math.round((g['Цвет'] ?? 0) * 100)}%`;
     el.gMaterials.textContent = `${Math.round((g['Материалы'] ?? 0) * 100)}%`;
     el.gGeometry.textContent = `${Math.round((g['Геометрия'] ?? 0) * 100)}%`;
     el.gStructure.textContent = `${Math.round((g['Структура'] ?? 0) * 100)}%`;
 
-    // Нарушения
     const problems = result.violations.length;
     el.violCount.textContent = String(problems);
     if (problems === 0) {
@@ -125,14 +123,19 @@ export function initDashboard(deps) {
     }
   }
 
-  // --- Пересчёт оценки (вызывается по изменению состава и смене стиля) ---
+  /**
+   * Пересчёт оценки активной комнаты.
+   * Вызывается по изменению состава и смене стиля.
+   */
   function refresh() {
-    const result = runEvaluation(deps, currentStyleId);
+    const items = deps.getItems();
+    const vb = deps.virtualBox;
+    const bounds = vb && typeof vb.getBounds === 'function' ? vb.getBounds() : null;
+    const result = evaluateRoom(items, currentStyleId, bounds);
     render(result);
     return result;
   }
 
-  // Скрыть лоадер (после первого кадра) и запланировать затухание подсказки
   function hideLoader() {
     el.loader.classList.add('hide');
     if (!hintDimmed) {
@@ -141,11 +144,10 @@ export function initDashboard(deps) {
     }
   }
 
-  // Первичная отрисовка пустого состояния
   renderEmpty();
 
   return {
-    update: () => refresh(),          // совместимый API для recompute в main.js
+    update: () => refresh(),
     hideLoader,
     getCurrentStyle: () => currentStyleId
   };
