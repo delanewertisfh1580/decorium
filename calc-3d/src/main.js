@@ -2,9 +2,11 @@
 // main.js — точка сборки приложения (Decorium MVP).
 // Направление зависимостей: config ← domain ← (items, scene, controls, ui) ← main.
 // v1.1: панель размеров предметов.
-// v1.1.1: настройка полок стеллажа, исправлено пересечение предметов.
-// v2.0 (Decorium MVP): интегрирована векторная оценка стиля и эргономики,
-//        лепестковая диаграмма, обратная связь от «клиента», кнопка оценки.
+// v1.1.1: настройка полок стеллажа, исправлено пересечение предметов на полках.
+// v2.0 (Decorium MVP): векторная оценка стиля и эргономики, лепестковая
+//        диаграмма, обратная связь от «клиента», кнопка оценки.
+// v2.0.1: ИСПРАВЛЕН render-цикл — добавлены покадровые animation.update(dt)
+//        и virtualBox.update(dt); исправлена сигнатура setTarget(w, h, d).
 // =============================================================================
 
 import * as THREE from 'three';
@@ -34,20 +36,17 @@ const { renderer, scene, camera, orbit } = initScene(canvas);
 const virtualBox = createVirtualBox(scene); // стартовый размер 3×3×3 (MAX_BOX)
 
 // =============================================================================
-// 2. Дашборд (метрики Self-Storage — оставлен без изменений)
+// 2. Дашборд
 // =============================================================================
 const dashboard = initDashboard();
 
 // =============================================================================
 // 3. Менеджер предметов
-// scene передаётся в deps — менеджер добавляет и удаляет меши
 // =============================================================================
 const manager = createManager({ scene, virtualBox, animation, onChanged: recompute });
 
 // =============================================================================
 // 4. Панель размеров и полок (v1.1 / v1.1.1)
-// Валидацию и применение делает менеджер; getItem нужен панели, чтобы
-// перечитывать применённые значения после ресайза (полки масштабируются).
 // =============================================================================
 const sizePanel = createSizePanel({
   onResize: manager.resizeItem,
@@ -67,7 +66,7 @@ initControls({
     // null — клик в пустоту или предмет удалён: панель закрываем
     if (id === null) {
       sizePanel.close();
-      hideFeedbackPanel(); // Decorium MVP: закрываем и панель оценки при клике в пустоту
+      hideFeedbackPanel(); // Decorium MVP: закрываем и панель оценки
       return;
     }
     const record = getItem(id);
@@ -81,7 +80,7 @@ initControls({
 initLibrary({
   onAdd: manager.addItem,
   onClear: () => {
-    sizePanel.close(); // панель выбранного предмета закрываем вместе с очисткой
+    sizePanel.close();
     hideFeedbackPanel();
     manager.clear();
   }
@@ -94,15 +93,12 @@ const evalButton = createEvaluateButton({
   onEvaluate: (styleId) => {
     const items = getItems();
     if (items.length === 0) {
-      // Мягкое предупреждение вместо alert — чтобы не выбивать из атмосферы
       showEmptyHint();
       return;
     }
 
-    // Блокируем кнопку, чтобы не было повторных кликов во время расчёта
     evalButton.setEnabled(false);
 
-    // Запускаем полную оценку: стиль + эргономика + фидбек
     const result = runEvaluation(
       {
         getItems,
@@ -112,14 +108,11 @@ const evalButton = createEvaluateButton({
       styleId
     );
 
-    // Показываем панель результатов с лепестковой диаграммой и комментариями
     showFeedbackPanel(result, {
       onRetry: () => {
-        // Игрок остаётся в сцене и может доработать расстановку
         evalButton.setEnabled(true);
       },
       onContinue: () => {
-        // Сброс уровня: очищаем сцену и разблокируем кнопку для нового дизайна
         sizePanel.close();
         manager.clear();
         evalButton.setEnabled(true);
@@ -128,7 +121,7 @@ const evalButton = createEvaluateButton({
   },
 });
 
-// Вспомогательная плашка-подсказка для пустой сцены (вместо alert)
+// Плашка-подсказка для пустой сцены (вместо alert)
 function showEmptyHint() {
   const existing = document.getElementById('eval-empty-hint');
   if (existing) existing.remove();
@@ -156,7 +149,6 @@ function showEmptyHint() {
   setTimeout(() => hint.remove(), 3200);
 }
 
-// Инжектим keyframes для плавного появления и затухания подсказки
 const hintStyle = document.createElement('style');
 hintStyle.textContent = `
   @keyframes evalHintFade {
@@ -169,31 +161,50 @@ hintStyle.textContent = `
 document.head.appendChild(hintStyle);
 
 // =============================================================================
-// 8. Render-цикл (без изменений)
+// 8. Render-цикл — ИСПРАВЛЕНО (v2.0.1)
+// Покадровые обновления обязательны:
+//   animation.update(dt)  — рост спавна (scale 0.01→1) и падение предметов;
+//   virtualBox.update(dt) — плавная подгонка бокса к целевому размеру.
+// Без них сцена «умирает»: предметы невидимы, бокс не меняется.
 // =============================================================================
-function render() {
+let lastTime = performance.now();
+
+function render(now) {
+  const dt = Math.max(0, Math.min(0.05, (now - lastTime) / 1000));
+  lastTime = now;
+
+  animation.update(dt);
+  virtualBox.update(dt);
   orbit.update();
   renderer.render(scene, camera);
 }
 renderer.setAnimationLoop(render);
 
 // =============================================================================
-// 9. Рекомпозиция дашборда при изменении состава (без изменений)
+// 9. Рекомпозиция дашборда при изменении состава
+// ИСПРАВЛЕНО (v2.0.1): setTarget принимает (w, h, d) числами, а не объект.
 // =============================================================================
 function recompute() {
   const items = getItems();
   const totalVolume = getTotalVolume();
   const rec = computeRecommendation(items, totalVolume);
-  virtualBox.setTarget(rec);
+
+  if (rec.type === 'box') {
+    virtualBox.setTarget(rec.box.w, rec.box.h, rec.box.d);
+  } else {
+    // 'empty' и 'xl' — показываем максимальный бокс 3×3×3
+    virtualBox.setTarget(MAX_BOX.w, MAX_BOX.h, MAX_BOX.d);
+  }
+
   dashboard.update(items, totalVolume, rec);
 }
 
-// Первичный вызов — до первого кадра (чтобы бокс 3×3×3 сразу появился)
+// Первичный вызов — до первого кадра
 recompute();
 dashboard.hideLoader();
 
 // =============================================================================
-// 10. Resize (без изменений)
+// 10. Resize
 // =============================================================================
 window.addEventListener('resize', () => {
   const w = window.innerWidth;
