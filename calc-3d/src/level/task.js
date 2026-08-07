@@ -1,13 +1,11 @@
 // =============================================================================
-// level/task.js — генерация TaskContract из seed (stateless, детерминированно).
-// Шаг Б: поле anims — список живых пропов уровня.
-// Тир 1 (уровни 1–15 по GDD): гарантированный уютный набор.
+// level/task.js — TaskContract из seed (stateless, детерминированно).
+// Шаг В: rooms = BSP-layout; число комнат по тиру GDD.
 // =============================================================================
 
 import { Rng } from './rng.js';
 import { STYLES } from '../domain/styles.js';
-
-const ROOM_TYPES = ['living', 'bedroom', 'studio'];
+import { buildLayout } from './bsp.js';
 
 const WISHES_POOL = [
     { feature: 'warmth', op: '>=', thr: 0.6, text: 'хочу тёплые оттенки' },
@@ -18,9 +16,8 @@ const WISHES_POOL = [
 const ANIM_POOL = ['tv', 'cat', 'floorlamp', 'plant', 'dog'];
 
 /**
- * Собирает TaskContract для клиента и уровня. Один seed — один уровень.
+ * Собирает TaskContract. Один seed — один уровень.
  * @param {{clientId?: string, levelId?: number}} opts
- * @returns {object} TaskContract
  */
 export function makeTask({ clientId = 'default', levelId = 1 }) {
     const seed = `${clientId}·level${levelId}`;
@@ -28,8 +25,23 @@ export function makeTask({ clientId = 'default', levelId = 1 }) {
 
     const styleId = rng.pick(Object.keys(STYLES));
 
-    const w = Math.round(rng.range(4, 6) * 2) / 2;
-    const d = Math.round(rng.range(3, 5) * 2) / 2;
+    // Тиры GDD: 1–5 одна комната, 6–15 две, 16–35 до трёх, 36+ до четырёх.
+    let roomCount;
+    if (levelId <= 5) roomCount = 1;
+    else if (levelId <= 15) roomCount = 2;
+    else if (levelId <= 35) roomCount = rng.irange(2, 3);
+    else roomCount = rng.irange(3, 4);
+
+    let W, D;
+    if (roomCount === 1) {
+        W = Math.round(rng.range(4, 6) * 2) / 2;
+        D = Math.round(rng.range(3, 5) * 2) / 2;
+    } else {
+        W = Math.round(rng.range(7, 9.5) * 2) / 2;
+        D = Math.round(rng.range(5, 7.5) * 2) / 2;
+    }
+
+    const layout = buildLayout(rng, W, D, roomCount);
 
     const wishes = rng.shuffle(WISHES_POOL).slice(0, rng.irange(0, 2));
 
@@ -45,7 +57,8 @@ export function makeTask({ clientId = 'default', levelId = 1 }) {
     return {
         seed,
         styleId,
-        rooms: [{ type: rng.pick(ROOM_TYPES), w, d }],
+        layout,
+        rooms: layout.rooms,
         wishes,
         anims
     };

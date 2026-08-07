@@ -1,10 +1,11 @@
 // =============================================================================
-// main.js — точка сборки Decorium, Шаг Б («живая сцена»).
-// Бутстрап 1:1 по контрактам движка; virtualBox заменён на apartment;
-// живые пропы (items/animated.js) подключены в render-цикл.
+// main.js — точка сборки Decorium, Шаг В («мультикомнатность»).
+// Активная комната центрирована в нуле мира; табы комнат; плавный переезд
+// камеры; per-room оценка. Ядро (manager/stacking/state/drag) не тронуто.
 // =============================================================================
 
-import { getItems, getItem } from './domain/state.js';
+import * as THREE from 'three';
+import { getItems, getItem, updateItem } from './domain/state.js';
 import { initScene } from './scene/renderer.js';
 import { createManager } from './items/manager.js';
 import * as animation from './items/animation.js';
@@ -20,20 +21,26 @@ import { showFeedbackPanel, hideFeedbackPanel } from './ui/feedbackPanel.js';
 import { makeTask } from './level/task.js';
 import { createApartment } from './level/apartment.js';
 import { createProps } from './items/animated.js';
+import { createRoomTabs } from './ui/roomTabs.js';
 import { Rng } from './level/rng.js';
 
 // =============================================================================
-// 1. Сцена (родной канвас #scene)
+// 1. Сцена
 // =============================================================================
 const canvas = document.getElementById('scene');
 const { renderer, scene, camera, orbit } = initScene(canvas);
+orbit.target.set(0, 1, 0);
 
 // =============================================================================
-// 2. Уровень: TaskContract → комната → живые пропы
+// 2. Уровень: ?level=N (дефолт 8 — сразу две комнаты)
 // =============================================================================
-const task = makeTask({ clientId: 'user1', levelId: 1 });
+const params = new URLSearchParams(location.search);
+const levelId = Math.max(1, parseInt(params.get('level') || '8', 10) || 8);
+
+const task = makeTask({ clientId: 'user1', levelId });
 const apartment = createApartment(scene, task);
 
+// Пропы — в активной при загрузке комнате (гостиная)
 const props = createProps(task.anims, apartment.getBounds(), new Rng(task.seed + '·props'));
 scene.add(props.group);
 
@@ -47,7 +54,7 @@ const dashboard = initDashboard({
 });
 
 // =============================================================================
-// 4. Менеджер предметов
+// 4. Менеджер
 // =============================================================================
 const manager = createManager({
     scene,
@@ -57,7 +64,7 @@ const manager = createManager({
 });
 
 // =============================================================================
-// 5. Панель размеров и полок
+// 5. Панель размеров
 // =============================================================================
 const sizePanel = createSizePanel({
     onResize: manager.resizeItem,
@@ -97,7 +104,47 @@ initLibrary({
 });
 
 // =============================================================================
-// 8. Кнопка оценки дизайна
+// 8. Табы комнат + переключение (сдвиг мира + синхронизация мешей/пропов)
+// =============================================================================
+let camGoal = null;
+
+function goalFor(room) {
+    return new THREE.Vector3(room.w * 0.6 + 2.2, 4.4, room.d * 0.6 + 2.6);
+}
+
+const tabs = createRoomTabs({
+    rooms: apartment.getRooms(),
+    onSelect: (id) => {
+        if (id === apartment.getActiveRoom().id) return;
+        const { dx, dz } = apartment.setActiveRoom(id);
+
+        if (dx !== 0 || dz !== 0) {
+            for (const it of getItems()) {
+                const mesh = manager.getMeshById(it.id);
+                if (mesh) {
+                    mesh.position.x += dx;
+                    mesh.position.z += dz;
+                }
+                updateItem(it.id, { x: it.x + dx, z: it.z + dz });
+            }
+            props.group.position.x += dx;
+            props.group.position.z += dz;
+        }
+
+        sizePanel.close();
+        tabs.setActive(id);
+        camGoal = goalFor(apartment.getActiveRoom());
+        recompute();
+    }
+});
+
+if (apartment.getRooms().length < 2) tabs.hide();
+else tabs.setActive(apartment.getActiveRoom().id);
+
+camGoal = goalFor(apartment.getActiveRoom());
+
+// =============================================================================
+// 9. Кнопка оценки
 // =============================================================================
 const evalButton = createEvaluateButton({
     onEvaluate: () => {
@@ -128,23 +175,14 @@ const evalButton = createEvaluateButton({
 function showEmptyHint() {
     const existing = document.getElementById('eval-empty-hint');
     if (existing) existing.remove();
-
     const hint = document.createElement('div');
     hint.id = 'eval-empty-hint';
     hint.textContent = 'Добавьте хотя бы один предмет из библиотеки, прежде чем оценивать дизайн.';
     Object.assign(hint.style, {
-        position: 'fixed',
-        bottom: '90px',
-        right: '20px',
-        zIndex: '600',
-        padding: '10px 14px',
-        maxWidth: '280px',
-        background: 'rgba(30, 38, 48, 0.95)',
-        color: '#e0e8f0',
-        fontSize: '13px',
-        borderRadius: '10px',
-        borderLeft: '3px solid #50b48c',
-        boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+        position: 'fixed', bottom: '90px', right: '20px', zIndex: '600',
+        padding: '10px 14px', maxWidth: '280px', background: 'rgba(30, 38, 48, 0.95)',
+        color: '#e0e8f0', fontSize: '13px', borderRadius: '10px',
+        borderLeft: '3px solid #50b48c', boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
         fontFamily: 'system-ui, sans-serif'
     });
     document.body.appendChild(hint);
@@ -152,7 +190,7 @@ function showEmptyHint() {
 }
 
 // =============================================================================
-// 9. Render-цикл: animation + apartment + props + orbit
+// 10. Render-цикл: animation + apartment + props + tween камеры + orbit
 // =============================================================================
 let last = performance.now();
 let elapsed = 0;
@@ -167,6 +205,11 @@ function render() {
     animation.update(dt);
     apartment.update(dt);
     props.update(dt, elapsed);
+
+    if (camGoal) {
+        camera.position.lerp(camGoal, 1 - Math.exp(-3.5 * dt));
+        if (camera.position.distanceTo(camGoal) < 0.05) camGoal = null;
+    }
     orbit.update();
 
     renderer.render(scene, camera);
@@ -174,17 +217,24 @@ function render() {
 renderer.setAnimationLoop(render);
 
 // =============================================================================
-// 10. Рекомпозиция дашборда
+// 11. Рекомпозиция: дашборд (активная комната) + звёзды по комнатам на табах
 // =============================================================================
 function recompute() {
     dashboard.update();
+    if (apartment.getRooms().length > 1) {
+        const res = runEvaluation(
+            { getItems, getMeshes: manager.getMeshes, virtualBox: apartment },
+            dashboard.getCurrentStyle()
+        );
+        tabs.setScores(res.perRoom);
+    }
 }
 
 recompute();
 dashboard.hideLoader();
 
 // =============================================================================
-// 11. Resize
+// 12. Resize
 // =============================================================================
 window.addEventListener('resize', () => {
     const w = window.innerWidth;
