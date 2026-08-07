@@ -1,111 +1,148 @@
 // =============================================================================
-// controls/drag.js — перетаскивание предметов (мышь и палец), выбор кликом
-// и удаление по двойному клику.
-// v1.1: добавлен выбор предмета — клик без сдвига открывает панель размеров.
-// DragControls получает ЖИВУЮ ссылку на массив мешей менеджера, поэтому
-// новые предметы подхватываются без пересоздания контролов.
+// controls/drag.js — управление: перетаскивание, hover, выбор, удаление.
+// Фаза 3: DragControls (плоскость камеры → «ватность») заменён на собственный
+// raycast-drag по плоскости пола Y=0: предмет следует за курсором 1:1.
+// Публичный контракт сохранён: initControls({camera, domElement, orbit,
+// manager, onSelect}); hover/drag-подсветка через setEmissive из factory.
 // =============================================================================
 
 import * as THREE from 'three';
-import { DragControls } from 'three/addons/controls/DragControls.js';
 import { setEmissive } from '../items/factory.js';
 
+const CLICK_THRESHOLD_SQ = 25; // 5px — граница «клик vs перетаскивание»
+
+/**
+ * Инициализирует управление сценой.
+ * @param {object} deps
+ * @param {THREE.Camera} deps.camera
+ * @param {HTMLElement} deps.domElement
+ * @param {import('three/addons/controls/OrbitControls.js').OrbitControls} deps.orbit
+ * @param {object} deps.manager
+ * @param {(id: number|null)=>void} [deps.onSelect]
+ */
 export function initControls({ camera, domElement, orbit, manager, onSelect }) {
-  let hoveredId = null;  // предмет под курсором
-  let draggingId = null; // предмет в перетаскивании
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // Y=0
+    const hitPoint = new THREE.Vector3();
 
-  const controls = new DragControls(manager.getMeshes(), camera, domElement);
+    let hoveredId = null;
+    let draggingId = null;
+    let downX = 0, downY = 0;
+    let moved = false;
 
-  // --- Начало перетаскивания ---
-  controls.addEventListener('dragstart', (event) => {
-    draggingId = event.object.userData.id;
-    orbit.enabled = false; // пока тащим предмет — камера не вращается
-    manager.startDrag(draggingId);
-    setEmissive(event.object, 0.5); // подсветка при перетаскивании сильнее
-    document.body.classList.add('dragging');
-  });
-
-  // --- Движение ---
-  controls.addEventListener('drag', (event) => {
-    // DragControls сам подвинул меш по плоскости камеры; менеджер
-    // ПЕРЕЗАПИШЕТ позицию после обрезки по стенам, всплывания на опору
-    // или отката к последней валидной точке — дельты здесь не складываем
-    manager.dragItem(
-      event.object.userData.id,
-      event.object.position.x,
-      event.object.position.z
-    );
-  });
-
-  // --- Конец перетаскивания ---
-  controls.addEventListener('dragend', (event) => {
-    const id = event.object.userData.id;
-    draggingId = null;
-    orbit.enabled = true; // возвращаем вращение камеры
-    manager.endDrag(id);
-    // Подсветка по состоянию hover: если курсор остался на предмете — 0.35
-    setEmissive(event.object, hoveredId === id ? 0.35 : 0);
-    document.body.classList.remove('dragging');
-  });
-
-  // --- Наведение курсора ---
-  controls.addEventListener('hoveron', (event) => {
-    hoveredId = event.object.userData.id;
-    if (!draggingId) {
-      setEmissive(event.object, 0.35);
-      domElement.style.cursor = 'grab';
+    function setPointer(event) {
+        const rect = domElement.getBoundingClientRect();
+        pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     }
-  });
 
-  controls.addEventListener('hoveroff', (event) => {
-    if (hoveredId === event.object.userData.id) hoveredId = null;
-    if (!draggingId) {
-      setEmissive(event.object, 0);
-      domElement.style.cursor = 'default';
+    /** id предмета под курсором или null */
+    function pickItem(event) {
+        setPointer(event);
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObjects(manager.getMeshes(), false);
+        return hits.length > 0 ? hits[0].object.userData.id : null;
     }
-  });
 
-  // --- Луч для выбора и удаления (v1.1) ---
-  const raycaster = new THREE.Raycaster();
-  const pointer = new THREE.Vector2();
+    /** Точка пересечения луча с плоскостью пола (для drag). */
+    function pickFloor(event) {
+        setPointer(event);
+        raycaster.setFromCamera(pointer, camera);
+        return raycaster.ray.intersectPlane(floorPlane, hitPoint) ? hitPoint : null;
+    }
 
-  // Возвращает id предмета под курсором или null (пустое место)
-  function pick(event) {
-    const rect = domElement.getBoundingClientRect();
-    pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-    raycaster.setFromCamera(pointer, camera);
-    const hits = raycaster.intersectObjects(manager.getMeshes(), false);
-    return hits.length > 0 ? hits[0].object.userData.id : null;
-  }
+    function setHover(id) {
+        if (id === hoveredId) return;
+        if (hoveredId !== null) {
+            const prev = manager.getMeshById(hoveredId);
+            if (prev) setEmissive(prev, 0);
+        }
+        hoveredId = id;
+        if (id !== null && id !== draggingId) {
+            const mesh = manager.getMeshById(id);
+            if (mesh) setEmissive(mesh, 0.35);
+        }
+        domElement.style.cursor = id !== null ? 'grab' : 'default';
+    }
 
-  // --- Выбор предмета: клик без сдвига (v1.1) ---
-  let downX = 0;
-  let downY = 0;
+    // --- Наведение (когда не тащим) ---
+    domElement.addEventListener('pointermove', (event) => {
+        if (draggingId !== null) {
+            const p = pickFloor(event);
+            if (p) manager.dragItem(draggingId, p.x, p.z);
+            return;
+        }
+        if (event.buttons !== 0) return; // вращение камеры — не hover
+        setHover(pickItem(event));
+    });
 
-  // Точка нажатия — чтобы отличить клик от перетаскивания
-  domElement.addEventListener('pointerdown', (event) => {
-    downX = event.clientX;
-    downY = event.clientY;
-  });
+    // --- Начало: хватаем предмет, если попали ---
+    domElement.addEventListener('pointerdown', (event) => {
+        downX = event.clientX;
+        downY = event.clientY;
+        moved = false;
 
-  domElement.addEventListener('click', (event) => {
-    const dx = event.clientX - downX;
-    const dy = event.clientY - downY;
-    // Сдвиг больше 5px — это было перетаскивание, а не клик
-    if (dx * dx + dy * dy > 25) return;
-    if (onSelect) onSelect(pick(event)); // null — клик в пустоту, панель закрыть
-  });
+        const id = pickItem(event);
+        if (id === null) return;
 
-  // --- Удаление по двойному клику (работает и двойным тапом) ---
-  function onDoubleClick(event) {
-    const id = pick(event);
-    if (id === null) return;
-    manager.removeItem(id);
-    // Панель размеров удалённого предмета закрываем
-    if (onSelect) onSelect(null);
-  }
-  domElement.addEventListener('dblclick', onDoubleClick);
+        draggingId = id;
+        orbit.enabled = false;
+        manager.startDrag(id);
+        const mesh = manager.getMeshById(id);
+        if (mesh) setEmissive(mesh, 0.5);
+        domElement.style.cursor = 'grabbing';
+        document.body.classList.add('dragging');
+        domElement.setPointerCapture(event.pointerId);
+    });
 
-  return controls;
+    // --- Конец: drag или клик ---
+    domElement.addEventListener('pointerup', (event) => {
+        const dx = event.clientX - downX;
+        const dy = event.clientY - downY;
+        moved = dx * dx + dy * dy > CLICK_THRESHOLD_SQ;
+
+        if (draggingId !== null) {
+            const id = draggingId;
+            draggingId = null;
+            orbit.enabled = true;
+            manager.endDrag(id);
+            const mesh = manager.getMeshById(id);
+            if (mesh) setEmissive(mesh, hoveredId === id ? 0.35 : 0);
+            domElement.style.cursor = hoveredId !== null ? 'grab' : 'default';
+            document.body.classList.remove('dragging');
+
+            // Клик без сдвига — выбор предмета (открытие панели размеров)
+            if (!moved && onSelect) onSelect(id);
+            return;
+        }
+
+        // Клик в пустоту — снять выделение/панели
+        if (!moved && onSelect) onSelect(null);
+    });
+
+    // --- Отмена (Esc / потеря фокуса) — мягко завершаем drag ---
+    domElement.addEventListener('pointercancel', () => {
+        if (draggingId !== null) {
+            manager.endDrag(draggingId);
+            draggingId = null;
+            orbit.enabled = true;
+            document.body.classList.remove('dragging');
+        }
+    });
+
+    // --- Удаление двойным кликом ---
+    domElement.addEventListener('dblclick', (event) => {
+        const id = pickItem(event);
+        if (id === null) return;
+        manager.removeItem(id);
+        setHover(null);
+        if (onSelect) onSelect(null);
+    });
+
+    return {
+        /** Текущий id под курсором (для отладки/UI). */
+        getHoveredId: () => hoveredId,
+        isDragging: () => draggingId !== null
+    };
 }

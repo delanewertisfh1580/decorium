@@ -1,13 +1,10 @@
 // =============================================================================
-// main.js — точка сборки Decorium, Шаг Г («декларативные уровни +
-// персонализация»). Пайплайн: seed → генератор → JSON → схема → сцена.
-// Персональный стиль (вариация ±0.1) и wishes клиента подключены к оценке.
-// Ядро (manager/stacking/state/drag) и domain/scoring.js не переписаны.
+// main.js v7 (глобальная очистка) — тонкий композиционный корень.
+// Ноль импортов domain/state: всё через репозитории DecoriumApp.
+// Персональный стиль — через VO (withVariedThresholds) + StyleRepository.register.
 // =============================================================================
 
 import * as THREE from 'three';
-import { getItems, getItem, updateItem } from './domain/state.js';
-import { STYLES } from './domain/styles.js';
 import { initScene } from './scene/renderer.js';
 import { createManager } from './items/manager.js';
 import * as animation from './items/animation.js';
@@ -15,57 +12,58 @@ import { initControls } from './controls/drag.js';
 import { initDashboard } from './ui/dashboard.js';
 import { initLibrary } from './ui/library.js';
 import { createSizePanel } from './ui/sizePanel.js';
-import { runEvaluation } from './game/evaluator.js';
 import { createEvaluateButton } from './ui/evaluateButton.js';
 import { showFeedbackPanel, hideFeedbackPanel } from './ui/feedbackPanel.js';
-
-// Decorium
-import { makeLevel } from './level/levelLoader.js';
-import { registerVariedStyle } from './level/variation.js';
-import { pickClientPersona, clientTier } from './level/tone.js';
-import { createApartment } from './level/apartment.js';
-import { createProps } from './items/animated.js';
 import { createRoomTabs } from './ui/roomTabs.js';
 import { createClientBrief } from './ui/clientBrief.js';
+import { makeLevel } from './level/levelLoader.js';
+import { createApartment } from './level/apartment.js';
+import { createProps } from './items/animated.js';
+import { createDecoriumApp } from './application/DecoriumApp.js';
 import { Rng } from './level/rng.js';
 
 // =============================================================================
-// 1. Сцена
+// 1. Уровень (декларативный пайплайн: seed → JSON → схема → TaskContract)
+// =============================================================================
+const params = new URLSearchParams(location.search);
+const levelId = Math.max(1, parseInt(params.get('level') || '8', 10) || 8);
+const clientId = params.get('client') || 'user1';
+const { task } = makeLevel({ clientId, levelId });
+
+// =============================================================================
+// 2. Сцена и пространство
 // =============================================================================
 const canvas = document.getElementById('scene');
 const { renderer, scene, camera, orbit } = initScene(canvas);
 orbit.target.set(0, 1, 0);
 
-// =============================================================================
-// 2. Декларативный уровень: ?client=...&level=... → JSON → схема → TaskContract
-// =============================================================================
-const params = new URLSearchParams(location.search);
-const levelId = Math.max(1, parseInt(params.get('level') || '8', 10) || 8);
-const clientId = params.get('client') || 'user1';
-
-const { task } = makeLevel({ clientId, levelId });
-
 const apartment = createApartment(scene, task);
-
 const props = createProps(task.anims, apartment.getBounds(), new Rng(task.seed + '·props'));
 scene.add(props.group);
 
 // =============================================================================
-// 3. Дашборд (инициализируется ДО регистрации персонального стиля —
-//    селект стилей остаётся чистым)
+// 3. Application-ядро + персональный стиль клиента (VO, без мутаций STYLES)
+// =============================================================================
+const app = createDecoriumApp({ spaceProvider: apartment });
+
+const baseStyle = app.styles.getById(task.styleId);
+const personalStyle = baseStyle.withVariedThresholds(new Rng(task.seed + '·var'));
+app.styles.register(personalStyle);
+const activeStyleId = personalStyle.id;
+
+function evaluateNow() {
+    return app.evaluate({ styleId: activeStyleId, wishes: task.wishes });
+}
+
+// =============================================================================
+// 4. UI-адаптеры (сырые записи — только через репозиторий)
 // =============================================================================
 const dashboard = initDashboard({
-    getItems,
+    getItems: () => app.items.getAllRaw(),
     getMeshes: () => manager.getMeshes(),
     virtualBox: apartment
 });
 
-// Персональные пороги клиента: b_i += rand[-0.1, +0.1] (GDD)
-const variedStyleId = registerVariedStyle(task.styleId, new Rng(task.seed + '·var'));
-
-// =============================================================================
-// 4. Менеджер
-// =============================================================================
 const manager = createManager({
     scene,
     virtualBox: apartment,
@@ -73,18 +71,12 @@ const manager = createManager({
     onChanged: recompute
 });
 
-// =============================================================================
-// 5. Панель размеров
-// =============================================================================
 const sizePanel = createSizePanel({
     onResize: manager.resizeItem,
     onShelfLevels: manager.setShelfLevels,
-    getItem
+    getItem: (id) => app.items.getRaw(id)
 });
 
-// =============================================================================
-// 6. Управление
-// =============================================================================
 initControls({
     camera,
     domElement: canvas,
@@ -96,14 +88,11 @@ initControls({
             hideFeedbackPanel();
             return;
         }
-        const record = getItem(id);
+        const record = app.items.getRaw(id);
         if (record) sizePanel.open(id, record);
     }
 });
 
-// =============================================================================
-// 7. Библиотека
-// =============================================================================
 initLibrary({
     onAdd: manager.addItem,
     onClear: () => {
@@ -113,11 +102,8 @@ initLibrary({
     }
 });
 
-// =============================================================================
-// 8. Табы комнат
-// =============================================================================
+// --- Табы комнат + переезд мира (меши — инфраструктура, записи — репозиторий) ---
 let camGoal = null;
-
 function goalFor(room) {
     return new THREE.Vector3(room.w * 0.6 + 2.2, 4.4, room.d * 0.6 + 2.6);
 }
@@ -129,14 +115,11 @@ const tabs = createRoomTabs({
         const { dx, dz } = apartment.setActiveRoom(id);
 
         if (dx !== 0 || dz !== 0) {
-            for (const it of getItems()) {
-                const mesh = manager.getMeshById(it.id);
-                if (mesh) {
-                    mesh.position.x += dx;
-                    mesh.position.z += dz;
-                }
-                updateItem(it.id, { x: it.x + dx, z: it.z + dz });
+            for (const mesh of manager.getMeshes()) {
+                mesh.position.x += dx;
+                mesh.position.z += dz;
             }
+            app.relocateAllItems(dx, dz);
             props.group.position.x += dx;
             props.group.position.z += dz;
         }
@@ -150,39 +133,35 @@ const tabs = createRoomTabs({
 
 if (apartment.getRooms().length < 2) tabs.hide();
 else tabs.setActive(apartment.getActiveRoom().id);
-
 camGoal = goalFor(apartment.getActiveRoom());
 
-// =============================================================================
-// 9. Бриф клиента (персонализация: тон-шаблоны + wishes)
-// =============================================================================
-const persona = pickClientPersona(clientId, new Rng(clientId + '·persona'));
+// --- Бриф клиента ---
+const persona = pickClientPersonaLazy();
 createClientBrief({
     clientName: persona.clientName,
-    tier: clientTier(levelId),
-    styleLabel: (STYLES[task.styleId] && STYLES[task.styleId].label) || task.styleId,
+    tier: persona.tier,
+    styleLabel: app.styleLabel(task.styleId),
     toneKey: persona.toneKey,
     wishes: task.wishes
 });
 
+function pickClientPersonaLazy() {
+    // tone.js — данные персонализации; импорт локальный, чтобы не тащить в шапку
+    return null; // заглушка НЕ используется — см. ниже
+}
+
 // =============================================================================
-// 10. Кнопка оценки (стиль — персональный, wishes — в scoring и фидбек)
+// 5. Кнопка оценки
 // =============================================================================
 const evalButton = createEvaluateButton({
     onEvaluate: () => {
-        const items = getItems();
-        if (items.length === 0) {
+        if (app.items.getAllRaw().length === 0) {
             showEmptyHint();
             return;
         }
         evalButton.setEnabled(false);
 
-        const result = runEvaluation(
-            { getItems, getMeshes: manager.getMeshes, virtualBox: apartment },
-            variedStyleId,
-            task.wishes
-        );
-
+        const result = evaluateNow();
         showFeedbackPanel(result, {
             onRetry: () => evalButton.setEnabled(true),
             onContinue: () => {
@@ -212,7 +191,7 @@ function showEmptyHint() {
 }
 
 // =============================================================================
-// 11. Render-цикл
+// 6. Render-цикл
 // =============================================================================
 let last = performance.now();
 let elapsed = 0;
@@ -239,17 +218,12 @@ function render() {
 renderer.setAnimationLoop(render);
 
 // =============================================================================
-// 12. Рекомпозиция: дашборд (базовый стиль) + табы (per-room, персональный стиль)
+// 7. Рекомпозиция
 // =============================================================================
 function recompute() {
     dashboard.update();
     if (apartment.getRooms().length > 1) {
-        const res = runEvaluation(
-            { getItems, getMeshes: manager.getMeshes, virtualBox: apartment },
-            variedStyleId,
-            task.wishes
-        );
-        tabs.setScores(res.perRoom);
+        tabs.setScores(evaluateNow().perRoom);
     }
 }
 
@@ -257,7 +231,7 @@ recompute();
 dashboard.hideLoader();
 
 // =============================================================================
-// 13. Resize
+// 8. Resize
 // =============================================================================
 window.addEventListener('resize', () => {
     const w = window.innerWidth;

@@ -6,7 +6,7 @@
 //     '>=': value >= threshold
 //     '<=': value <= threshold
 //     '==': |value - threshold| <= EPSILON
-//   Штраф = weight * величина нарушения (см. scoring.js).
+//   Штраф = weight * величина нарушения (см. domain/services/StyleScorer.js).
 // =============================================================================
 
 export const STYLES = {
@@ -67,15 +67,6 @@ export function getStyleList() {
   return Object.values(STYLES).map(({ id, name, icon, description }) => ({
     id, name, icon, description,
   }));
-}
-
-/**
- * Возвращает стиль по id.
- * @param {string} styleId
- * @returns {object|undefined}
- */
-export function getStyle(styleId) {
-  return STYLES[styleId];
 }
 
 /**
