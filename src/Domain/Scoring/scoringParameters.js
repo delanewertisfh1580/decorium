@@ -35,7 +35,8 @@ export function initializeScoringParameters(params) {
         starRatingThresholds: Object.freeze(params.starRatingThresholds),
         maxPenalty: params.maxPenalty,
         styleWeight: params.styleWeight,
-        ergonomicsWeight: params.ergonomicsWeight || 0
+        ergonomicsWeight: params.ergonomicsWeight || 0,
+        defaultWeight: params.defaultWeight || 1.0
     });
 }
 

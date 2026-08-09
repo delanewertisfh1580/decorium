@@ -189,7 +189,7 @@ describe('EvaluateRoomUseCase', () => {
       roomRepository.getState = async (roomId) => roomState;
       
       // Создаем ограничение, которое нарушается
-      const constraint = new LinearConstraint('woodShare', 'gte', 0.5, 1.0);
+      const constraint = new LinearConstraint('woodShare', 'gte', 0.5);
       
       const result = await evaluateRoomUseCase.execute('room-001', [constraint]);
       
