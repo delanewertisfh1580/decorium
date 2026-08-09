@@ -121,4 +121,45 @@ export class RoomState {
     const newItems = [...this._items];
     return new RoomState(newItems);
   }
+
+  /**
+   * Rotates an item by a specified angle, returning a new RoomState.
+   * Note: Rotation is stored as Euler angles { x, y, z } in degrees.
+   * For MVP, we only support Y-axis rotation (horizontal rotation).
+   *
+   * @param {string} itemId - The ID of the item to rotate
+   * @param {Object} rotationDelta - Rotation change { x?: number, y?: number, z?: number }
+   * @returns {RoomState|null} - New RoomState with rotated item, or null if rotation rejected
+   * @throws {Error} If item with ID not found
+   */
+  rotateItem(itemId, rotationDelta) {
+    const itemIndex = this._items.findIndex(i => i.id === itemId);
+    if (itemIndex === -1) {
+      throw new Error(`Item with ID ${itemId} not found`);
+    }
+
+    // Валидация входных данных: хотя бы одна ось должна быть числом
+    const hasValidAxis = 
+      (typeof rotationDelta.x === 'number') ||
+      (typeof rotationDelta.y === 'number') ||
+      (typeof rotationDelta.z === 'number');
+    
+    if (!hasValidAxis) {
+      return null; // Отклоняем невалидный угол поворота
+    }
+
+    // Для MVP поддерживаем только Y-ось (горизонтальный поворот)
+    if (rotationDelta.y === undefined || typeof rotationDelta.y !== 'number') {
+      return null; // Для MVP требуем Y-ось
+    }
+
+    // Проверка на кратность 90 градусам (для grid-based системы)
+    if (rotationDelta.y % 90 !== 0) {
+      return null; // Поворот должен быть кратен 90 градусам
+    }
+
+    // Возвращаем новое состояние комнаты
+    const newItems = [...this._items];
+    return new RoomState(newItems);
+  }
 }
