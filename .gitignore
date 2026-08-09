@@ -5,19 +5,10 @@ node_modules/
 # Build artifacts
 dist/
 build/
-target/
+.calc-3d/dist/
 
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-.ENV
-.python-version
+# Vite specific
+.vite/
 
 # Logs
 *.log
@@ -27,27 +18,43 @@ venv/
 .env.local
 .env.*
 
-# Editor files
+# IDE files
 .vscode/
 .idea/
-*.swp
-*.swo
-*.tmp
 
 # OS generated files
 .DS_Store
 Thumbs.db
 
-# Testing
-.coverage
+# Coverage reports
 coverage/
 htmlcov/
-.nyc_output/
-.mypy_cache/
-.pytest_cache/
-.jest-cache/
+.coverage
 
-# Compression
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Python cache (if any Python files were detected)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Package lock files
+package-lock.json
+yarn.lock
+
+# Compiled binaries
+*.exe
+*.dll
+*.so
+*.a
+*.obj
+*.out
+
+# Compressed files
 *.zip
 *.gz
 *.tar
@@ -70,4 +77,5 @@ htmlcov/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
+
 ```
