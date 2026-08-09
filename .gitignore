@@ -39,6 +39,4 @@ htmlcov/
 .coverage
 
 # Test cache
-.vitest/
 .nyc_output/
-```
