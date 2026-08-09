@@ -1,137 +1,175 @@
 /**
- * FeatureVector - Value Object representing item features in normalized [0, 1] range.
+ * Value Object representing a feature vector for an item.
+ * Immutable - properties cannot be changed after construction.
  * 
- * Immutable value object. All operations return new instances.
- * 
- * Features (8 dimensions):
+ * Features (all normalized to [0, 1]):
  * - woodShare: доля деревянных текстур
  * - metalShare: доля металлических текстур
  * - glassShare: доля стеклянных поверхностей
  * - lightColorShare: доля светлых цветов
  * - warmPaletteShare: доля теплой палитры
- * - formSimplicity: простота форм (1 = простые, 0 = сложные)
- * - textureComplexity: сложность текстур
- * - plasticShare: доля пластика
+ * - formSimplicity: простота форм (0 = сложные, 1 = простые)
+ * - saturationLevel: уровень насыщенности цветов
+ * - plasticShare: доля пластиковых элементов
  */
 export class FeatureVector {
-  static REQUIRED_FEATURES = [
+  #woodShare;
+  #metalShare;
+  #glassShare;
+  #lightColorShare;
+  #warmPaletteShare;
+  #formSimplicity;
+  #saturationLevel;
+  #plasticShare;
+
+  static REQUIRED_FIELDS = [
     'woodShare',
     'metalShare',
     'glassShare',
     'lightColorShare',
     'warmPaletteShare',
     'formSimplicity',
-    'textureComplexity',
+    'saturationLevel',
     'plasticShare'
   ];
 
-  constructor(data, skipValidation = false) {
-    // Validate required features
-    for (const feature of FeatureVector.REQUIRED_FEATURES) {
-      if (!(feature in data)) {
-        throw new Error(`Missing required feature: ${feature}`);
-      }
-    }
-
-    // Validate and assign each feature
-    for (const feature of FeatureVector.REQUIRED_FEATURES) {
-      const value = data[feature];
-      
-      if (typeof value !== 'number' || !Number.isFinite(value)) {
-        throw new Error(`Feature ${feature} must be a finite number`);
-      }
-      
-      // Skip range validation for intermediate calculations (add, multiply)
-      if (!skipValidation && (value < 0 || value > 1)) {
-        throw new Error('Feature value out of range [0, 1]');
-      }
-      
-      // Use Object.defineProperty to ensure immutability at property level
-      Object.defineProperty(this, feature, {
-        value: value,
-        writable: false,
-        enumerable: true,
-        configurable: false
-      });
-    }
-
-    // Freeze the instance for complete immutability
-    Object.freeze(this);
-  }
-
   /**
-   * Adds another vector to this one, returning a new FeatureVector.
-   * @param {FeatureVector} other 
-   * @returns {FeatureVector}
+   * @param {Object} features - Object containing feature values
+   * @throws {Error} If any feature is missing or out of range [0, 1]
    */
-  add(other) {
-    if (!(other instanceof FeatureVector)) {
-      throw new Error('Can only add FeatureVector instances');
+  constructor(features) {
+    if (!features || typeof features !== 'object') {
+      throw new Error('Features must be an object');
     }
 
-    const newData = {};
-    for (const feature of FeatureVector.REQUIRED_FEATURES) {
-      newData[feature] = this[feature] + other[feature];
-    }
+    // Validate and assign each required field
+    for (const field of FeatureVector.REQUIRED_FIELDS) {
+      if (!(field in features)) {
+        throw new Error(`Missing required field: ${field}`);
+      }
 
-    // Skip validation because sum can exceed [0, 1] range during intermediate calculations
-    return new FeatureVector(newData, true);
+      const value = features[field];
+      
+      if (typeof value !== 'number') {
+        throw new Error(`${field} must be a number`);
+      }
+
+      if (value < 0 || value > 1) {
+        throw new Error(`${field} must be between 0 and 1`);
+      }
+
+      // Store in private field for immutability using direct syntax
+      if (field === 'woodShare') this.#woodShare = value;
+      else if (field === 'metalShare') this.#metalShare = value;
+      else if (field === 'glassShare') this.#glassShare = value;
+      else if (field === 'lightColorShare') this.#lightColorShare = value;
+      else if (field === 'warmPaletteShare') this.#warmPaletteShare = value;
+      else if (field === 'formSimplicity') this.#formSimplicity = value;
+      else if (field === 'saturationLevel') this.#saturationLevel = value;
+      else if (field === 'plasticShare') this.#plasticShare = value;
+    }
   }
 
+  // Public getters for read-only access - using explicit private field access
+  get woodShare() { return this.#woodShare; }
+  get metalShare() { return this.#metalShare; }
+  get glassShare() { return this.#glassShare; }
+  get lightColorShare() { return this.#lightColorShare; }
+  get warmPaletteShare() { return this.#warmPaletteShare; }
+  get formSimplicity() { return this.#formSimplicity; }
+  get saturationLevel() { return this.#saturationLevel; }
+  get plasticShare() { return this.#plasticShare; }
+
   /**
-   * Multiplies all features by a scalar, returning a new FeatureVector.
-   * @param {number} scalar 
-   * @returns {FeatureVector}
+   * Access field value by name (used by average and other methods)
+   * @param {string} field - Field name
+   * @returns {number} Field value
    */
-  multiply(scalar) {
-    if (typeof scalar !== 'number' || !Number.isFinite(scalar)) {
-      throw new Error('Scalar must be a finite number');
+  getField(field) {
+    if (!FeatureVector.REQUIRED_FIELDS.includes(field)) {
+      throw new Error(`Unknown field: ${field}`);
     }
-
-    const newData = {};
-    for (const feature of FeatureVector.REQUIRED_FEATURES) {
-      newData[feature] = this[feature] * scalar;
-    }
-
-    // Skip validation because multiplication can exceed [0, 1] range during intermediate calculations
-    return new FeatureVector(newData, true);
+    // Access via getter using bracket notation on this
+    return this[field];
   }
 
   /**
-   * Calculates the average of multiple vectors.
-   * @param {FeatureVector[]} vectors 
-   * @returns {FeatureVector}
+   * Calculate average vector from array of vectors
+   * @param {FeatureVector[]} vectors - Array of FeatureVectors
+   * @returns {FeatureVector} New averaged FeatureVector
+   * @throws {Error} If array is empty
    */
   static average(vectors) {
-    if (!Array.isArray(vectors) || vectors.length === 0) {
-      throw new Error('Cannot calculate average of empty list');
+    if (!vectors || vectors.length === 0) {
+      throw new Error('Cannot calculate average of empty array');
     }
 
-    // Sum all vectors
-    let sum = vectors[0];
-    for (let i = 1; i < vectors.length; i++) {
-      sum = sum.add(vectors[i]);
+    const sum = {};
+    for (const field of FeatureVector.REQUIRED_FIELDS) {
+      sum[field] = 0;
     }
 
-    // Divide by count
-    const count = vectors.length;
-    const avgData = {};
-    for (const feature of FeatureVector.REQUIRED_FEATURES) {
-      avgData[feature] = sum[feature] / count;
+    for (const vector of vectors) {
+      if (!(vector instanceof FeatureVector)) {
+        throw new Error('All items must be FeatureVector instances');
+      }
+      for (const field of FeatureVector.REQUIRED_FIELDS) {
+        sum[field] += vector.getField(field);
+      }
     }
 
-    return new FeatureVector(avgData);
+    const average = {};
+    for (const field of FeatureVector.REQUIRED_FIELDS) {
+      average[field] = sum[field] / vectors.length;
+    }
+
+    return new FeatureVector(average);
   }
 
   /**
-   * Returns a plain object representation.
-   * @returns {Object}
+   * Calculate dot product with another vector
+   * @param {FeatureVector} other - Another FeatureVector
+   * @returns {number} Scalar product
    */
-  toObject() {
-    const obj = {};
-    for (const feature of FeatureVector.REQUIRED_FEATURES) {
-      obj[feature] = this[feature];
+  dot(other) {
+    if (!(other instanceof FeatureVector)) {
+      throw new Error('Dot product requires a FeatureVector');
     }
-    return obj;
+
+    let result = 0;
+    for (const field of FeatureVector.REQUIRED_FIELDS) {
+      result += this.getField(field) * other.getField(field);
+    }
+    return result;
+  }
+
+  /**
+   * Convert to plain object
+   * @returns {Object} Plain object with all features
+   */
+  toArray() {
+    const result = {};
+    for (const field of FeatureVector.REQUIRED_FIELDS) {
+      result[field] = this.getField(field);
+    }
+    return result;
+  }
+
+  /**
+   * Check equality with another vector
+   * @param {*} other - Another object to compare
+   * @returns {boolean} True if all features are equal
+   */
+  equals(other) {
+    if (!(other instanceof FeatureVector)) {
+      return false;
+    }
+
+    for (const field of FeatureVector.REQUIRED_FIELDS) {
+      if (this.getField(field) !== other.getField(field)) {
+        return false;
+      }
+    }
+    return true;
   }
 }
