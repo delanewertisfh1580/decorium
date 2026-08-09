@@ -9,7 +9,23 @@ target/
 
 # Cache directories
 .vite/
+__pycache__/
+*.pyc
 
-# Logs
+# Environment
+.env
+.env.local
+*.env.*
+
+# Logs and temporary files
 *.log
+*.tmp
+
+# Editors
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
 ```
