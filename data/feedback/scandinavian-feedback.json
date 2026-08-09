@@ -1,0 +1,50 @@
+[
+  {
+    "id": "scand-wood-low",
+    "category": "violation",
+    "template": "Слишком мало дерева. Скандинавский стиль требует натуральных материалов (минимум {threshold}, у вас {value}).",
+    "severity": "high"
+  },
+  {
+    "id": "scand-form-complex",
+    "category": "violation",
+    "template": "Формы слишком сложные. Скандинавский стиль любит минимализм и простоту (максимум {threshold}, у вас {value}).",
+    "severity": "medium"
+  },
+  {
+    "id": "scand-saturation-high",
+    "category": "violation",
+    "template": "Слишком яркие цвета. Скандинавский стиль предпочитает спокойные, приглушенные тона (максимум {threshold}, у вас {value}).",
+    "severity": "medium"
+  },
+  {
+    "id": "scand-plastic-high",
+    "category": "violation",
+    "template": "Много пластика. Скандинавский стиль использует натуральные материалы (максимум {threshold}, у вас {value}).",
+    "severity": "high"
+  },
+  {
+    "id": "scand-color-cold",
+    "category": "violation",
+    "template": "Слишком холодные тона. Добавьте теплого уюта (минимум {threshold}, у вас {value}).",
+    "severity": "low"
+  },
+  {
+    "id": "success-excellent",
+    "category": "success",
+    "template": "Великолепно! Комната идеально соответствует скандинавскому стилю.",
+    "severity": "high"
+  },
+  {
+    "id": "success-good",
+    "category": "success",
+    "template": "Хорошая работа! Комната выглядит уютно и стильно.",
+    "severity": "medium"
+  },
+  {
+    "id": "tip-more-items",
+    "category": "tip",
+    "template": "Попробуйте добавить больше предметов для завершенности композиции.",
+    "severity": "low"
+  }
+]

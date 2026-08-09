@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FeedbackMessage",
+  "description": "Сообщение обратной связи для игрока при нарушении ограничений или достижении результата",
+  "type": "object",
+  "required": [
+    "id",
+    "category",
+    "template"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Уникальный идентификатор сообщения (совпадает с messageKey в constraint)",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["violation", "success", "neutral", "tip"],
+      "description": "Категория сообщения"
+    },
+    "template": {
+      "type": "string",
+      "description": "Шаблон сообщения с плейсхолдерами вида {feature}, {threshold}, {value}"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "description": "Важность сообщения для UI"
+    }
+  },
+  "additionalProperties": false
+}

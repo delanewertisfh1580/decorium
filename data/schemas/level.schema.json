@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LevelDefinition",
+  "description": "Определение уровня: комната, стиль, доступные предметы и начальное состояние",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "styleId",
+    "roomDimensions",
+    "availableItems",
+    "initialPlacement"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Уникальный идентификатор уровня",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Название уровня"
+    },
+    "styleId": {
+      "type": "string",
+      "description": "Ссылка на стиль для оценки этого уровня"
+    },
+    "roomDimensions": {
+      "type": "object",
+      "description": "Размеры комнаты в метрах",
+      "required": ["width", "height", "depth"],
+      "properties": {
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "depth": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "availableItems": {
+      "type": "array",
+      "description": "Список ID предметов, доступных для размещения на этом уровне",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 5,
+      "uniqueItems": true
+    },
+    "initialPlacement": {
+      "type": "array",
+      "description": "Начальное размещение предметов (может быть пустым)",
+      "items": {
+        "type": "object",
+        "required": ["itemId", "position", "rotation"],
+        "properties": {
+          "itemId": {
+            "type": "string"
+          },
+          "position": {
+            "type": "object",
+            "required": ["x", "y", "z"],
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "z": { "type": "number" }
+            },
+            "additionalProperties": false
+          },
+          "rotation": {
+            "type": "object",
+            "required": ["x", "y", "z"],
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "z": { "type": "number" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "targetScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Целевое количество звезд для прохождения уровня"
+    }
+  },
+  "additionalProperties": false
+}
