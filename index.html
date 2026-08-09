@@ -1,103 +1,59 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <!-- Viewport: запрещаем пинч-зум, чтобы touch-перетаскивание не конфликтовало с жестами -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Decorium · 3D-оценка дизайна</title>
-
-  <!-- Шрифт Inter: только fontsource через CDN jsdelivr, веса 400/600/700/800 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/400.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/600.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/700.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/800.css">
-
-  <!-- Стили и точка входа приложения (при сборке Vite инлайнит всё в этот файл) -->
-  <link rel="stylesheet" href="/src/styles.css">
-  <script type="module" src="/src/main.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decorium - Interior Design Game</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; overflow: hidden; }
+        #app { display: grid; grid-template-columns: 250px 1fr 300px; grid-template-rows: auto 1fr; height: 100vh; gap: 10px; padding: 10px; }
+        #toolbar-container { grid-column: 1 / -1; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        #catalog-container { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow-y: auto; }
+        #room-container { background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        #room-canvas { border: 2px solid #333; cursor: pointer; }
+        #info-panel { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        #evaluation-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
+    </style>
 </head>
 <body>
-  <!-- Канвас 3D-сцены (touch-action: none задаётся в CSS) -->
-  <canvas id="scene"></canvas>
-
-  <!-- Лоадер: скрывается после первого кадра -->
-  <div id="loader">
-    <div class="spinner"></div>
-    <span>Загружаем 3D-сцену…</span>
-  </div>
-
-  <!-- Шапка бренда -->
-  <header class="brand panel">
-    <div class="brand-logo">D</div>
-    <div class="brand-text">
-      <b>Decorium</b>
-      <small>AI-Driven оценка дизайна · MVP</small>
+    <div id="app">
+        <div id="toolbar-container"></div>
+        <div id="catalog-container"></div>
+        <div id="room-container"><canvas id="room-canvas"></canvas></div>
+        <div id="info-panel"><h3>Информация</h3><p>Клик - выбрать/переместить | R - повернуть | Del - удалить | E - оценить</p></div>
+        <div id="evaluation-container"></div>
     </div>
-  </header>
-
-  <!-- Библиотека вещей: кнопки генерируются из config через JS -->
-  <aside class="library panel">
-    <h3>Библиотека вещей</h3>
-    <div id="library-items"></div>
-    <div class="lib-hint">Клик — добавить предмет в комнату</div>
-  </aside>
-
-  <!-- Дашборд метрик качества дизайна -->
-  <aside class="dashboard panel">
-    <h3>Качество дизайна</h3>
-
-    <!-- Стиль, заказанный клиентом -->
-    <div class="q-style wide">
-      <div class="lbl">Стиль клиента</div>
-      <select id="q-style-select"></select>
-    </div>
-
-    <!-- Звёзды и итоговый балл -->
-    <div class="q-stars-row wide">
-      <div id="q-stars" class="q-stars">☆☆☆☆☆</div>
-      <b id="q-total">— / 100</b>
-    </div>
-
-    <!-- Стиль и эргономика -->
-    <div class="q-bars wide">
-      <div class="q-bar-block">
-        <div class="fill-head"><span>Стиль</span><b id="q-style-val">0%</b></div>
-        <div class="fill-bar"><i id="q-style-bar"></i></div>
-      </div>
-      <div class="q-bar-block">
-        <div class="fill-head"><span>Эргономика</span><b id="q-ergo-val">0%</b></div>
-        <div class="fill-bar"><i id="q-ergo-bar"></i></div>
-      </div>
-    </div>
-
-    <!-- Суб-оценки по группам -->
-    <div class="q-groups wide">
-      <div class="lbl">Суб-оценки</div>
-      <div class="q-group-grid">
-        <div class="q-group"><span>🎨 Цвет</span><b id="q-g-color">—</b></div>
-        <div class="q-group"><span>🪵 Материалы</span><b id="q-g-materials">—</b></div>
-        <div class="q-group"><span>📐 Геометрия</span><b id="q-g-geometry">—</b></div>
-        <div class="q-group"><span>🏗️ Структура</span><b id="q-g-structure">—</b></div>
-      </div>
-    </div>
-
-    <!-- Нарушения -->
-    <div class="q-viol wide">
-      <div class="fill-head"><span>Нарушения</span><b id="q-viol-count">0</b></div>
-      <div id="q-viol-text" class="q-viol-text">Добавьте предметы, чтобы увидеть оценку.</div>
-    </div>
-
-    <!-- Счётчик предметов -->
-    <div class="stats">
-      <div class="stat-row"><span>Предметов в комнате</span><b id="m-count">0</b></div>
-    </div>
-
-    <!-- Действия -->
-    <button id="btn-clear">🗑 Очистить сцену</button>
-    <p class="note">Decorium MVP · оценка обновляется в реальном времени</p>
-  </aside>
-
-  <!-- Подсказка по управлению -->
-  <div id="hint">🖱 Перетаскивайте вещи мышью или пальцем · двойной клик — удалить</div>
+    <script type="module">
+        import { GameController } from './src/Presentation/Controllers/GameController.js';
+        import { LoadLevelUseCase } from './src/Application/UseCases/LoadLevelUseCase.js';
+        import { PlaceItemUseCase } from './src/Application/UseCases/PlaceItemUseCase.js';
+        import { MoveItemUseCase } from './src/Application/UseCases/MoveItemUseCase.js';
+        import { RotateItemUseCase } from './src/Application/UseCases/RotateItemUseCase.js';
+        import { RemoveItemUseCase } from './src/Application/UseCases/RemoveItemUseCase.js';
+        import { EvaluateRoomUseCase } from './src/Application/UseCases/EvaluateRoomUseCase.js';
+        import { JsonLevelRepository } from './src/Infrastructure/Repositories/JsonLevelRepository.js';
+        import { JsonItemCatalog } from './src/Infrastructure/DataLoaders/JsonItemCatalog.js';
+        async function main() {
+            const levelRepo = new JsonLevelRepository('./data/levels/');
+            const itemCatalog = new JsonItemCatalog('./data/items/');
+            await itemCatalog.load();
+            const loadLevelUseCase = new LoadLevelUseCase(levelRepo);
+            const placeItemUseCase = new PlaceItemUseCase(levelRepo);
+            const moveItemUseCase = new MoveItemUseCase(levelRepo);
+            const rotateItemUseCase = new RotateItemUseCase(levelRepo);
+            const removeItemUseCase = new RemoveItemUseCase(levelRepo);
+            const evaluateRoomUseCase = new EvaluateRoomUseCase(levelRepo);
+            const controller = new GameController({ loadLevelUseCase, placeItemUseCase, moveItemUseCase, rotateItemUseCase, removeItemUseCase, evaluateRoomUseCase, itemCatalog });
+            const roomCanvas = document.getElementById('room-canvas');
+            const catalogContainer = document.getElementById('catalog-container');
+            const toolbarContainer = document.getElementById('toolbar-container');
+            const evaluationContainer = document.getElementById('evaluation-container');
+            await controller.init(roomCanvas, catalogContainer, toolbarContainer, evaluationContainer);
+            await controller.loadLevel('level-001');
+            console.log('Decorium initialized!');
+        }
+        main().catch(console.error);
+    </script>
 </body>
 </html>
