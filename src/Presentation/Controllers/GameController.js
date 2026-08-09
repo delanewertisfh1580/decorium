@@ -25,7 +25,7 @@ export class GameController {
         this._itemCatalog = dependencies.itemCatalog;
 
         this._roomViewModel = null;
-        this._evaluationViewModel = new (await import('../ViewModels/EvaluationViewModel.js')).EvaluationViewModel();
+        this._evaluationViewModel = null;
         this._selectedItemId = null;
         this._catalogItems = [];
 
@@ -48,7 +48,9 @@ export class GameController {
         const { ItemCatalogView } = await import('../Views/ItemCatalogView.js');
         const { ToolbarView } = await import('../Views/ToolbarView.js');
         const { EvaluationView } = await import('../Views/EvaluationView.js');
+        const { EvaluationViewModel } = await import('../ViewModels/EvaluationViewModel.js');
 
+        this._evaluationViewModel = new EvaluationViewModel();
         this._roomView = new RoomView(roomCanvas, null);
         this._catalogView = new ItemCatalogView(catalogContainer, (itemId) => this._onCatalogSelect(itemId));
         this._toolbarView = new ToolbarView(toolbarContainer, {
@@ -77,14 +79,15 @@ export class GameController {
             return;
         }
 
-        this._roomViewModel = new (await import('../ViewModels/RoomViewModel.js')).RoomViewModel(result.roomState);
+        const { RoomViewModel } = await import('../ViewModels/RoomViewModel.js');
+        const { ItemViewModel } = await import('../ViewModels/ItemViewModel.js');
+
+        this._roomViewModel = new RoomViewModel(result.roomState);
         this._roomView._viewModel = this._roomViewModel;
         
         // Загружаем каталог предметов для этого уровня
         const allItems = await this._itemCatalog.getAllItems();
-        this._catalogItems = allItems.map(item => 
-            new (await import('../ViewModels/ItemViewModel.js')).ItemViewModel(item)
-        );
+        this._catalogItems = allItems.map(item => new ItemViewModel(item));
         
         this._renderAll();
     }

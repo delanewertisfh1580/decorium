@@ -35,9 +35,9 @@
         import { JsonLevelRepository } from './src/Infrastructure/Repositories/JsonLevelRepository.js';
         import { JsonItemCatalog } from './src/Infrastructure/DataLoaders/JsonItemCatalog.js';
         async function main() {
-            const levelRepo = new JsonLevelRepository('./data/levels/');
-            const itemCatalog = new JsonItemCatalog('./data/items/');
-            await itemCatalog.load();
+            const levelRepo = new JsonLevelRepository('./data/levels');
+            const itemCatalog = new JsonItemCatalog('./data');
+            await itemCatalog.loadAllItems();
             const loadLevelUseCase = new LoadLevelUseCase(levelRepo);
             const placeItemUseCase = new PlaceItemUseCase(levelRepo);
             const moveItemUseCase = new MoveItemUseCase(levelRepo);

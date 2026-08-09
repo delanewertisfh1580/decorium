@@ -1,22 +1,17 @@
 import Ajv from 'ajv';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
  * Infrastructure: ItemCatalog Implementation
  * Loads item definitions from JSON files with schema validation.
+ * Browser-compatible version using fetch API.
  */
-class JsonItemCatalog {
+export class JsonItemCatalog {
   /**
-   * @param {string} dataDir - Path to the data directory containing items/
+   * @param {string} basePath - Base path for JSON files
    * @param {Object} schema - JSON Schema for item validation
    */
-  constructor(dataDir, schema) {
-    this.dataDir = dataDir;
+  constructor(basePath, schema) {
+    this.basePath = basePath;
     this.schema = schema;
     this.ajv = new Ajv();
     this.validate = this.ajv.compile(schema);
@@ -32,24 +27,31 @@ class JsonItemCatalog {
       return this.itemsCache;
     }
 
+    // Browser: fetch list of items from index.json or predefined list
+    const response = await fetch(`${this.basePath}/items/index.json`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to load items index');
+    }
+    
+    const indexData = await response.json();
+    const itemIds = Array.isArray(indexData) ? indexData : indexData.items || [];
+    
     const items = [];
-    const files = fs.readdirSync(this.dataDir).filter(f => f.endsWith('.json'));
-
-    for (const file of files) {
-      const filePath = path.join(this.dataDir, file);
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
-      const data = JSON.parse(fileContent);
-
-      // Handle both array and single object formats
-      const itemsArray = Array.isArray(data) ? data : [data];
-
-      for (const item of itemsArray) {
-        const valid = this.validate(item);
-        if (!valid) {
-          const errors = this.validate.errors.map(e => e.message).join(', ');
-          throw new Error(`Item schema validation failed in ${file}: ${errors}`);
+    for (const itemId of itemIds) {
+      const itemResponse = await fetch(`${this.basePath}/items/${itemId}.json`);
+      if (itemResponse.ok) {
+        const data = await itemResponse.json();
+        const itemsArray = Array.isArray(data) ? data : [data];
+        
+        for (const item of itemsArray) {
+          const valid = this.validate(item);
+          if (!valid) {
+            const errors = this.validate.errors.map(e => e.message).join(', ');
+            throw new Error(`Item schema validation failed for ${itemId}: ${errors}`);
+          }
+          items.push(item);
         }
-        items.push(item);
       }
     }
 

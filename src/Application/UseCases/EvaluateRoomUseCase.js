@@ -9,7 +9,7 @@
 import EvaluationResultDTO from '../DTOs/EvaluationResultDTO.js';
 import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
 
-class EvaluateRoomUseCase {
+export class EvaluateRoomUseCase {
   /**
    * @param {Object} roomRepository
    * @param {Object} constraintEvaluator

@@ -8,7 +8,7 @@ import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
  * UseCase: LoadLevelUseCase
  * Loads a level by ID, validates data, and returns a LevelDTO.
  */
-class LoadLevelUseCase {
+export class LoadLevelUseCase {
   /**
    * @param {LevelRepository} levelRepository
    */

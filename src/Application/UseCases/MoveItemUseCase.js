@@ -5,7 +5,7 @@ import MoveResultDTO from '../DTOs/MoveResultDTO.js';
  * 
  * @dependency RoomRepository - порт для сохранения состояния (Infrastructure)
  */
-class MoveItemUseCase {
+export class MoveItemUseCase {
   /**
    * @param {Object} roomRepository 
    */

@@ -1,24 +1,19 @@
 import Ajv from 'ajv';
 import LevelRepository from '../../Application/Ports/LevelRepository.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
  * Infrastructure: LevelRepository Implementation
  * Loads level data from JSON files with schema validation.
+ * Browser-compatible version using fetch API.
  */
-class JsonLevelRepository extends LevelRepository {
+export class JsonLevelRepository extends LevelRepository {
   /**
-   * @param {string} dataDir - Path to the data directory
+   * @param {string} basePath - Base path for JSON files (used in Node.js)
    * @param {Object} schema - JSON Schema for validation
    */
-  constructor(dataDir, schema) {
+  constructor(basePath, schema) {
     super();
-    this.dataDir = dataDir;
+    this.basePath = basePath;
     this.schema = schema;
     this.ajv = new Ajv();
     this.validate = this.ajv.compile(schema);
@@ -29,28 +24,31 @@ class JsonLevelRepository extends LevelRepository {
    * @returns {Promise<Object|null>} Raw level data or null if not found
    */
   async loadLevel(levelId) {
-    const filePath = path.join(this.dataDir, `${levelId}.json`);
-
+    // Browser: use fetch to load JSON
+    const filePath = `${this.basePath}/${levelId}.json`;
+    
     try {
-      // Check if file exists
-      if (!fs.existsSync(filePath)) {
-        return null;
+      const response = await fetch(filePath);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null;
+        }
+        throw new Error(`Failed to load level ${levelId}: ${response.statusText}`);
       }
-
-      // Read file content
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
-      const data = JSON.parse(fileContent);
-
+      
+      const data = await response.json();
+      
       // Validate against schema
       const valid = this.validate(data);
       if (!valid) {
         const errors = this.validate.errors.map(e => e.message).join(', ');
         throw new Error(`Level schema validation failed for ${levelId}: ${errors}`);
       }
-
+      
       return data;
     } catch (error) {
-      if (error.code === 'ENOENT') {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         return null;
       }
       if (error instanceof SyntaxError) {
