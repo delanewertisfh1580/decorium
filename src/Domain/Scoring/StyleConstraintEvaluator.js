@@ -1,4 +1,4 @@
-import { Violation } from './Violation.js';
+import { Violation } from '../Constraints/Violation.js';
 
 /**
  * StyleConstraintEvaluator - Domain Service for evaluating style constraints.
@@ -33,14 +33,14 @@ export class StyleConstraintEvaluator {
         const violations = [];
 
         for (const constraint of this._constraints) {
-            const { feature, id } = constraint;
+            const featureKey = constraint.featureKey || constraint.feature;
             
-            if (!(feature in roomVector)) {
+            if (!(featureKey in roomVector)) {
                 // Skip constraints for features not present in the room vector
                 continue;
             }
 
-            const actualValue = roomVector[feature];
+            const actualValue = roomVector[featureKey];
             const violation = Violation.fromConstraint(constraint, actualValue);
 
             if (violation !== null) {

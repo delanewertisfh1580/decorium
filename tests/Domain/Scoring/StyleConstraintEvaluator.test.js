@@ -1,12 +1,19 @@
 import { describe, it, expect } from 'vitest';
 import { StyleConstraintEvaluator } from '../../../src/Domain/Scoring/StyleConstraintEvaluator.js';
-import { Violation } from '../../../src/Domain/Scoring/Violation.js';
+import { Violation } from '../../../src/Domain/Constraints/Violation.js';
 
 describe('StyleConstraintEvaluator', () => {
+    // Plain constraint objects as they come from JSON data
     const sampleConstraints = [
-        { id: 'wood-min', feature: 'wood_share', operator: '>=', threshold: 0.6 },
-        { id: 'simple-forms', feature: 'form_simplicity', operator: '<=', threshold: 0.4 },
-        { id: 'low-saturation', feature: 'saturation', operator: '<=', threshold: 0.5 }
+        { featureKey: 'wood_share', operator: 'gte', threshold: 0.6 },
+        { featureKey: 'form_simplicity', operator: 'lte', threshold: 0.4 },
+        { featureKey: 'saturation', operator: 'lte', threshold: 0.5 }
+    ];
+    
+    const sampleConstraintsWithIds = [
+        { id: 'wood-min', featureKey: 'wood_share', operator: 'gte', threshold: 0.6 },
+        { id: 'simple-forms', featureKey: 'form_simplicity', operator: 'lte', threshold: 0.4 },
+        { id: 'low-saturation', featureKey: 'saturation', operator: 'lte', threshold: 0.5 }
     ];
 
     describe('constructor validation', () => {
@@ -42,7 +49,7 @@ describe('StyleConstraintEvaluator', () => {
         });
 
         it('should return violations for unsatisfied constraints', () => {
-            const evaluator = new StyleConstraintEvaluator(sampleConstraints);
+            const evaluator = new StyleConstraintEvaluator(sampleConstraintsWithIds);
             const roomVector = {
                 wood_share: 0.3,  // Violates >= 0.6
                 form_simplicity: 0.8,  // Violates <= 0.4
