@@ -1,0 +1,311 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import RemoveItemUseCase from '../../../src/Application/UseCases/RemoveItemUseCase.js';
+import RemoveResultDTO from '../../../src/Application/DTOs/RemoveResultDTO.js';
+import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
+import { Item } from '../../../src/Domain/Items/Item.js';
+import { FeatureVector } from '../../../src/Domain/Items/FeatureVector.js';
+
+// Mock Repository Implementation for Tests
+class MockRoomRepository {
+  constructor() {
+    this.storage = new Map();
+  }
+
+  async saveState(roomId, roomState) {
+    this.storage.set(roomId, roomState);
+    return true;
+  }
+
+  async getState(roomId) {
+    return this.storage.get(roomId) || null;
+  }
+}
+
+describe('Slice A-005: RemoveItemUseCase', () => {
+  let repository;
+  let useCase;
+
+  beforeEach(() => {
+    repository = new MockRoomRepository();
+    useCase = new RemoveItemUseCase(repository);
+  });
+
+  describe('Input Validation', () => {
+    it('should fail if roomId is missing', async () => {
+      const result = await useCase.execute('', 'item-1');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('INVALID_INPUT');
+    });
+
+    it('should fail if itemId is missing', async () => {
+      const result = await useCase.execute('room-1', '');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('INVALID_INPUT');
+    });
+
+    it('should fail if roomId is not a string', async () => {
+      const result = await useCase.execute(null, 'item-1');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('INVALID_INPUT');
+    });
+
+    it('should fail if itemId is not a string', async () => {
+      const result = await useCase.execute('room-1', null);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('INVALID_INPUT');
+    });
+  });
+
+  describe('Room Not Found', () => {
+    it('should fail if room does not exist', async () => {
+      const result = await useCase.execute('non-existent-room', 'item-1');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('ROOM_NOT_FOUND');
+    });
+  });
+
+  describe('Item Not Found', () => {
+    it('should fail if item is not in the room', async () => {
+      // Create a room with one item
+      const featureVector = new FeatureVector({
+        woodShare: 0.8,
+        metalShare: 0.1,
+        glassShare: 0.0,
+        lightColorShare: 0.7,
+        warmPaletteShare: 0.6,
+        formSimplicity: 0.8,
+        saturationLevel: 0.5,
+        plasticShare: 0.0
+      });
+      const existingItem = new Item({
+        id: 'existing-item',
+        name: 'Existing Item',
+        type: 'seating',
+        featureVector: featureVector
+      });
+      const initialState = RoomState.createEmpty().addItem(existingItem);
+      await repository.saveState('room-with-item', initialState);
+
+      // Try to remove a non-existent item
+      const result = await useCase.execute('room-with-item', 'non-existent-item');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('ITEM_NOT_FOUND');
+    });
+  });
+
+  describe('Successful Removal', () => {
+    it('should remove an item from the room', async () => {
+      // Create a room with two items
+      const featureVector1 = new FeatureVector({
+        woodShare: 0.8,
+        metalShare: 0.1,
+        glassShare: 0.0,
+        lightColorShare: 0.7,
+        warmPaletteShare: 0.6,
+        formSimplicity: 0.8,
+        saturationLevel: 0.5,
+        plasticShare: 0.0
+      });
+      const featureVector2 = new FeatureVector({
+        woodShare: 0.6,
+        metalShare: 0.2,
+        glassShare: 0.1,
+        lightColorShare: 0.5,
+        warmPaletteShare: 0.5,
+        formSimplicity: 0.7,
+        saturationLevel: 0.4,
+        plasticShare: 0.1
+      });
+      const item1 = new Item({
+        id: 'item-1',
+        name: 'First Item',
+        type: 'seating',
+        featureVector: featureVector1
+      });
+      const item2 = new Item({
+        id: 'item-2',
+        name: 'Second Item',
+        type: 'surface',
+        featureVector: featureVector2
+      });
+      
+      const initialState = RoomState.createEmpty()
+        .addItem(item1)
+        .addItem(item2);
+      
+      await repository.saveState('room-multi', initialState);
+
+      // Remove first item
+      const result = await useCase.execute('room-multi', 'item-1');
+
+      expect(result.success).toBe(true);
+      expect(result.itemId).toBe('item-1');
+      expect(result.remainingItemCount).toBe(1);
+
+      // Verify state was updated
+      const savedState = await repository.getState('room-multi');
+      expect(savedState).toBeInstanceOf(RoomState);
+      expect(savedState.getItemCount()).toBe(1);
+      expect(savedState.getItem('item-1')).toBeNull();
+      expect(savedState.getItem('item-2')).toBeDefined();
+    });
+
+    it('should remove the last item from the room', async () => {
+      // Create a room with one item
+      const featureVector = new FeatureVector({
+        woodShare: 0.8,
+        metalShare: 0.1,
+        glassShare: 0.0,
+        lightColorShare: 0.7,
+        warmPaletteShare: 0.6,
+        formSimplicity: 0.8,
+        saturationLevel: 0.5,
+        plasticShare: 0.0
+      });
+      const singleItem = new Item({
+        id: 'only-item',
+        name: 'Only Item',
+        type: 'seating',
+        featureVector: featureVector
+      });
+      const initialState = RoomState.createEmpty().addItem(singleItem);
+      await repository.saveState('room-single', initialState);
+
+      // Remove the only item
+      const result = await useCase.execute('room-single', 'only-item');
+
+      expect(result.success).toBe(true);
+      expect(result.itemId).toBe('only-item');
+      expect(result.remainingItemCount).toBe(0);
+
+      // Verify room is empty
+      const savedState = await repository.getState('room-single');
+      expect(savedState).toBeInstanceOf(RoomState);
+      expect(savedState.getItemCount()).toBe(0);
+    });
+
+    it('should return correct remaining count when removing from multiple items', async () => {
+      // Create a room with three items
+      const items = [];
+      for (let i = 1; i <= 3; i++) {
+        const featureVector = new FeatureVector({
+          woodShare: 0.5,
+          metalShare: 0.3,
+          glassShare: 0.1,
+          lightColorShare: 0.4,
+          warmPaletteShare: 0.4,
+          formSimplicity: 0.6,
+          saturationLevel: 0.5,
+          plasticShare: 0.2
+        });
+        items.push(new Item({
+          id: `item-${i}`,
+          name: `Item ${i}`,
+          type: 'generic',
+          featureVector: featureVector
+        }));
+      }
+      
+      let initialState = RoomState.createEmpty();
+      items.forEach(item => {
+        initialState = initialState.addItem(item);
+      });
+      
+      await repository.saveState('room-three', initialState);
+
+      // Remove middle item
+      const result = await useCase.execute('room-three', 'item-2');
+
+      expect(result.success).toBe(true);
+      expect(result.itemId).toBe('item-2');
+      expect(result.remainingItemCount).toBe(2);
+
+      // Verify correct items remain
+      const savedState = await repository.getState('room-three');
+      expect(savedState.getItemCount()).toBe(2);
+      expect(savedState.getItem('item-1')).toBeDefined();
+      expect(savedState.getItem('item-2')).toBeNull();
+      expect(savedState.getItem('item-3')).toBeDefined();
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle repository errors gracefully', async () => {
+      // Create a repository that throws errors
+      const errorRepository = {
+        async getState(roomId) {
+          throw new Error('Database connection failed');
+        },
+        async saveState(roomId, roomState) {
+          throw new Error('Database connection failed');
+        }
+      };
+
+      const errorUseCase = new RemoveItemUseCase(errorRepository);
+      const result = await errorUseCase.execute('room-1', 'item-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('UNEXPECTED_ERROR');
+    });
+
+    it('should handle domain exceptions gracefully', async () => {
+      // Create a repository that returns corrupted state
+      const corruptedRepository = {
+        async getState(roomId) {
+          // Return an object that's not a proper RoomState
+          return { getItem: () => { throw new Error('Corrupted state'); } };
+        },
+        async saveState(roomId, roomState) {
+          return true;
+        }
+      };
+
+      const corruptedUseCase = new RemoveItemUseCase(corruptedRepository);
+      const result = await corruptedUseCase.execute('room-corrupted', 'item-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+  });
+
+  describe('DTO Structure', () => {
+    it('should return proper DTO structure on success', async () => {
+      const featureVector = new FeatureVector({
+        woodShare: 0.8,
+        metalShare: 0.1,
+        glassShare: 0.0,
+        lightColorShare: 0.7,
+        warmPaletteShare: 0.6,
+        formSimplicity: 0.8,
+        saturationLevel: 0.5,
+        plasticShare: 0.0
+      });
+      const item = new Item({
+        id: 'test-item',
+        name: 'Test Item',
+        type: 'seating',
+        featureVector: featureVector
+      });
+      const initialState = RoomState.createEmpty().addItem(item);
+      await repository.saveState('room-test', initialState);
+
+      const result = await useCase.execute('room-test', 'test-item');
+
+      expect(result).toBeInstanceOf(RemoveResultDTO);
+      expect(result.success).toBe(true);
+      expect(result.itemId).toBe('test-item');
+      expect(result.remainingItemCount).toBe(0);
+      expect(result.error).toBeNull();
+    });
+
+    it('should return proper DTO structure on failure', async () => {
+      const result = await useCase.execute('room-1', 'item-1');
+
+      expect(result).toBeInstanceOf(RemoveResultDTO);
+      expect(result.success).toBe(false);
+      expect(result.itemId).toBeNull();
+      expect(result.remainingItemCount).toBeNull();
+      expect(result.error).toBeDefined();
+    });
+  });
+});
