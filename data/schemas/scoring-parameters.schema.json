@@ -33,5 +33,5 @@
       "description": "Вес эргономической оценки в итоговом score"
     }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }
