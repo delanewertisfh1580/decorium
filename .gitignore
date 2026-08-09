@@ -1,0 +1,10 @@
+```
+# Dependencies
+node_modules/
+
+# Build artifacts
+calc-3d/dist/
+
+# Package lock files
+package-lock.json
+```
