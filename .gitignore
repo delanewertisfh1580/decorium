@@ -7,9 +7,9 @@ dist/
 build/
 target/
 
-# Temporary files
-*.tmp
-*.swp
+# Cache directories
+.vite/
+.vitest/
 
 # Logs
 *.log
@@ -17,22 +17,28 @@ target/
 # Environment
 .env
 .env.local
-.env.
+*.env.*
+
+# Temporary files
+*.tmp
+*.swp
 
 # Editors
 .vscode/
 .idea/
 
-# Python
+# Python cache (if applicable)
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-venv/
-.venv/
-.env
 
-# Vite/Vitest cache
-.node_modules/.vite/
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Test cache
+.vitest/
+.nyc_output/
 ```
