@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ScoringParameters",
+  "description": "Параметры системы оценки: пороги для звезд, веса компонентов",
+  "type": "object",
+  "required": [
+    "starThresholds",
+    "styleWeight",
+    "ergonomicsWeight"
+  ],
+  "properties": {
+    "starThresholds": {
+      "type": "array",
+      "description": "Пороги totalScore для получения звезд [0, 1, 2, 3, 4, 5]",
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "minItems": 6,
+      "maxItems": 6
+    },
+    "styleWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Вес стилевой оценки в итоговом score"
+    },
+    "ergonomicsWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Вес эргономической оценки в итоговом score"
+    }
+  },
+  "additionalProperties": false
+}

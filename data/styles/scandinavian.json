@@ -1,0 +1,15 @@
+{
+  "id": "scandinavian",
+  "name": "Скандинавский стиль",
+  "description": "Минимализм, натуральные материалы, светлые тона и уют. Много дерева, простые формы и функциональность.",
+  "targetVector": {
+    "wood_share": 0.7,
+    "metal_share": 0.15,
+    "glass_share": 0.1,
+    "plastic_share": 0.0,
+    "fabric_share": 0.5,
+    "color_temperature": 0.7,
+    "saturation": 0.2,
+    "form_complexity": 0.15
+  }
+}
