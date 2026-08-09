@@ -7,25 +7,29 @@ dist/
 build/
 target/
 
-# Cache directories
-.vite/
-__pycache__/
-*.pyc
+# Temporary files
+*.tmp
+*.temp
+
+# Logs
+*.log
 
 # Environment
 .env
 .env.local
 *.env.*
 
-# Logs and temporary files
-*.log
-*.tmp
-
 # Editors
 .vscode/
 .idea/
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py.class
+
+# Vite/Vitest cache
+.node_modules/.vite/
 ```
