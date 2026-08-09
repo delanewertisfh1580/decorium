@@ -1,7 +1,7 @@
 // =============================================================================
-// main.js v7 (глобальная очистка) — тонкий композиционный корень.
+// main.js v8 (финальная DDD-сборка) — тонкий композиционный корень.
 // Ноль импортов domain/state: всё через репозитории DecoriumApp.
-// Персональный стиль — через VO (withVariedThresholds) + StyleRepository.register.
+// Направление: domain ← application ← infrastructure/ui ← main.
 // =============================================================================
 
 import * as THREE from 'three';
@@ -9,17 +9,18 @@ import { initScene } from './scene/renderer.js';
 import { createManager } from './items/manager.js';
 import * as animation from './items/animation.js';
 import { initControls } from './controls/drag.js';
-import { initDashboard } from './ui/dashboard.js';
 import { initLibrary } from './ui/library.js';
 import { createSizePanel } from './ui/sizePanel.js';
 import { createEvaluateButton } from './ui/evaluateButton.js';
 import { showFeedbackPanel, hideFeedbackPanel } from './ui/feedbackPanel.js';
+import { initDashboard } from './ui/dashboard.js';
 import { createRoomTabs } from './ui/roomTabs.js';
 import { createClientBrief } from './ui/clientBrief.js';
 import { makeLevel } from './level/levelLoader.js';
 import { createApartment } from './level/apartment.js';
 import { createProps } from './items/animated.js';
 import { createDecoriumApp } from './application/DecoriumApp.js';
+import { pickClientPersona, clientTier } from './level/tone.js';
 import { Rng } from './level/rng.js';
 
 // =============================================================================
@@ -42,26 +43,33 @@ const props = createProps(task.anims, apartment.getBounds(), new Rng(task.seed +
 scene.add(props.group);
 
 // =============================================================================
-// 3. Application-ядро + персональный стиль клиента (VO, без мутаций STYLES)
+// 3. Application-ядро (домен) — пространство инжектится интерфейсом
 // =============================================================================
 const app = createDecoriumApp({ spaceProvider: apartment });
 
-const baseStyle = app.styles.getById(task.styleId);
-const personalStyle = baseStyle.withVariedThresholds(new Rng(task.seed + '·var'));
-app.styles.register(personalStyle);
-const activeStyleId = personalStyle.id;
+// Персональные пороги клиента (GDD: b_i += rand[-0.1,+0.1]), детерминированно.
+// Регистрируем лениво под каждый выбранный базовый стиль.
+function personalStyleIdFor(styleId) {
+    const pid = styleId + '__client';
+    if (!app.styles.getById(pid)) {
+        const base = app.styles.getById(styleId);
+        if (base) {
+            app.styles.register(base.withVariedThresholds(new Rng(task.seed + '·var·' + styleId)));
+        }
+    }
+    return app.styles.getById(pid) ? pid : styleId;
+}
 
-function evaluateNow() {
-    return app.evaluate({ styleId: activeStyleId, wishes: task.wishes });
+function evaluateNow(styleId) {
+    return app.evaluate({ styleId: personalStyleIdFor(styleId), wishes: task.wishes });
 }
 
 // =============================================================================
-// 4. UI-адаптеры (сырые записи — только через репозиторий)
+// 4. UI-адаптеры (оценка — через инъекцию, без легаси-импортов)
 // =============================================================================
 const dashboard = initDashboard({
-    getItems: () => app.items.getAllRaw(),
-    getMeshes: () => manager.getMeshes(),
-    virtualBox: apartment
+    evaluate: (styleId) => evaluateNow(styleId),
+    styleList: () => app.styleList()
 });
 
 const manager = createManager({
@@ -135,24 +143,17 @@ if (apartment.getRooms().length < 2) tabs.hide();
 else tabs.setActive(apartment.getActiveRoom().id);
 camGoal = goalFor(apartment.getActiveRoom());
 
-// --- Бриф клиента ---
-const persona = pickClientPersonaLazy();
+// --- Бриф клиента (персонализация: тон-шаблоны + wishes) ---
+const persona = pickClientPersona(clientId, new Rng(clientId + '·persona'));
 createClientBrief({
     clientName: persona.clientName,
-    tier: persona.tier,
+    tier: clientTier(levelId),
     styleLabel: app.styleLabel(task.styleId),
     toneKey: persona.toneKey,
     wishes: task.wishes
 });
 
-function pickClientPersonaLazy() {
-    // tone.js — данные персонализации; импорт локальный, чтобы не тащить в шапку
-    return null; // заглушка НЕ используется — см. ниже
-}
-
-// =============================================================================
-// 5. Кнопка оценки
-// =============================================================================
+// --- Кнопка оценки ---
 const evalButton = createEvaluateButton({
     onEvaluate: () => {
         if (app.items.getAllRaw().length === 0) {
@@ -161,7 +162,7 @@ const evalButton = createEvaluateButton({
         }
         evalButton.setEnabled(false);
 
-        const result = evaluateNow();
+        const result = evaluateNow(dashboard.getCurrentStyle());
         showFeedbackPanel(result, {
             onRetry: () => evalButton.setEnabled(true),
             onContinue: () => {
@@ -191,7 +192,7 @@ function showEmptyHint() {
 }
 
 // =============================================================================
-// 6. Render-цикл
+// 5. Render-цикл
 // =============================================================================
 let last = performance.now();
 let elapsed = 0;
@@ -218,12 +219,12 @@ function render() {
 renderer.setAnimationLoop(render);
 
 // =============================================================================
-// 7. Рекомпозиция
+// 6. Рекомпозиция
 // =============================================================================
 function recompute() {
     dashboard.update();
     if (apartment.getRooms().length > 1) {
-        tabs.setScores(evaluateNow().perRoom);
+        tabs.setScores(evaluateNow(dashboard.getCurrentStyle()).perRoom);
     }
 }
 
@@ -231,7 +232,7 @@ recompute();
 dashboard.hideLoader();
 
 // =============================================================================
-// 8. Resize
+// 7. Resize
 // =============================================================================
 window.addEventListener('resize', () => {
     const w = window.innerWidth;
