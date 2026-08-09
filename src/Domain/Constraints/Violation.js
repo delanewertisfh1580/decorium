@@ -57,6 +57,14 @@ export class Violation {
   }
 
   /**
+   * Get the ID of the violated constraint.
+   * @returns {string}
+   */
+  get constraintId() {
+    return this._constraint.id || this._constraint.featureKey;
+  }
+
+  /**
    * Get the operator of the violated constraint.
    * @returns {string}
    */
@@ -74,12 +82,23 @@ export class Violation {
 
   /**
    * Create a Violation from a constraint and actual value.
-   * @param {import('./LinearConstraint.js').LinearConstraint} constraint
+   * @param {import('./LinearConstraint.js').LinearConstraint|Object} constraint - Can be LinearConstraint or plain object
    * @param {number} actualValue
    * @returns {Violation|null} null if no violation
    */
   static fromConstraint(constraint, actualValue) {
-    const severity = constraint.calculateViolation(actualValue);
+    // Calculate severity based on operator type
+    let severity = 0;
+    const { operator, threshold } = constraint;
+    
+    if (operator === 'gte' && actualValue < threshold) {
+      severity = threshold - actualValue;
+    } else if (operator === 'lte' && actualValue > threshold) {
+      severity = actualValue - threshold;
+    }
+    
+    // Clamp severity to [0, 1]
+    severity = Math.max(0, Math.min(1, severity));
     
     // If severity is 0, constraint is satisfied - no violation
     if (severity === 0) {
