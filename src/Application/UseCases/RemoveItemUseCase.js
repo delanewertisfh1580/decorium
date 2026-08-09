@@ -5,7 +5,7 @@ import RemoveResultDTO from '../DTOs/RemoveResultDTO.js';
  * 
  * @dependency RoomRepository - порт для сохранения состояния (Infrastructure)
  */
-class RemoveItemUseCase {
+export class RemoveItemUseCase {
   /**
    * @param {Object} roomRepository 
    */

@@ -5,7 +5,7 @@ import RotateResultDTO from '../DTOs/RotateResultDTO.js';
  * 
  * @dependency RoomRepository - порт для сохранения состояния (Infrastructure)
  */
-class RotateItemUseCase {
+export class RotateItemUseCase {
   /**
    * @param {Object} roomRepository 
    */

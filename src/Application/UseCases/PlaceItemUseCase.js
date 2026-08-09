@@ -7,7 +7,7 @@ import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
  * Use Case: Place an item in the room.
  * Orchestrates domain logic for item placement.
  */
-class PlaceItemUseCase {
+export class PlaceItemUseCase {
   /**
    * @param {import('../Ports/RoomRepository.js').default} roomRepository
    */
