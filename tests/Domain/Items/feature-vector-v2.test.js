@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { FeatureVector, REQUIRED_FIELDS_COUNT } from '../../src/Domain/Items/FeatureVector.js';
-import { CatalogValidator } from '../../src/Domain/Items/CatalogValidator.js';
+import { FeatureVector, REQUIRED_FIELDS_COUNT } from '../../../src/Domain/Items/FeatureVector.js';
+import { CatalogValidator } from '../../../src/Domain/Items/CatalogValidator.js';
 
 describe('FeatureVector v2', () => {
   it('должен требовать ровно 16 полей', () => {

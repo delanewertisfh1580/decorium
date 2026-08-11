@@ -7,13 +7,21 @@ describe('Item Entity', () => {
     woodShare: 0.8, 
     metalShare: 0.2,
     glassShare: 0.1,
+    plasticShare: 0.05,
+    textileShare: 0.3,
     lightColorShare: 0.7,
+    darkColorShare: 0.3,
     warmPaletteShare: 0.6,
-    formSimplicity: 0.5,
     saturationLevel: 0.3,
-    plasticShare: 0.05
+    formSimplicity: 0.5,
+    roundnessShare: 0.4,
+    rectilinearShare: 0.6,
+    sizeNorm: 0.5,
+    priceNorm: 0.4,
+    lightingFunctionShare: 0.0,
+    storageFunctionShare: 0.2
   });
-  const validMetadata = { width: 1.0, height: 1.5, depth: 0.5 };
+  const validDimensions = { x: 1.0, z: 0.5, height: 1.5 };
 
   it('should create a valid item with required fields', () => {
     const item = new Item({
@@ -21,17 +29,19 @@ describe('Item Entity', () => {
       name: 'Scandinavian Chair',
       type: 'chair',
       featureVector: validVector,
-      metadata: validMetadata
+      dimensions: validDimensions,
+      price: 150
     });
 
     expect(item.id).toBe('chair-001');
     expect(item.name).toBe('Scandinavian Chair');
     expect(item.type).toBe('chair');
     expect(item.featureVector).toBe(validVector);
-    expect(item.metadata).toEqual(validMetadata);
+    expect(item.dimensions).toEqual(validDimensions);
+    expect(item.price).toBe(150);
   });
 
-  it('should create an item without optional metadata', () => {
+  it('should create an item without optional dimensions and price', () => {
     const item = new Item({
       id: 'table-001',
       name: 'Wooden Table',
@@ -40,7 +50,8 @@ describe('Item Entity', () => {
     });
 
     expect(item.id).toBe('table-001');
-    expect(item.metadata).toBeUndefined();
+    expect(item.dimensions).toBeUndefined();
+    expect(item.price).toBe(0);
   });
 
   it('should throw error if id is missing', () => {
