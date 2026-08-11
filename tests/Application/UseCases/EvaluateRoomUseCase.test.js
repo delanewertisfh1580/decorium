@@ -137,11 +137,19 @@ describe('EvaluateRoomUseCase', () => {
         woodShare: 0.8,
         metalShare: 0.1,
         glassShare: 0.1,
+        plasticShare: 0.1,
+        textileShare: 0.2,
         lightColorShare: 0.7,
+        darkColorShare: 0.3,
         warmPaletteShare: 0.8,
-        formSimplicity: 0.6,
         saturationLevel: 0.3,
-        plasticShare: 0.1
+        formSimplicity: 0.6,
+        roundnessShare: 0.4,
+        rectilinearShare: 0.6,
+        sizeNorm: 0.5,
+        priceNorm: 0.5,
+        lightingFunctionShare: 0.1,
+        storageFunctionShare: 0.2
       });
       
       const item = new Item({
@@ -171,11 +179,19 @@ describe('EvaluateRoomUseCase', () => {
         woodShare: 0.2, // Низкое значение
         metalShare: 0.8,
         glassShare: 0.5,
+        plasticShare: 0.6,
+        textileShare: 0.3,
         lightColorShare: 0.3,
+        darkColorShare: 0.7,
         warmPaletteShare: 0.2,
-        formSimplicity: 0.4,
         saturationLevel: 0.7,
-        plasticShare: 0.6
+        formSimplicity: 0.4,
+        roundnessShare: 0.3,
+        rectilinearShare: 0.7,
+        sizeNorm: 0.5,
+        priceNorm: 0.5,
+        lightingFunctionShare: 0.2,
+        storageFunctionShare: 0.3
       });
       
       const item = new Item({
@@ -208,11 +224,19 @@ describe('EvaluateRoomUseCase', () => {
           woodShare: 0.8,
           metalShare: 0.1,
           glassShare: 0.1,
+          plasticShare: 0.1,
+          textileShare: 0.2,
           lightColorShare: 0.8,
+          darkColorShare: 0.2,
           warmPaletteShare: 0.7,
-          formSimplicity: 0.8,
           saturationLevel: 0.2,
-          plasticShare: 0.1
+          formSimplicity: 0.8,
+          roundnessShare: 0.4,
+          rectilinearShare: 0.6,
+          sizeNorm: 0.5,
+          priceNorm: 0.5,
+          lightingFunctionShare: 0.1,
+          storageFunctionShare: 0.2
         });
         
         const item = new Item({
@@ -252,11 +276,19 @@ describe('EvaluateRoomUseCase', () => {
         woodShare: 0.8,
         metalShare: 0.1,
         glassShare: 0.1,
+        plasticShare: 0.1,
+        textileShare: 0.2,
         lightColorShare: 0.7,
+        darkColorShare: 0.3,
         warmPaletteShare: 0.8,
-        formSimplicity: 0.6,
         saturationLevel: 0.3,
-        plasticShare: 0.1
+        formSimplicity: 0.6,
+        roundnessShare: 0.4,
+        rectilinearShare: 0.6,
+        sizeNorm: 0.5,
+        priceNorm: 0.5,
+        lightingFunctionShare: 0.1,
+        storageFunctionShare: 0.2
       });
       
       const item = new Item({

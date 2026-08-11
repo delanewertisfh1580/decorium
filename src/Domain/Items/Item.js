@@ -26,9 +26,14 @@ export class Item {
   #featureVector;
 
   /**
-   * @type {{ width?: number, height?: number, depth?: number } | undefined}
+   * @type {{ x: number, z: number, height?: number } | undefined}
    */
-  #metadata;
+  #dimensions;
+
+  /**
+   * @type {number}
+   */
+  #price;
 
   /**
    * @param {Object} params
@@ -36,9 +41,10 @@ export class Item {
    * @param {string} params.name - Human-readable name
    * @param {string} params.type - Item type (e.g., 'chair', 'table', 'decor')
    * @param {FeatureVector} params.featureVector - Feature vector describing item characteristics
-   * @param {{ width?: number, height?: number, depth?: number }} [params.metadata] - Optional physical dimensions
+   * @param {{ x: number, z: number, height?: number }} [params.dimensions] - Physical dimensions (width x depth in meters)
+   * @param {number} [params.price] - Item price in credits
    */
-  constructor({ id, name, type, featureVector, metadata }) {
+  constructor({ id, name, type, featureVector, dimensions, price = 0 }) {
     // Validation
     if (id === undefined || id === null) {
       throw new Error('Item ID is required');
@@ -63,7 +69,8 @@ export class Item {
     this.#name = name;
     this.#type = type;
     this.#featureVector = featureVector;
-    this.#metadata = metadata;
+    this.#dimensions = dimensions;
+    this.#price = price;
 
     // Freeze to enforce immutability
     Object.freeze(this);
@@ -98,9 +105,16 @@ export class Item {
   }
 
   /**
-   * @returns {{ width?: number, height?: number, depth?: number } | undefined}
+   * @returns {{ x: number, z: number, height?: number } | undefined}
    */
-  get metadata() {
-    return this.#metadata;
+  get dimensions() {
+    return this.#dimensions;
+  }
+
+  /**
+   * @returns {number}
+   */
+  get price() {
+    return this.#price;
   }
 }

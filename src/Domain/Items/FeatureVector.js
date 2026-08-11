@@ -6,31 +6,55 @@
  * - woodShare: доля деревянных текстур
  * - metalShare: доля металлических текстур
  * - glassShare: доля стеклянных поверхностей
- * - lightColorShare: доля светлых цветов
- * - warmPaletteShare: доля теплой палитры
- * - formSimplicity: простота форм (0 = сложные, 1 = простые)
- * - saturationLevel: уровень насыщенности цветов
  * - plasticShare: доля пластиковых элементов
+ * - textileShare: доля текстильных материалов
+ * - lightColorShare: доля светлых цветов
+ * - darkColorShare: доля темных цветов
+ * - warmPaletteShare: доля теплой палитры
+ * - saturationLevel: уровень насыщенности цветов
+ * - formSimplicity: простота форм (0 = сложные, 1 = простые)
+ * - roundnessShare: доля округлых форм
+ * - rectilinearShare: доля прямоугольных форм
+ * - sizeNorm: нормализованный размер
+ * - priceNorm: нормализованная цена
+ * - lightingFunctionShare: доля осветительных функций
+ * - storageFunctionShare: доля функций хранения
  */
 export class FeatureVector {
   #woodShare;
   #metalShare;
   #glassShare;
-  #lightColorShare;
-  #warmPaletteShare;
-  #formSimplicity;
-  #saturationLevel;
   #plasticShare;
+  #textileShare;
+  #lightColorShare;
+  #darkColorShare;
+  #warmPaletteShare;
+  #saturationLevel;
+  #formSimplicity;
+  #roundnessShare;
+  #rectilinearShare;
+  #sizeNorm;
+  #priceNorm;
+  #lightingFunctionShare;
+  #storageFunctionShare;
 
   static REQUIRED_FIELDS = [
     'woodShare',
     'metalShare',
     'glassShare',
+    'plasticShare',
+    'textileShare',
     'lightColorShare',
+    'darkColorShare',
     'warmPaletteShare',
-    'formSimplicity',
     'saturationLevel',
-    'plasticShare'
+    'formSimplicity',
+    'roundnessShare',
+    'rectilinearShare',
+    'sizeNorm',
+    'priceNorm',
+    'lightingFunctionShare',
+    'storageFunctionShare'
   ];
 
   /**
@@ -62,11 +86,19 @@ export class FeatureVector {
       if (field === 'woodShare') this.#woodShare = value;
       else if (field === 'metalShare') this.#metalShare = value;
       else if (field === 'glassShare') this.#glassShare = value;
-      else if (field === 'lightColorShare') this.#lightColorShare = value;
-      else if (field === 'warmPaletteShare') this.#warmPaletteShare = value;
-      else if (field === 'formSimplicity') this.#formSimplicity = value;
-      else if (field === 'saturationLevel') this.#saturationLevel = value;
       else if (field === 'plasticShare') this.#plasticShare = value;
+      else if (field === 'textileShare') this.#textileShare = value;
+      else if (field === 'lightColorShare') this.#lightColorShare = value;
+      else if (field === 'darkColorShare') this.#darkColorShare = value;
+      else if (field === 'warmPaletteShare') this.#warmPaletteShare = value;
+      else if (field === 'saturationLevel') this.#saturationLevel = value;
+      else if (field === 'formSimplicity') this.#formSimplicity = value;
+      else if (field === 'roundnessShare') this.#roundnessShare = value;
+      else if (field === 'rectilinearShare') this.#rectilinearShare = value;
+      else if (field === 'sizeNorm') this.#sizeNorm = value;
+      else if (field === 'priceNorm') this.#priceNorm = value;
+      else if (field === 'lightingFunctionShare') this.#lightingFunctionShare = value;
+      else if (field === 'storageFunctionShare') this.#storageFunctionShare = value;
     }
   }
 
@@ -74,11 +106,19 @@ export class FeatureVector {
   get woodShare() { return this.#woodShare; }
   get metalShare() { return this.#metalShare; }
   get glassShare() { return this.#glassShare; }
-  get lightColorShare() { return this.#lightColorShare; }
-  get warmPaletteShare() { return this.#warmPaletteShare; }
-  get formSimplicity() { return this.#formSimplicity; }
-  get saturationLevel() { return this.#saturationLevel; }
   get plasticShare() { return this.#plasticShare; }
+  get textileShare() { return this.#textileShare; }
+  get lightColorShare() { return this.#lightColorShare; }
+  get darkColorShare() { return this.#darkColorShare; }
+  get warmPaletteShare() { return this.#warmPaletteShare; }
+  get saturationLevel() { return this.#saturationLevel; }
+  get formSimplicity() { return this.#formSimplicity; }
+  get roundnessShare() { return this.#roundnessShare; }
+  get rectilinearShare() { return this.#rectilinearShare; }
+  get sizeNorm() { return this.#sizeNorm; }
+  get priceNorm() { return this.#priceNorm; }
+  get lightingFunctionShare() { return this.#lightingFunctionShare; }
+  get storageFunctionShare() { return this.#storageFunctionShare; }
 
   /**
    * Access field value by name (used by average and other methods)
@@ -173,3 +213,8 @@ export class FeatureVector {
     return true;
   }
 }
+
+/**
+ * Constant for the number of required fields (16)
+ */
+export const REQUIRED_FIELDS_COUNT = FeatureVector.REQUIRED_FIELDS.length;

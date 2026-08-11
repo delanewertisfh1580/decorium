@@ -114,7 +114,19 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         warmPaletteShare: 0.5,
         formSimplicity: 0.7,
         saturationLevel: 0.4,
-        plasticShare: 0.1
+        plasticShare: 0.1,
+        textileShare: 0.2,
+        lightColorShare: 0.7,
+        darkColorShare: 0.3,
+        warmPaletteShare: 0.8,
+        saturationLevel: 0.3,
+        formSimplicity: 0.6,
+        roundnessShare: 0.4,
+        rectilinearShare: 0.6,
+        sizeNorm: 0.5,
+        priceNorm: 0.5,
+        lightingFunctionShare: 0.1,
+        storageFunctionShare: 0.2
       });
       const item1 = new Item({
         id: 'item-1',
@@ -196,7 +208,19 @@ describe('Slice A-005: RemoveItemUseCase', () => {
           warmPaletteShare: 0.4,
           formSimplicity: 0.6,
           saturationLevel: 0.5,
-          plasticShare: 0.2
+          plasticShare: 0.2,
+          textileShare: 0.3,
+          lightColorShare: 0.4,
+          darkColorShare: 0.6,
+          warmPaletteShare: 0.4,
+          saturationLevel: 0.5,
+          formSimplicity: 0.6,
+          roundnessShare: 0.4,
+          rectilinearShare: 0.6,
+          sizeNorm: 0.5,
+          priceNorm: 0.5,
+          lightingFunctionShare: 0.2,
+          storageFunctionShare: 0.3
         });
         items.push(new Item({
           id: `item-${i}`,
