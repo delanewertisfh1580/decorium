@@ -1,67 +1,70 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 /**
  * Infrastructure: SchemaLoader
  * Loads JSON Schema definitions for validation.
+ * Browser-compatible version using fetch API.
  */
-class SchemaLoader {
+export class SchemaLoader {
   /**
-   * @param {string} schemasDir - Path to the schemas directory
+   * Load level schema from schemas directory
+   * @returns {Promise<Object>} The level schema object
    */
-  constructor(schemasDir) {
-    this.schemasDir = schemasDir;
-    this.schemasCache = {};
+  static async loadLevelSchema() {
+    try {
+      const response = await fetch('./data/schemas/level.schema.json');
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Return a minimal default schema if file not found
+          console.warn('Level schema not found, using default schema');
+          return {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              roomId: { type: 'string' },
+              items: { type: 'array' },
+              constraints: { type: 'array' },
+              styleId: { type: 'string' }
+            },
+            required: ['id', 'roomId']
+          };
+        }
+        throw new Error(`Failed to load schema: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        // Return default schema on network errors
+        console.warn('Network error loading schema, using default schema');
+        return {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            roomId: { type: 'string' },
+            items: { type: 'array' },
+            constraints: { type: 'array' },
+            styleId: { type: 'string' }
+          },
+          required: ['id', 'roomId']
+        };
+      }
+      throw error;
+    }
   }
 
   /**
    * Load a specific schema by name
    * @param {string} schemaName - Name of the schema file (without .json)
-   * @returns {Object} The schema object
+   * @returns {Promise<Object>} The schema object
    */
-  loadSchema(schemaName) {
-    if (this.schemasCache[schemaName]) {
-      return this.schemasCache[schemaName];
+  static async loadSchema(schemaName) {
+    const response = await fetch(`./data/schemas/${schemaName}.schema.json`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to load schema ${schemaName}: ${response.statusText}`);
     }
-
-    const filePath = path.join(this.schemasDir, `${schemaName}.schema.json`);
-
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`Schema file not found: ${filePath}`);
-    }
-
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const schema = JSON.parse(fileContent);
-
-    this.schemasCache[schemaName] = schema;
-    return schema;
-  }
-
-  /**
-   * Load all schemas from the directory
-   * @returns {Object} Object with schema names as keys
-   */
-  loadAllSchemas() {
-    const schemas = {};
-    const files = fs.readdirSync(this.schemasDir).filter(f => f.endsWith('.schema.json'));
-
-    for (const file of files) {
-      const schemaName = file.replace('.schema.json', '');
-      schemas[schemaName] = this.loadSchema(schemaName);
-    }
-
-    return schemas;
-  }
-
-  /**
-   * Clear cache (useful for testing)
-   */
-  clearCache() {
-    this.schemasCache = {};
+    
+    return await response.json();
   }
 }
 

@@ -1,12 +1,12 @@
 {
-  "name": "calc-3d",
+  "name": "decorium",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Интерактивный 3D-калькулятор размера бокса для Self-Storage (CodeForge)",
+  "description": "Decorium - интерьерная игра-таймкиллер с AI-driven оценкой дизайна (DDD + Three.js)",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/check-main.js && vite build",
     "preview": "vite preview",
     "test": "vitest run"
   },

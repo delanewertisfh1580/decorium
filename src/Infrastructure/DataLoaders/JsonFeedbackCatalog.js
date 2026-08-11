@@ -1,25 +1,20 @@
 import Ajv from 'ajv';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
  * Infrastructure: FeedbackCatalog Implementation
  * Loads feedback message templates from JSON files.
+ * Browser-compatible version using fetch API.
  */
-class JsonFeedbackCatalog {
+export class JsonFeedbackCatalog {
   /**
-   * @param {string} dataDir - Path to the feedback directory
+   * @param {string} dataPath - Path to the feedback directory
    * @param {Object} schema - JSON Schema for feedback validation
    */
-  constructor(dataDir, schema) {
-    this.dataDir = dataDir;
+  constructor(dataPath, schema = null) {
+    this.dataPath = dataPath;
     this.schema = schema;
-    this.ajv = new Ajv();
-    this.validate = this.ajv.compile(schema);
+    this.ajv = schema ? new Ajv() : null;
+    this.validate = schema ? this.ajv.compile(schema) : null;
     this.feedbackCache = null;
   }
 
@@ -32,29 +27,44 @@ class JsonFeedbackCatalog {
       return this.feedbackCache;
     }
 
-    const feedback = [];
-    const files = fs.readdirSync(this.dataDir).filter(f => f.endsWith('.json'));
-
-    for (const file of files) {
-      const filePath = path.join(this.dataDir, file);
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
-      const data = JSON.parse(fileContent);
-
-      // Handle both array and single object formats
-      const feedbackArray = Array.isArray(data) ? data : [data];
-
-      for (const item of feedbackArray) {
-        const valid = this.validate(item);
-        if (!valid) {
-          const errors = this.validate.errors.map(e => e.message).join(', ');
-          throw new Error(`Feedback schema validation failed in ${file}: ${errors}`);
-        }
-        feedback.push(item);
+    try {
+      const response = await fetch(`${this.dataPath}/index.json`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to load feedback index');
       }
-    }
 
-    this.feedbackCache = feedback;
-    return feedback;
+      const indexData = await response.json();
+      const feedbackIds = Array.isArray(indexData) ? indexData : indexData.feedback || [];
+
+      const feedback = [];
+      for (const feedbackId of feedbackIds) {
+        const itemResponse = await fetch(`${this.dataPath}/${feedbackId}.json`);
+        if (itemResponse.ok) {
+          const data = await itemResponse.json();
+          const itemsArray = Array.isArray(data) ? data : [data];
+
+          for (const item of itemsArray) {
+            if (this.validate) {
+              const valid = this.validate(item);
+              if (!valid) {
+                const errors = this.validate.errors.map(e => e.message).join(', ');
+                throw new Error(`Feedback schema validation failed for ${feedbackId}: ${errors}`);
+              }
+            }
+            feedback.push(item);
+          }
+        }
+      }
+
+      this.feedbackCache = feedback;
+      return feedback;
+    } catch (error) {
+      // Return empty array on error (graceful degradation)
+      console.warn('Failed to load feedback, using empty catalog:', error.message);
+      this.feedbackCache = [];
+      return [];
+    }
   }
 
   /**

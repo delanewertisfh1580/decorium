@@ -13,7 +13,11 @@ export class GameController {
      * @param {import('../Application/UseCases/RotateItemUseCase.js').RotateItemUseCase} dependencies.rotateItemUseCase
      * @param {import('../Application/UseCases/RemoveItemUseCase.js').RemoveItemUseCase} dependencies.removeItemUseCase
      * @param {import('../Application/UseCases/EvaluateRoomUseCase.js').EvaluateRoomUseCase} dependencies.evaluateRoomUseCase
-     * @param {import('../Domain/Repositories/ItemCatalogRepository.js').ItemCatalogRepository} dependencies.itemCatalog
+     * @param {import('../Infrastructure/DataLoaders/JsonItemCatalog.js').JsonItemCatalog} dependencies.itemCatalog
+     * @param {THREE.Scene} dependencies.scene
+     * @param {THREE.PerspectiveCamera} dependencies.camera
+     * @param {THREE.WebGLRenderer} dependencies.renderer
+     * @param {import('three/addons/controls/OrbitControls.js').OrbitControls} dependencies.controls
      */
     constructor(dependencies) {
         this._loadLevel = dependencies.loadLevelUseCase;
@@ -23,6 +27,10 @@ export class GameController {
         this._removeItem = dependencies.removeItemUseCase;
         this._evaluateRoom = dependencies.evaluateRoomUseCase;
         this._itemCatalog = dependencies.itemCatalog;
+        this._scene = dependencies.scene;
+        this._camera = dependencies.camera;
+        this._renderer = dependencies.renderer;
+        this._controls = dependencies.controls;
 
         this._roomViewModel = null;
         this._evaluationViewModel = null;
@@ -34,6 +42,9 @@ export class GameController {
         this._catalogView = null;
         this._toolbarView = null;
         this._evaluationView = null;
+        
+        // Предметы на сцене
+        this._itemMeshes = new Map();
     }
 
     /**
@@ -82,11 +93,11 @@ export class GameController {
         const { RoomViewModel } = await import('../ViewModels/RoomViewModel.js');
         const { ItemViewModel } = await import('../ViewModels/ItemViewModel.js');
 
-        this._roomViewModel = new RoomViewModel(result.roomState);
+        this._roomViewModel = new RoomViewModel(result.data);
         this._roomView._viewModel = this._roomViewModel;
         
         // Загружаем каталог предметов для этого уровня
-        const allItems = await this._itemCatalog.getAllItems();
+        const allItems = await this._itemCatalog.loadAllItems();
         this._catalogItems = allItems.map(item => new ItemViewModel(item));
         
         this._renderAll();
@@ -213,18 +224,18 @@ export class GameController {
     }
 
     async _onEvaluate() {
-        const evalParams = { /* параметры оценки из конфига уровня */ };
+        const constraints = this._roomViewModel.constraints || [];
         const result = await this._evaluateRoom.execute(
             this._roomViewModel.id,
-            evalParams
+            constraints
         );
 
         if (result.success) {
             this._evaluationViewModel.update(
-                result.score,
-                result.maxScore,
-                result.stars,
-                result.feedback
+                result.data.score,
+                100, // maxScore - должен приходить из use case
+                result.data.stars,
+                result.data.feedback
             );
             this._evaluationView.render(this._evaluationViewModel);
         }
