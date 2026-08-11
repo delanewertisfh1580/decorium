@@ -9,8 +9,9 @@ export class LinearConstraint {
    * @param {string} featureKey - The feature name to constrain (e.g., 'wood_share')
    * @param {'gte'|'lte'} operator - The comparison operator
    * @param {number} threshold - The threshold value [0, 1]
+   * @param {string} [id] - Optional ID for the constraint
    */
-  constructor(featureKey, operator, threshold) {
+  constructor(featureKey, operator, threshold, id) {
     if (!featureKey || typeof featureKey !== 'string' || featureKey.trim() === '') {
       throw new Error('Feature key is required');
     }
@@ -26,6 +27,7 @@ export class LinearConstraint {
     this._featureKey = featureKey;
     this._operator = operator;
     this._threshold = threshold;
+    this._id = id || null;
 
     Object.freeze(this);
   }
@@ -40,6 +42,10 @@ export class LinearConstraint {
 
   get threshold() {
     return this._threshold;
+  }
+
+  get id() {
+    return this._id;
   }
 
   /**

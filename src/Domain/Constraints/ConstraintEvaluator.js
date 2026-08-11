@@ -1,6 +1,8 @@
 /**
  * ConstraintEvaluationResult - Value Object representing the result of evaluating a constraint
  */
+import { Violation } from './Violation.js';
+
 export class ConstraintEvaluationResult {
   constructor(constraint, isSatisfied, violation) {
     this._constraint = constraint;
@@ -35,7 +37,7 @@ export class ConstraintEvaluator {
    */
   evaluate(constraint, value) {
     const isSatisfied = constraint.isSatisfied(value);
-    const violation = constraint.calculateViolation(value);
+    const violation = Violation.fromConstraint(constraint, value);
 
     return new ConstraintEvaluationResult(constraint, isSatisfied, violation);
   }

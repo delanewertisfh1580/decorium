@@ -10,7 +10,7 @@ describe('ConstraintEvaluator', () => {
     const result = evaluator.evaluate(constraint, 0.7);
     
     expect(result.isSatisfied).toBe(true);
-    expect(result.violation).toBe(0);
+    expect(result.violation).toBe(null);
     expect(result.constraint).toBe(constraint);
   });
 
@@ -21,7 +21,8 @@ describe('ConstraintEvaluator', () => {
     const result = evaluator.evaluate(constraint, 0.3);
     
     expect(result.isSatisfied).toBe(false);
-    expect(result.violation).toBe(0.2);
+    expect(result.violation).toBeDefined();
+    expect(result.violation.severity).toBe(0.2);
     expect(result.constraint).toBe(constraint);
   });
 
@@ -32,7 +33,7 @@ describe('ConstraintEvaluator', () => {
     const result = evaluator.evaluate(constraint, 0.05);
     
     expect(result.isSatisfied).toBe(true);
-    expect(result.violation).toBe(0);
+    expect(result.violation).toBe(null);
   });
 
   it('should evaluate a violated lte constraint', () => {
@@ -42,7 +43,8 @@ describe('ConstraintEvaluator', () => {
     const result = evaluator.evaluate(constraint, 0.25);
     
     expect(result.isSatisfied).toBe(false);
-    expect(result.violation).toBe(0.15);
+    expect(result.violation).toBeDefined();
+    expect(result.violation.severity).toBe(0.15);
   });
 
   it('should handle boundary value (exactly at threshold)', () => {
@@ -52,7 +54,7 @@ describe('ConstraintEvaluator', () => {
     const result = evaluator.evaluate(constraint, 0.5);
     
     expect(result.isSatisfied).toBe(true);
-    expect(result.violation).toBe(0);
+    expect(result.violation).toBe(null);
   });
 
   it('should evaluate multiple constraints and return all results', () => {
@@ -72,9 +74,12 @@ describe('ConstraintEvaluator', () => {
     
     expect(results).toHaveLength(3);
     expect(results[0].isSatisfied).toBe(true);
+    expect(results[0].violation).toBe(null);
     expect(results[1].isSatisfied).toBe(false);
-    expect(results[1].violation).toBeCloseTo(0.05);
+    expect(results[1].violation).toBeDefined();
+    expect(results[1].violation.severity).toBeCloseTo(0.05);
     expect(results[2].isSatisfied).toBe(false);
-    expect(results[2].violation).toBeCloseTo(0.1);
+    expect(results[2].violation).toBeDefined();
+    expect(results[2].violation.severity).toBeCloseTo(0.1);
   });
 });
