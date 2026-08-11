@@ -1,165 +1,334 @@
 import { Item } from '../Items/Item.js';
+import { RoomBounds } from './RoomBounds.js';
 
 /**
- * Value Object representing the state of a room.
- * Immutable: all modification methods return a new instance.
+ * Result object for room operations.
+ */
+class RoomOperationResult {
+  constructor(success, error = null) {
+    this.success = success;
+    this.error = error;
+  }
+
+  static success() {
+    return new RoomOperationResult(true);
+  }
+
+  static failure(error) {
+    return new RoomOperationResult(false, error);
+  }
+}
+
+/**
+ * PlacedItem - represents an item placed in the room with position and rotation.
+ */
+class PlacedItem {
+  #item;
+  #position;
+  #rotation;
+
+  constructor(item, position, rotation) {
+    this.#item = item;
+    this.#position = { ...position };
+    this.#rotation = rotation;
+  }
+
+  get id() {
+    return this.#item.id;
+  }
+
+  get item() {
+    return this.#item;
+  }
+
+  get position() {
+    return { ...this.#position };
+  }
+
+  get rotation() {
+    return this.#rotation;
+  }
+
+  get dimensions() {
+    return this.#item.dimensions;
+  }
+}
+
+/**
+ * RoomState - manages the state of items placed in a room.
+ * Handles bounds checking, collision detection, and gap validation.
  */
 export class RoomState {
+  #placedItems;
+  #bounds;
+
   /**
-   * @private
-   * @param {Item[]} items - Array of placed items
+   * @param {RoomBounds} bounds - Room boundaries
+   * @param {PlacedItem[]} [items=[]] - Initial placed items
    */
-  constructor(items) {
-    Object.freeze(items);
-    this._items = items;
+  constructor(bounds, items = []) {
+    if (!(bounds instanceof RoomBounds)) {
+      throw new Error('RoomState requires RoomBounds');
+    }
+    this.#bounds = bounds;
+    this.#placedItems = [...items];
   }
 
   /**
    * Creates an empty room state.
+   * @param {RoomBounds} bounds
    * @returns {RoomState}
    */
-  static createEmpty() {
-    return new RoomState([]);
+  static createEmpty(bounds) {
+    return new RoomState(bounds, []);
   }
 
   /**
-   * Gets all items in the room.
-   * @returns {Item[]}
+   * Gets all placed items.
+   * @returns {Array}
    */
   getItems() {
-    return [...this._items];
+    return this.#placedItems.map(pi => ({
+      id: pi.id,
+      item: pi.item,
+      position: pi.position,
+      rotation: pi.rotation,
+      dimensions: pi.dimensions
+    }));
   }
 
   /**
-   * Gets the count of items in the room.
-   * @returns {number}
+   * Checks if a position is within room bounds.
+   * @param {Object} position - {x, z}
+   * @param {Object} dimensions - {x, z}
+   * @returns {boolean}
    */
-  getItemCount() {
-    return this._items.length;
+  #isWithinBounds(position, dimensions) {
+    const halfX = dimensions.x / 2;
+    const halfZ = dimensions.z / 2;
+    
+    const minX = position.x - halfX;
+    const maxX = position.x + halfX;
+    const minZ = position.z - halfZ;
+    const maxZ = position.z + halfZ;
+
+    return minX >= 0 && maxX <= this.#bounds.width &&
+           minZ >= 0 && maxZ <= this.#bounds.height;
   }
 
   /**
-   * Adds an item to the room, returning a new RoomState.
-   * @param {Item} item - The item to add
-   * @returns {RoomState} - New RoomState with the item added
-   * @throws {Error} If item with same ID already exists
+   * Calculates the distance between two placed items' edges.
+   * @param {PlacedItem} a
+   * @param {PlacedItem} b
+   * @returns {number} - Minimum gap between edges (negative if overlapping)
    */
-  addItem(item) {
-    if (!(item instanceof Item)) {
-      throw new Error('Only Item instances can be added to RoomState');
+  #calculateGap(a, b) {
+    const aHalfX = a.dimensions.x / 2;
+    const aHalfZ = a.dimensions.z / 2;
+    const bHalfX = b.dimensions.x / 2;
+    const bHalfZ = b.dimensions.z / 2;
+
+    // Calculate center distances
+    const dx = Math.abs(a.position.x - b.position.x);
+    const dz = Math.abs(a.position.z - b.position.z);
+
+    // Calculate edge distances
+    const gapX = dx - aHalfX - bHalfX;
+    const gapZ = dz - aHalfZ - bHalfZ;
+
+    // Return minimum gap (negative means overlap)
+    return Math.min(gapX, gapZ);
+  }
+
+  /**
+   * Checks for collisions and insufficient gaps.
+   * @param {Object} position - {x, z}
+   * @param {Object} dimensions - {x, z}
+   * @param {string} excludeId - ID to exclude from check
+   * @returns {{collision: boolean, insufficientGap: boolean}}
+   */
+  #checkCollisionsAndGaps(position, dimensions, excludeId = null) {
+    const tempItem = {
+      id: 'temp',
+      dimensions: dimensions
+    };
+    const tempPlaced = new PlacedItem(tempItem, position, 0);
+
+    for (const placed of this.#placedItems) {
+      if (excludeId && placed.id === excludeId) {
+        continue;
+      }
+
+      const gap = this.#calculateGap(tempPlaced, placed);
+      
+      if (gap < 0) {
+        return { collision: true, insufficientGap: false };
+      }
+      
+      if (gap < 0.9) {
+        return { collision: false, insufficientGap: true };
+      }
     }
 
-    const existingIndex = this._items.findIndex(i => i.id === item.id);
-    if (existingIndex !== -1) {
-      throw new Error(`Item with ID ${item.id} already exists`);
+    return { collision: false, insufficientGap: false };
+  }
+
+  /**
+   * Places an item in the room.
+   * @param {Item} item - The item to place
+   * @param {Object} position - {x, z} position
+   * @param {number} rotation - Rotation in degrees
+   * @returns {RoomOperationResult}
+   */
+  placeItem(item, position, rotation = 0) {
+    const dimensions = item.dimensions || { x: 1, z: 1 };
+
+    // Check bounds
+    if (!this.#isWithinBounds(position, dimensions)) {
+      return RoomOperationResult.failure('OUT_OF_BOUNDS');
     }
 
-    const newItems = [...this._items, item];
-    return new RoomState(newItems);
-  }
-
-  /**
-   * Removes an item by ID, returning a new RoomState.
-   * @param {string} itemId - The ID of the item to remove
-   * @returns {RoomState} - New RoomState with the item removed
-   * @throws {Error} If item with ID not found
-   */
-  removeItem(itemId) {
-    const existingIndex = this._items.findIndex(i => i.id === itemId);
-    if (existingIndex === -1) {
-      throw new Error(`Item with ID ${itemId} not found`);
+    // Check collisions and gaps
+    const checks = this.#checkCollisionsAndGaps(position, dimensions);
+    if (checks.collision) {
+      return RoomOperationResult.failure('COLLISION');
+    }
+    if (checks.insufficientGap) {
+      return RoomOperationResult.failure('INSUFFICIENT_GAP');
     }
 
-    const newItems = [
-      ...this._items.slice(0, existingIndex),
-      ...this._items.slice(existingIndex + 1)
-    ];
-    return new RoomState(newItems);
+    // Place the item
+    const placedItem = new PlacedItem(item, position, rotation);
+    this.#placedItems.push(placedItem);
+
+    return RoomOperationResult.success();
   }
 
   /**
-   * Gets an item by ID.
-   * @param {string} itemId - The ID of the item to find
-   * @returns {Item|null} - The item or null if not found
-   */
-  getItem(itemId) {
-    return this._items.find(i => i.id === itemId) || null;
-  }
-
-  /**
-   * Moves an item to a new position, returning a new RoomState.
-   * Note: This is a simplified implementation. Domain rules for bounds/collisions
-   * should be added here or in a separate Domain Service.
-   * 
-   * @param {string} itemId - The ID of the item to move
-   * @param {Object} newPosition - New position { x, y, z }
-   * @returns {RoomState|null} - New RoomState with moved item, or null if move rejected
-   * @throws {Error} If item with ID not found
+   * Moves an item to a new position.
+   * @param {string} itemId - ID of the item to move
+   * @param {Object} newPosition - {x, z} position
+   * @returns {RoomOperationResult}
    */
   moveItem(itemId, newPosition) {
-    const itemIndex = this._items.findIndex(i => i.id === itemId);
-    if (itemIndex === -1) {
-      throw new Error(`Item with ID ${itemId} not found`);
+    const placedIndex = this.#placedItems.findIndex(pi => pi.id === itemId);
+    if (placedIndex === -1) {
+      return RoomOperationResult.failure('NOT_FOUND');
     }
 
-    const oldItem = this._items[itemIndex];
-    
-    // Здесь можно добавить проверку границ комнаты и коллизий
-    // Для MVP принимаем любую позицию с числами
-    if (typeof newPosition.x !== 'number' || typeof newPosition.y !== 'number' || typeof newPosition.z !== 'number') {
-      return null; // Отклоняем невалидную позицию
+    const placed = this.#placedItems[placedIndex];
+    const dimensions = placed.dimensions;
+
+    // Check bounds
+    if (!this.#isWithinBounds(newPosition, dimensions)) {
+      return RoomOperationResult.failure('OUT_OF_BOUNDS');
     }
 
-    // Создаем новый предмет с обновленной позицией (предполагается, что Item имеет метод withPosition или аналогичный)
-    // Поскольку Item сейчас immutable и не имеет позиции в себе (позиция хранится в state UI/Infrastructure),
-    // мы просто возвращаем новое состояние комнаты, помечая предмет как "перемещенный".
-    // В полной реализации Item должен хранить transform или мы должны иметь PlacedItem aggregate.
-    
-    // Для текущей архитектуры MVP: позиция хранится вне Item (в UI/Scene), 
-    // поэтому moveItem здесь просто подтверждает возможность перемещения.
-    // Возвращаем копию состояния (так как RoomState immutable).
-    const newItems = [...this._items];
-    return new RoomState(newItems);
+    // Check collisions and gaps (excluding current item)
+    const checks = this.#checkCollisionsAndGaps(newPosition, dimensions, itemId);
+    if (checks.collision) {
+      return RoomOperationResult.failure('COLLISION');
+    }
+    if (checks.insufficientGap) {
+      return RoomOperationResult.failure('INSUFFICIENT_GAP');
+    }
+
+    // Update position
+    this.#placedItems[placedIndex] = new PlacedItem(placed.item, newPosition, placed.rotation);
+
+    return RoomOperationResult.success();
   }
 
   /**
-   * Rotates an item by a specified angle, returning a new RoomState.
-   * Note: Rotation is stored as Euler angles { x, y, z } in degrees.
-   * For MVP, we only support Y-axis rotation (horizontal rotation).
-   *
-   * @param {string} itemId - The ID of the item to rotate
-   * @param {Object} rotationDelta - Rotation change { x?: number, y?: number, z?: number }
-   * @returns {RoomState|null} - New RoomState with rotated item, or null if rotation rejected
-   * @throws {Error} If item with ID not found
+   * Rotates an item by 90 degrees.
+   * @param {string} itemId - ID of the item to rotate
+   * @returns {RoomOperationResult}
    */
-  rotateItem(itemId, rotationDelta) {
-    const itemIndex = this._items.findIndex(i => i.id === itemId);
-    if (itemIndex === -1) {
-      throw new Error(`Item with ID ${itemId} not found`);
+  rotateItem(itemId) {
+    const placedIndex = this.#placedItems.findIndex(pi => pi.id === itemId);
+    if (placedIndex === -1) {
+      return RoomOperationResult.failure('NOT_FOUND');
     }
 
-    // Валидация входных данных: хотя бы одна ось должна быть числом
-    const hasValidAxis = 
-      (typeof rotationDelta.x === 'number') ||
-      (typeof rotationDelta.y === 'number') ||
-      (typeof rotationDelta.z === 'number');
+    const placed = this.#placedItems[placedIndex];
+    const newRotation = (placed.rotation + 90) % 360;
+
+    // Get rotated dimensions
+    const originalDimensions = placed.item.dimensions || { x: 1, z: 1 };
+    const rotatedDimensions = { x: originalDimensions.z, z: originalDimensions.x };
+
+    // Check bounds with rotated dimensions
+    if (!this.#isWithinBounds(placed.position, rotatedDimensions)) {
+      return RoomOperationResult.failure('OUT_OF_BOUNDS');
+    }
+
+    // Check collisions and gaps with rotated dimensions
+    const checks = this.#checkCollisionsAndGaps(placed.position, rotatedDimensions, itemId);
+    if (checks.collision) {
+      return RoomOperationResult.failure('COLLISION');
+    }
+    if (checks.insufficientGap) {
+      return RoomOperationResult.failure('INSUFFICIENT_GAP');
+    }
+
+    // Update rotation
+    this.#placedItems[placedIndex] = new PlacedItem(placed.item, placed.position, newRotation);
+
+    return RoomOperationResult.success();
+  }
+
+  /**
+   * Removes an item from the room.
+   * @param {string} itemId - ID of the item to remove
+   * @returns {RoomOperationResult}
+   */
+  removeItem(itemId) {
+    const placedIndex = this.#placedItems.findIndex(pi => pi.id === itemId);
+    if (placedIndex === -1) {
+      return RoomOperationResult.failure('NOT_FOUND');
+    }
+
+    this.#placedItems.splice(placedIndex, 1);
+    return RoomOperationResult.success();
+  }
+
+  /**
+   * Serializes the room state to a plain object.
+   * @returns {Object}
+   */
+  serialize() {
+    return {
+      bounds: {
+        width: this.#bounds.width,
+        height: this.#bounds.height,
+        doors: this.#bounds.doors,
+        windows: this.#bounds.windows
+      },
+      items: this.#placedItems.map(pi => ({
+        id: pi.id,
+        position: pi.position,
+        rotation: pi.rotation
+      }))
+    };
+  }
+
+  /**
+   * Deserializes a room state from a plain object.
+   * @param {Object} data - Serialized data
+   * @param {RoomBounds} bounds - Room bounds
+   * @param {Map<string, Item>} itemCatalog - Catalog of items by ID
+   * @returns {RoomState}
+   */
+  static deserialize(data, bounds, itemCatalog) {
+    const placedItems = [];
     
-    if (!hasValidAxis) {
-      return null; // Отклоняем невалидный угол поворота
+    for (const itemData of data.items) {
+      const item = itemCatalog.get(itemData.id);
+      if (item) {
+        placedItems.push(new PlacedItem(item, itemData.position, itemData.rotation));
+      }
     }
 
-    // Для MVP поддерживаем только Y-ось (горизонтальный поворот)
-    if (rotationDelta.y === undefined || typeof rotationDelta.y !== 'number') {
-      return null; // Для MVP требуем Y-ось
-    }
-
-    // Проверка на кратность 90 градусам (для grid-based системы)
-    if (rotationDelta.y % 90 !== 0) {
-      return null; // Поворот должен быть кратен 90 градусам
-    }
-
-    // Возвращаем новое состояние комнаты
-    const newItems = [...this._items];
-    return new RoomState(newItems);
+    return new RoomState(bounds, placedItems);
   }
 }

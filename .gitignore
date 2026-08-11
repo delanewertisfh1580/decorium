@@ -1,1 +1,4 @@
-(src/Domain/Rooms/RoomBounds.js tests/Application/UseCases/LoadLevelUseCase.test.js tests/Application/UseCases/PlaceItemUseCase.test.js tests/Application/UseCases/RemoveItemUseCase.test.js)
+```
+node_modules/
+dist/
+```
