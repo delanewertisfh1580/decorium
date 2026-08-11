@@ -1,5 +1,5 @@
 import Ajv from 'ajv';
-import LevelRepository from '../../Application/Ports/LevelRepository.js';
+import { LevelRepository } from '../../Application/Ports/LevelRepository.js';
 
 /**
  * Infrastructure: LevelRepository Implementation
@@ -12,9 +12,8 @@ export class JsonLevelRepository extends LevelRepository {
    * @param {Object} schema - JSON Schema for validation
    */
   constructor(basePath, schema) {
-    super();
+    super(null, schema);
     this.basePath = basePath;
-    this.schema = schema;
     this.ajv = new Ajv();
     this.validate = this.ajv.compile(schema);
   }
