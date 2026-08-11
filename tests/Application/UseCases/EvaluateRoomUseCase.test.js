@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import EvaluateRoomUseCase from '../../../src/Application/UseCases/EvaluateRoomUseCase.js';
 import EvaluationResultDTO from '../../../src/Application/DTOs/EvaluationResultDTO.js';
 import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
+import { RoomBounds } from '../../../src/Domain/Rooms/RoomBounds.js';
 import { Item } from '../../../src/Domain/Items/Item.js';
 import { FeatureVector } from '../../../src/Domain/Items/FeatureVector.js';
 import { ConstraintEvaluator } from '../../../src/Domain/Constraints/ConstraintEvaluator.js';
@@ -9,6 +10,8 @@ import { LinearConstraint } from '../../../src/Domain/Constraints/LinearConstrai
 import { StyleScorer } from '../../../src/Domain/Scoring/StyleScorer.js';
 import { StarRatingPolicy } from '../../../src/Domain/Scoring/StarRatingPolicy.js';
 import { getScoringParameters, initializeScoringParameters, resetScoringParameters } from '../../../src/Domain/Scoring/scoringParameters.js';
+
+const createTestBounds = () => new RoomBounds(5, 5);
 
 /**
  * Тесты для Slice A-006: EvaluateRoomUseCase
@@ -86,7 +89,7 @@ describe('EvaluateRoomUseCase', () => {
     });
 
     it('должен вернуть ошибку при невалидных ограничениях', async () => {
-      roomRepository.getState = async (roomId) => RoomState.createEmpty();
+      roomRepository.getState = async (roomId) => RoomState.createEmpty(createTestBounds());
       
       const result = await evaluateRoomUseCase.execute('room-001', null);
       
@@ -95,7 +98,7 @@ describe('EvaluateRoomUseCase', () => {
     });
 
     it('должен вернуть ошибку при ограничениях не массивом', async () => {
-      roomRepository.getState = async (roomId) => RoomState.createEmpty();
+      roomRepository.getState = async (roomId) => RoomState.createEmpty(createTestBounds());
       
       const result = await evaluateRoomUseCase.execute('room-001', 'not-an-array');
       
@@ -117,7 +120,7 @@ describe('EvaluateRoomUseCase', () => {
 
   describe('Оценка пустой комнаты', () => {
     it('должен вернуть минимальную оценку для пустой комнаты', async () => {
-      roomRepository.getState = async (roomId) => RoomState.createEmpty();
+      roomRepository.getState = async (roomId) => RoomState.createEmpty(createTestBounds());
       
       const result = await evaluateRoomUseCase.execute('room-001', []);
       
@@ -159,7 +162,7 @@ describe('EvaluateRoomUseCase', () => {
         featureVector: featureVector
       });
       
-      const roomState = RoomState.createEmpty().addItem(item);
+      const roomState = RoomState.createEmpty(createTestBounds()).addItem(item);
       roomRepository.getState = async (roomId) => roomState;
       
       // Создаем ограничение, которое выполняется
@@ -201,7 +204,7 @@ describe('EvaluateRoomUseCase', () => {
         featureVector: featureVector
       });
       
-      const roomState = RoomState.createEmpty().addItem(item);
+      const roomState = RoomState.createEmpty(createTestBounds()).addItem(item);
       roomRepository.getState = async (roomId) => roomState;
       
       // Создаем ограничение, которое нарушается (woodShare=0.2 < threshold=0.5)
@@ -249,7 +252,7 @@ describe('EvaluateRoomUseCase', () => {
         items.push(item);
       }
       
-      let roomState = RoomState.createEmpty();
+      let roomState = RoomState.createEmpty(createTestBounds());
       items.forEach(item => {
         roomState = roomState.addItem(item);
       });
@@ -298,7 +301,7 @@ describe('EvaluateRoomUseCase', () => {
         featureVector: featureVector
       });
       
-      const roomState = RoomState.createEmpty().addItem(item);
+      const roomState = RoomState.createEmpty(createTestBounds()).addItem(item);
       roomRepository.getState = async (roomId) => roomState;
       
       const constraints = [new LinearConstraint('woodShare', 'gte', 0.5, 1.0)];

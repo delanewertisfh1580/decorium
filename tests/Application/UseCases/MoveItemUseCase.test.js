@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { RoomBounds } from '../../../src/Domain/Rooms/RoomBounds.js';
 import MoveItemUseCase from '../../../src/Application/UseCases/MoveItemUseCase.js';
 import MoveResultDTO from '../../../src/Application/DTOs/MoveResultDTO.js';
 import RoomState from '../../../src/Domain/Rooms/RoomState.js';
@@ -15,7 +16,7 @@ class MockRoomRepository {
     if (this.scenario === 'room_not_found') return null;
     
     // Создаем комнату с одним предметом для тестов
-    const roomState = new RoomState();
+    const roomState = new RoomState(new RoomBounds(5, 5));
     const vector = new FeatureVector({ wood_share: 0.8 });
     const item = new Item('item-1', 'Chair', 'seating', vector, {});
     

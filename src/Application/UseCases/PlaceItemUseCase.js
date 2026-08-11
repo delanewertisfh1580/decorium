@@ -46,8 +46,11 @@ export class PlaceItemUseCase {
       let roomState = await this.roomRepository.getState(roomId);
       
       if (!roomState) {
-        // If room doesn't exist yet, create a new empty state
-        roomState = RoomState.createEmpty();
+        // If room doesn't exist yet, we need bounds to create a new state
+        // For now, use default bounds (will be provided by level data in S8)
+        const { RoomBounds } = await import('../../Domain/Rooms/RoomBounds.js');
+        const defaultBounds = new RoomBounds(5, 4, [], []);
+        roomState = RoomState.createEmpty(defaultBounds);
       }
 
       // 3. Construct Domain Item

@@ -157,20 +157,19 @@ describe('RoomState', () => {
     const item = createTestItem('item-1', 1, 1);
 
     state.placeItem(item, { x: 2.5, z: 2.5 }, 0);
-    const result = state.removeItem('item-1');
+    const newState = state.removeItem('item-1');
     
-    expect(result.success).toBe(true);
-    expect(state.getItems()).toHaveLength(0);
+    expect(newState).not.toBeNull();
+    expect(newState.getItems()).toHaveLength(0);
   });
 
-  it('should return error when removing non-existent item', () => {
+  it('should return null when removing non-existent item', () => {
     const bounds = createBounds(5, 5);
     const state = new RoomState(bounds);
     
     const result = state.removeItem('non-existent');
     
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('NOT_FOUND');
+    expect(result).toBeNull();
   });
 
   it('should serialize and deserialize state', () => {

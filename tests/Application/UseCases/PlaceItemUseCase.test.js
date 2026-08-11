@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import PlaceItemUseCase from '../../../src/Application/UseCases/PlaceItemUseCase.js';
 import PlacementResultDTO from '../../../src/Application/DTOs/PlacementResultDTO.js';
 import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
+import { RoomBounds } from '../../../src/Domain/Rooms/RoomBounds.js';
 
 // Mock Repository Implementation for Tests
 class MockRoomRepository {
@@ -18,6 +19,8 @@ class MockRoomRepository {
     return this.storage.get(roomId) || null;
   }
 }
+
+const createTestBounds = () => new RoomBounds(5, 5);
 
 describe('Slice A-002: PlaceItemUseCase', () => {
   let repository;
@@ -96,7 +99,7 @@ describe('Slice A-002: PlaceItemUseCase', () => {
 
     it('should add an item to an existing room', async () => {
       // Pre-populate room
-      const initialState = RoomState.createEmpty();
+      const initialState = RoomState.createEmpty(createTestBounds());
       await repository.saveState('room-existing', initialState);
 
       const itemData = {

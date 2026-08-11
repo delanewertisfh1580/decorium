@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import RemoveItemUseCase from '../../../src/Application/UseCases/RemoveItemUseCase.js';
 import RemoveResultDTO from '../../../src/Application/DTOs/RemoveResultDTO.js';
 import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
+import { RoomBounds } from '../../../src/Domain/Rooms/RoomBounds.js';
 import { Item } from '../../../src/Domain/Items/Item.js';
 import { FeatureVector } from '../../../src/Domain/Items/FeatureVector.js';
 
@@ -20,6 +21,8 @@ class MockRoomRepository {
     return this.storage.get(roomId) || null;
   }
 }
+
+const createTestBounds = () => new RoomBounds(5, 5);
 
 describe('Slice A-005: RemoveItemUseCase', () => {
   let repository;
@@ -92,7 +95,7 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         type: 'seating',
         featureVector: featureVector
       });
-      const initialState = RoomState.createEmpty().addItem(existingItem);
+      const initialState = RoomState.createEmpty(createTestBounds()).addItem(existingItem);
       await repository.saveState('room-with-item', initialState);
 
       // Try to remove a non-existent item
@@ -156,7 +159,7 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         featureVector: featureVector2
       });
       
-      const initialState = RoomState.createEmpty()
+      const initialState = RoomState.createEmpty(createTestBounds())
         .addItem(item1)
         .addItem(item2);
       
@@ -204,7 +207,7 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         type: 'seating',
         featureVector: featureVector
       });
-      const initialState = RoomState.createEmpty().addItem(singleItem);
+      const initialState = RoomState.createEmpty(createTestBounds()).addItem(singleItem);
       await repository.saveState('room-single', initialState);
 
       // Remove the only item
@@ -251,7 +254,7 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         }));
       }
       
-      let initialState = RoomState.createEmpty();
+      let initialState = RoomState.createEmpty(createTestBounds());
       items.forEach(item => {
         initialState = initialState.addItem(item);
       });
@@ -340,7 +343,7 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         type: 'seating',
         featureVector: featureVector
       });
-      const initialState = RoomState.createEmpty().addItem(item);
+      const initialState = RoomState.createEmpty(createTestBounds()).addItem(item);
       await repository.saveState('room-test', initialState);
 
       const result = await useCase.execute('room-test', 'test-item');

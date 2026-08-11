@@ -84,6 +84,20 @@ export class RoomState {
   }
 
   /**
+   * Adds an item at default position (convenience method for tests).
+   * @param {Item} item
+   * @returns {RoomState} - Returns new RoomState with item added
+   */
+  addItem(item) {
+    const newState = new RoomState(this.#bounds, [...this.#placedItems]);
+    const result = newState.placeItem(item, { x: 1, z: 1 }, 0);
+    if (!result.success) {
+      throw new Error(`Failed to add item: ${result.error}`);
+    }
+    return newState;
+  }
+
+  /**
    * Gets all placed items.
    * @returns {Array}
    */
@@ -278,18 +292,36 @@ export class RoomState {
   }
 
   /**
+   * Gets an item by ID.
+   * @param {string} itemId
+   * @returns {PlacedItem|undefined}
+   */
+  getItem(itemId) {
+    return this.#placedItems.find(pi => pi.id === itemId);
+  }
+
+  /**
+   * Gets the count of placed items.
+   * @returns {number}
+   */
+  getItemCount() {
+    return this.#placedItems.length;
+  }
+
+  /**
    * Removes an item from the room.
    * @param {string} itemId - ID of the item to remove
-   * @returns {RoomOperationResult}
+   * @returns {RoomState} - New RoomState with item removed, or null if not found
    */
   removeItem(itemId) {
     const placedIndex = this.#placedItems.findIndex(pi => pi.id === itemId);
     if (placedIndex === -1) {
-      return RoomOperationResult.failure('NOT_FOUND');
+      return null;
     }
 
-    this.#placedItems.splice(placedIndex, 1);
-    return RoomOperationResult.success();
+    const newItems = [...this.#placedItems];
+    newItems.splice(placedIndex, 1);
+    return new RoomState(this.#bounds, newItems);
   }
 
   /**
