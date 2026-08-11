@@ -28,11 +28,20 @@ class MockLevelRepository {
             woodShare: 0.8, 
             metalShare: 0.1,
             glassShare: 0.05,
+            plasticShare: 0.02,
+            textileShare: 0.0,
             lightColorShare: 0.7,
+            darkColorShare: 0.3,
             warmPaletteShare: 0.6,
-            formSimplicity: 0.9,
+            coolPaletteShare: 0.4,
             saturationLevel: 0.3,
-            plasticShare: 0.02
+            formSimplicity: 0.9,
+            roundnessShare: 0.2,
+            rectilinearShare: 0.8,
+            sizeNorm: 0.5,
+            priceNorm: 0.5,
+            lightingFunctionShare: 0.0,
+            storageFunctionShare: 0.0
           },
           metadata: {}
         }

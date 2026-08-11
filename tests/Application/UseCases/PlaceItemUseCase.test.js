@@ -64,11 +64,20 @@ describe('Slice A-002: PlaceItemUseCase', () => {
           woodShare: 0.8,
           metalShare: 0.1,
           glassShare: 0.0,
+          plasticShare: 0.05,
+          textileShare: 0.0,
           lightColorShare: 0.7,
+          darkColorShare: 0.3,
           warmPaletteShare: 0.6,
-          formSimplicity: 0.8,
+          coolPaletteShare: 0.4,
           saturationLevel: 0.3,
-          plasticShare: 0.05
+          formSimplicity: 0.8,
+          roundnessShare: 0.2,
+          rectilinearShare: 0.8,
+          sizeNorm: 0.5,
+          priceNorm: 0.4,
+          lightingFunctionShare: 0.0,
+          storageFunctionShare: 0.0
         }
       };
       const position = { x: 1, y: 0, z: 2 };
@@ -98,11 +107,20 @@ describe('Slice A-002: PlaceItemUseCase', () => {
           woodShare: 0.6,
           metalShare: 0.2,
           glassShare: 0.1,
+          plasticShare: 0.1,
+          textileShare: 0.0,
           lightColorShare: 0.5,
+          darkColorShare: 0.5,
           warmPaletteShare: 0.5,
-          formSimplicity: 0.7,
+          coolPaletteShare: 0.5,
           saturationLevel: 0.4,
-          plasticShare: 0.1
+          formSimplicity: 0.7,
+          roundnessShare: 0.3,
+          rectilinearShare: 0.7,
+          sizeNorm: 0.5,
+          priceNorm: 0.5,
+          lightingFunctionShare: 0.0,
+          storageFunctionShare: 0.0
         }
       };
       const result = await useCase.execute('room-existing', itemData, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0, w: 1 });
@@ -124,11 +142,20 @@ describe('Slice A-002: PlaceItemUseCase', () => {
           woodShare: 0.5,
           metalShare: 0.3,
           glassShare: 0.1,
+          plasticShare: 0.1,
+          textileShare: 0.0,
           lightColorShare: 0.4,
+          darkColorShare: 0.6,
           warmPaletteShare: 0.4,
-          formSimplicity: 0.6,
+          coolPaletteShare: 0.6,
           saturationLevel: 0.5,
-          plasticShare: 0.2
+          formSimplicity: 0.6,
+          roundnessShare: 0.4,
+          rectilinearShare: 0.6,
+          sizeNorm: 0.5,
+          priceNorm: 0.5,
+          lightingFunctionShare: 0.0,
+          storageFunctionShare: 0.0
         }
       };
       
