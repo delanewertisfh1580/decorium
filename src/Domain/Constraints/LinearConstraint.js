@@ -1,84 +1,48 @@
 /**
- * LinearConstraint - Value Object representing a style constraint rule
- * 
- * A constraint defines a requirement for a specific feature in the room vector.
- * Supported operators: 'gte' (>=), 'lte' (<=)
+ * Value object describing a single style constraint.
  */
 export class LinearConstraint {
-  /**
-   * @param {string} featureKey - The feature name to constrain (e.g., 'wood_share')
-   * @param {'gte'|'lte'} operator - The comparison operator
-   * @param {number} threshold - The threshold value [0, 1]
-   * @param {string} [id] - Optional ID for the constraint
-   */
-  constructor(featureKey, operator, threshold, id) {
-    if (!featureKey || typeof featureKey !== 'string' || featureKey.trim() === '') {
-      throw new Error('Feature key is required');
-    }
-
+  constructor(featureKey, operator, threshold, id = null, weight = 1, messageKey = null) {
+    if (!featureKey || typeof featureKey !== 'string') throw new Error('Feature key is required');
     if (!['gte', 'lte'].includes(operator)) {
       throw new Error(`Invalid operator '${operator}'. Must be 'gte' or 'lte'`);
     }
-
-    if (typeof threshold !== 'number' || isNaN(threshold)) {
+    if (typeof threshold !== 'number' || Number.isNaN(threshold)) {
       throw new Error('Threshold must be a number');
+    }
+
+    // Preserve the legacy constructor form where the fourth argument was a numeric weight.
+    if (typeof id === 'number') {
+      weight = id;
+      id = null;
     }
 
     this._featureKey = featureKey;
     this._operator = operator;
     this._threshold = threshold;
-    this._id = id || null;
-
+    this._id = id;
+    this._weight = typeof weight === 'number' ? weight : 1;
+    this._messageKey = messageKey;
     Object.freeze(this);
   }
 
-  get featureKey() {
-    return this._featureKey;
-  }
+  get featureKey() { return this._featureKey; }
+  get feature() { return this._featureKey; }
+  get operator() { return this._operator; }
+  get threshold() { return this._threshold; }
+  get id() { return this._id; }
+  get weight() { return this._weight; }
+  get messageKey() { return this._messageKey; }
+  get description() { return `${this._featureKey} ${this._operator} ${this._threshold}`; }
 
-  get operator() {
-    return this._operator;
-  }
-
-  get threshold() {
-    return this._threshold;
-  }
-
-  get id() {
-    return this._id;
-  }
-
-  /**
-   * Check if a value satisfies this constraint
-   * @param {number} value - The actual value to check
-   * @returns {boolean} True if constraint is satisfied
-   */
   isSatisfied(value) {
-    if (this._operator === 'gte') {
-      return value >= this._threshold;
-    }
-    if (this._operator === 'lte') {
-      return value <= this._threshold;
-    }
-    return false;
+    return this._operator === 'gte' ? value >= this._threshold : value <= this._threshold;
   }
 
-  /**
-   * Calculate violation amount (0 if satisfied, positive if violated)
-   * @param {number} value - The actual value
-   * @returns {number} Violation amount (0 or positive)
-   */
   calculateViolation(value) {
-    if (this.isSatisfied(value)) {
-      return 0;
-    }
-    
-    if (this._operator === 'gte') {
-      return this._threshold - value;
-    }
-    if (this._operator === 'lte') {
-      return value - this._threshold;
-    }
-    return 0;
+    if (this.isSatisfied(value)) return 0;
+    return this._operator === 'gte'
+      ? this._threshold - value
+      : value - this._threshold;
   }
 }

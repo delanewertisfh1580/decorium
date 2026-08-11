@@ -3,19 +3,19 @@
   "name": "Гостиная: Первые шаги",
   "styleId": "scandinavian",
   "roomDimensions": {
-    "width": 5.0,
-    "height": 2.8,
-    "depth": 4.0
+    "width": 8.0,
+    "height": 3.0,
+    "depth": 6.0
   },
   "availableItems": [
-    "scand-sofa-01",
-    "scand-chair-01",
-    "scand-table-01",
-    "scand-lamp-01",
-    "scand-rug-01",
-    "scand-plant-01",
-    "scand-decor-01",
-    "scand-shelf-01"
+    "sofa-001",
+    "chair-001",
+    "table-001",
+    "lamp-001",
+    "shelf-001",
+    "plant-001",
+    "mirror-001",
+    "coffeetable-001"
   ],
   "initialPlacement": [],
   "targetScore": 3

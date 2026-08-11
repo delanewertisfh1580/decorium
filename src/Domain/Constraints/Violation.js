@@ -1,20 +1,7 @@
-/**
- * Violation - Value Object representing a constraint violation.
- * Immutable after creation.
- */
 export class Violation {
-  /**
-   * @param {import('./LinearConstraint.js').LinearConstraint} constraint
-   * @param {number} actualValue
-   * @param {number} severity - How severe the violation is (0-1)
-   */
   constructor(constraint, actualValue, severity) {
-    if (!constraint) {
-      throw new Error('Violation requires a constraint');
-    }
-    if (typeof actualValue !== 'number') {
-      throw new Error('Violation requires a numeric actualValue');
-    }
+    if (!constraint) throw new Error('Violation requires a constraint');
+    if (typeof actualValue !== 'number') throw new Error('Violation requires a numeric actualValue');
     if (typeof severity !== 'number' || severity < 0 || severity > 1) {
       throw new Error('Severity must be a number between 0 and 1');
     }
@@ -22,96 +9,24 @@ export class Violation {
     this._constraint = constraint;
     this._actualValue = actualValue;
     this._severity = severity;
-
-    // Freeze for immutability
     Object.freeze(this);
   }
 
-  /**
-   * @returns {import('./LinearConstraint.js').LinearConstraint}
-   */
-  get constraint() {
-    return this._constraint;
-  }
+  get constraint() { return this._constraint; }
+  get actualValue() { return this._actualValue; }
+  get severity() { return this._severity; }
+  get featureName() { return this._constraint.featureKey; }
+  get constraintId() { return this._constraint.id || this._constraint.featureKey; }
+  get operator() { return this._constraint.operator; }
+  get threshold() { return this._constraint.threshold; }
+  get messageKey() { return this._constraint.messageKey; }
 
-  /**
-   * @returns {number}
-   */
-  get actualValue() {
-    return this._actualValue;
-  }
-
-  /**
-   * @returns {number}
-   */
-  get severity() {
-    return this._severity;
-  }
-
-  /**
-   * Get the feature name being violated.
-   * @returns {string}
-   */
-  get featureName() {
-    return this._constraint.featureKey;
-  }
-
-  /**
-   * Get the ID of the violated constraint.
-   * @returns {string}
-   */
-  get constraintId() {
-    return this._constraint.id || this._constraint.featureKey;
-  }
-
-  /**
-   * Get the operator of the violated constraint.
-   * @returns {string}
-   */
-  get operator() {
-    return this._constraint.operator;
-  }
-
-  /**
-   * Get the threshold of the violated constraint.
-   * @returns {number}
-   */
-  get threshold() {
-    return this._constraint.threshold;
-  }
-
-  /**
-   * Create a Violation from a constraint and actual value.
-   * @param {import('./LinearConstraint.js').LinearConstraint|Object} constraint - Can be LinearConstraint or plain object
-   * @param {number} actualValue
-   * @returns {Violation|null} null if no violation
-   */
   static fromConstraint(constraint, actualValue) {
-    // Calculate severity based on operator type
-    let severity = 0;
-    const { operator, threshold } = constraint;
-    
-    if (operator === 'gte' && actualValue < threshold) {
-      severity = threshold - actualValue;
-    } else if (operator === 'lte' && actualValue > threshold) {
-      severity = actualValue - threshold;
-    }
-    
-    // Clamp severity to [0, 1]
-    severity = Math.max(0, Math.min(1, severity));
-    
-    // If severity is 0, constraint is satisfied - no violation
-    if (severity === 0) {
-      return null;
-    }
-
-    return new Violation(constraint, actualValue, severity);
+    const difference = constraint.calculateViolation(actualValue);
+    if (difference <= 0) return null;
+    return new Violation(constraint, actualValue, Math.min(1, difference));
   }
 
-  /**
-   * Convert to plain object for serialization.
-   * @returns {{ featureName: string, operator: string, threshold: number, actualValue: number, severity: number }}
-   */
   toJSON() {
     return {
       featureName: this.featureName,
@@ -119,6 +34,7 @@ export class Violation {
       threshold: this.threshold,
       actualValue: this.actualValue,
       severity: this.severity,
+      messageKey: this.messageKey
     };
   }
 }

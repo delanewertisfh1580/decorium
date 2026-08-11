@@ -1,66 +1,29 @@
-/**
- * View для отображения результатов оценки.
- * 
- * @implements {import('./IView.js').IView}
- */
 export class EvaluationView {
-    /**
-     * @param {HTMLElement} container 
-     */
-    constructor(container) {
-        this._container = container;
-        this._isVisible = false;
-    }
+  constructor(container) {
+    this.container = container;
+  }
 
-    async init() {
-        this._container.innerHTML = `
-            <div id="evaluation-panel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border:2px solid #333;z-index:1000;">
-                <h2>Результаты оценки</h2>
-                <div id="stars" style="font-size:48px;color:#FFC107;"></div>
-                <div id="score" style="font-size:24px;margin:10px 0;"></div>
-                <div id="feedback" style="text-align:left;margin:10px 0;"></div>
-                <button id="btn-close" style="padding:10px 20px;margin-top:10px;">Закрыть</button>
-            </div>
-        `;
+  async init() {}
 
-        document.getElementById('btn-close').onclick = () => this.hide();
-    }
+  render(result) {
+    const feedback = Array.isArray(result.feedback) ? result.feedback : [result.feedback];
+    const feedbackItems = feedback.filter(Boolean).map(message => `<li>${message}</li>`).join('');
+    const violations = result.violations?.length
+      ? `<p class="score-label">Нарушений: ${result.violations.length}</p>`
+      : '<p class="score-label">Все ограничения соблюдены</p>';
+    this.container.innerHTML = `
+      <section class="evaluation-card panel">
+        <button class="close" type="button" data-close>Закрыть</button>
+        <h2>Результат расстановки</h2>
+        <div class="stars">${'★'.repeat(result.stars)}${'☆'.repeat(5 - result.stars)}</div>
+        <div class="evaluation-score">${Math.round(result.score * 100)} / 100</div>
+        ${violations}
+        <ul class="feedback">${feedbackItems}</ul>
+      </section>
+    `;
+    this.container.querySelector('[data-close]').onclick = () => this.hide();
+  }
 
-    /**
-     * @param {import('../ViewModels/EvaluationViewModel.js').EvaluationViewModel} viewModel 
-     */
-    render(viewModel) {
-        if (!viewModel.isVisible) {
-            this.hide();
-            return;
-        }
-
-        const panel = document.getElementById('evaluation-panel');
-        const starsDiv = document.getElementById('stars');
-        const scoreDiv = document.getElementById('score');
-        const feedbackDiv = document.getElementById('feedback');
-
-        starsDiv.textContent = '★'.repeat(viewModel.stars) + '☆'.repeat(5 - viewModel.stars);
-        scoreDiv.textContent = `Счет: ${viewModel.score} / ${viewModel.maxScore}`;
-        feedbackDiv.innerHTML = viewModel.feedback.map(f => `<p>• ${f}</p>`).join('');
-        
-        panel.style.display = 'block';
-        this._isVisible = true;
-    }
-
-    destroy() {
-        this._container.innerHTML = '';
-    }
-
-    hide() {
-        const panel = document.getElementById('evaluation-panel');
-        if (panel) panel.style.display = 'none';
-        this._isVisible = false;
-    }
-
-    show() {
-        const panel = document.getElementById('evaluation-panel');
-        if (panel) panel.style.display = 'block';
-        this._isVisible = true;
-    }
+  hide() { this.container.replaceChildren(); }
+  destroy() { this.hide(); }
 }

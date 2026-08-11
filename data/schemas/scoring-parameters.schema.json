@@ -1,37 +1,26 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "ScoringParameters",
-  "description": "Параметры системы оценки: пороги для звезд, веса компонентов",
   "type": "object",
-  "required": [
-    "starThresholds",
-    "styleWeight",
-    "ergonomicsWeight"
-  ],
+  "required": ["starRatingThresholds", "styleWeight", "ergonomicsWeight", "maxPenalty"],
   "properties": {
-    "starThresholds": {
-      "type": "array",
-      "description": "Пороги totalScore для получения звезд [0, 1, 2, 3, 4, 5]",
-      "items": {
-        "type": "number",
-        "minimum": 0,
-        "maximum": 1
+    "starRatingThresholds": {
+      "type": "object",
+      "required": ["0", "1", "2", "3", "4", "5"],
+      "properties": {
+        "0": { "type": "number", "minimum": 0, "maximum": 1 },
+        "1": { "type": "number", "minimum": 0, "maximum": 1 },
+        "2": { "type": "number", "minimum": 0, "maximum": 1 },
+        "3": { "type": "number", "minimum": 0, "maximum": 1 },
+        "4": { "type": "number", "minimum": 0, "maximum": 1 },
+        "5": { "type": "number", "minimum": 0, "maximum": 1 }
       },
-      "minItems": 6,
-      "maxItems": 6
+      "additionalProperties": false
     },
-    "styleWeight": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 1,
-      "description": "Вес стилевой оценки в итоговом score"
-    },
-    "ergonomicsWeight": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 1,
-      "description": "Вес эргономической оценки в итоговом score"
-    }
+    "maxPenalty": { "type": "number", "exclusiveMinimum": 0 },
+    "styleWeight": { "type": "number", "minimum": 0, "maximum": 1 },
+    "ergonomicsWeight": { "type": "number", "minimum": 0, "maximum": 1 },
+    "defaultWeight": { "type": "number", "minimum": 0 }
   },
   "additionalProperties": true
 }

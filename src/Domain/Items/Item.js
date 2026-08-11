@@ -1,120 +1,37 @@
 import { FeatureVector } from './FeatureVector.js';
 
-/**
- * Item Entity - represents a placeable object in the room.
- * Immutable after creation.
- */
 export class Item {
-  /**
-   * @type {string}
-   */
-  #id;
-
-  /**
-   * @type {string}
-   */
-  #name;
-
-  /**
-   * @type {string}
-   */
-  #type;
-
-  /**
-   * @type {FeatureVector}
-   */
-  #featureVector;
-
-  /**
-   * @type {{ x: number, z: number, height?: number } | undefined}
-   */
-  #dimensions;
-
-  /**
-   * @type {number}
-   */
-  #price;
-
-  /**
-   * @param {Object} params
-   * @param {string} params.id - Unique identifier for the item
-   * @param {string} params.name - Human-readable name
-   * @param {string} params.type - Item type (e.g., 'chair', 'table', 'decor')
-   * @param {FeatureVector} params.featureVector - Feature vector describing item characteristics
-   * @param {{ x: number, z: number, height?: number }} [params.dimensions] - Physical dimensions (width x depth in meters)
-   * @param {number} [params.price] - Item price in credits
-   */
   constructor({ id, name, type, featureVector, dimensions, price = 0 }) {
-    // Validation
-    if (id === undefined || id === null) {
-      throw new Error('Item ID is required');
-    }
-    if (typeof id !== 'string' || id.trim() === '') {
-      throw new Error('Item ID cannot be empty');
-    }
-    if (!name) {
-      throw new Error('Item name is required');
-    }
-    if (!type) {
-      throw new Error('Item type is required');
-    }
-    if (!featureVector) {
+    if (id === undefined || id === null) throw new Error('Item ID is required');
+    if (typeof id !== 'string' || id.trim() === '') throw new Error('Item ID cannot be empty');
+    if (!name) throw new Error('Item name is required');
+    if (!type) throw new Error('Item type is required');
+    if (featureVector === undefined || featureVector === null) {
       throw new Error('Item featureVector is required');
     }
     if (!(featureVector instanceof FeatureVector)) {
       throw new Error('featureVector must be an instance of FeatureVector');
     }
+    if (dimensions !== undefined && (!dimensions || typeof dimensions.x !== 'number' || typeof dimensions.z !== 'number')) {
+      throw new Error('Item dimensions must contain numeric x and z values');
+    }
 
-    this.#id = id.trim();
-    this.#name = name;
-    this.#type = type;
-    this.#featureVector = featureVector;
-    this.#dimensions = dimensions;
-    this.#price = price;
-
-    // Freeze to enforce immutability
+    this._id = id.trim();
+    this._name = name;
+    this._type = type;
+    this._featureVector = featureVector;
+    this._dimensions = dimensions;
+    this._price = price;
     Object.freeze(this);
   }
 
-  /**
-   * @returns {string}
-   */
-  get id() {
-    return this.#id;
-  }
-
-  /**
-   * @returns {string}
-   */
-  get name() {
-    return this.#name;
-  }
-
-  /**
-   * @returns {string}
-   */
-  get type() {
-    return this.#type;
-  }
-
-  /**
-   * @returns {FeatureVector}
-   */
-  get featureVector() {
-    return this.#featureVector;
-  }
-
-  /**
-   * @returns {{ x: number, z: number, height?: number } | undefined}
-   */
-  get dimensions() {
-    return this.#dimensions;
-  }
-
-  /**
-   * @returns {number}
-   */
-  get price() {
-    return this.#price;
-  }
+  get id() { return this._id; }
+  get name() { return this._name; }
+  get type() { return this._type; }
+  get typeId() { return this._type; }
+  get featureVector() { return this._featureVector; }
+  get dimensions() { return this._dimensions; }
+  get price() { return this._price; }
 }
+
+export default Item;

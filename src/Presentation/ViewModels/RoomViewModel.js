@@ -1,40 +1,20 @@
-/**
- * ViewModel для комнаты и размещенных предметов.
- * Содержит состояние комнаты для отображения в UI.
- * 
- * @class RoomViewModel
- */
 export class RoomViewModel {
-    constructor(roomState) {
-        this._roomState = roomState;
-        this._selectedItemId = null;
-    }
+  constructor(level) {
+    this.level = level;
+    this._selectedItemId = null;
+  }
 
-    get id() { return this._roomState.id; }
-    get name() { return this._roomState.levelName; }
-    get width() { return this._roomState.width; }
-    get height() { return this._roomState.height; }
-    get placedItems() { return this._roomState.placedItems; }
-    
-    get selectedItemId() { return this._selectedItemId; }
-    
-    /**
-     * @param {string} itemId 
-     */
-    selectItem(itemId) {
-        this._selectedItemId = itemId;
-    }
+  get id() { return this.level.roomId; }
+  get name() { return this.level.name; }
+  get width() { return this.level.roomState.width; }
+  get height() { return this.level.roomState.depth; }
+  get roomState() { return this.level.roomState; }
+  get placedItems() { return this.level.roomState.getItems(); }
+  get constraints() { return this.level.constraints; }
+  get availableItems() { return this.level.availableItems; }
+  get selectedItemId() { return this._selectedItemId; }
 
-    clearSelection() {
-        this._selectedItemId = null;
-    }
-
-    /**
-     * Получает данные предмета по ID
-     * @param {string} itemId 
-     * @returns {import('../Domain/Items/Item.js').Item|null}
-     */
-    getItemById(itemId) {
-        return this._roomState.getItemById(itemId);
-    }
+  selectItem(itemId) { this._selectedItemId = itemId; }
+  clearSelection() { this._selectedItemId = null; }
+  getItemById(itemId) { return this.level.availableItems.find(item => item.id === itemId) ?? null; }
 }

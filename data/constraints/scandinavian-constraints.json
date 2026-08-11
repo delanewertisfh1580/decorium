@@ -2,7 +2,7 @@
   {
     "id": "scand-wood-min",
     "styleId": "scandinavian",
-    "feature": "wood_share",
+    "feature": "woodShare",
     "operator": ">=",
     "threshold": 0.5,
     "weight": 2.0,
@@ -11,16 +11,16 @@
   {
     "id": "scand-form-simple",
     "styleId": "scandinavian",
-    "feature": "form_complexity",
-    "operator": "<=",
-    "threshold": 0.4,
+    "feature": "formSimplicity",
+    "operator": ">=",
+    "threshold": 0.6,
     "weight": 1.5,
     "messageKey": "scand-form-complex"
   },
   {
     "id": "scand-saturation-low",
     "styleId": "scandinavian",
-    "feature": "saturation",
+    "feature": "saturationLevel",
     "operator": "<=",
     "threshold": 0.5,
     "weight": 1.0,
@@ -29,7 +29,7 @@
   {
     "id": "scand-plastic-free",
     "styleId": "scandinavian",
-    "feature": "plastic_share",
+    "feature": "plasticShare",
     "operator": "<=",
     "threshold": 0.1,
     "weight": 1.5,
@@ -38,7 +38,7 @@
   {
     "id": "scand-warm-tone",
     "styleId": "scandinavian",
-    "feature": "color_temperature",
+    "feature": "warmPaletteShare",
     "operator": ">=",
     "threshold": 0.5,
     "weight": 1.0,

@@ -1,7 +1,14 @@
 {
-  "starThresholds": [0.0, 0.2, 0.4, 0.6, 0.8, 0.95],
+  "starRatingThresholds": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.40,
+    "3": 0.56,
+    "4": 0.71,
+    "5": 0.86
+  },
+  "maxPenalty": 1.0,
   "styleWeight": 1.0,
   "ergonomicsWeight": 0.0,
-  "defaultWeight": 1.0,
-  "maxPenalty": 1.0
+  "defaultWeight": 1.0
 }

@@ -1,29 +1,32 @@
 /**
- * RoomBounds: границы комнаты, двери, окна с зонами clearance.
+ * RoomBounds: playable floor dimensions and optional clearance rectangles.
  */
 export class RoomBounds {
-  constructor(width, height, doors = [], windows = []) {
-    if (width <= 0 || height <= 0) {
-      throw new Error('INVALID_BOUNDS: width and height must be positive');
+  constructor(width, depth, doors = [], windows = []) {
+    if (typeof width !== 'number' || width <= 0 || typeof depth !== 'number' || depth <= 0) {
+      throw new Error('INVALID_BOUNDS: width and depth must be positive');
     }
+
     this.width = width;
-    this.height = height;
-    this.doors = doors.map(d => this._normalizeRect(d));
-    this.windows = windows.map(w => this._normalizeRect(w));
+    this.depth = depth;
+    // Kept as an alias for the original MVP tests and DTO vocabulary.
+    this.height = depth;
+    this.doors = doors.map(rect => this._normalizeRect(rect));
+    this.windows = windows.map(rect => this._normalizeRect(rect));
   }
 
   _normalizeRect(rect) {
     return {
       x: rect.x,
-      y: rect.y,
+      z: rect.z ?? rect.y ?? 0,
       width: rect.width,
-      height: rect.height,
-      clearance: rect.clearance || 0.9 // default 0.9m clearance
+      depth: rect.depth ?? rect.height ?? 0,
+      clearance: rect.clearance ?? 0.9
     };
   }
 
   isInside(x, z) {
-    return x >= 0 && x <= this.width && z >= 0 && z <= this.height;
+    return x >= 0 && x <= this.width && z >= 0 && z <= this.depth;
   }
 
   getClearanceRects() {

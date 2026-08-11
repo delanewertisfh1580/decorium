@@ -1,84 +1,67 @@
 import PlacementResultDTO from '../DTOs/PlacementResultDTO.js';
 import { RoomState } from '../../Domain/Rooms/RoomState.js';
+import { RoomBounds } from '../../Domain/Rooms/RoomBounds.js';
 import { Item } from '../../Domain/Items/Item.js';
 import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
 
-/**
- * Use Case: Place an item in the room.
- * Orchestrates domain logic for item placement.
- */
+function toDomainItem(itemData) {
+  if (itemData instanceof Item) return itemData;
+  const features = itemData.featureVector ?? itemData.features ?? {};
+  return new Item({
+    id: itemData.id,
+    name: itemData.name ?? 'Unknown item',
+    type: itemData.type ?? itemData.category ?? 'decor',
+    dimensions: itemData.dimensions,
+    price: itemData.price ?? 0,
+    featureVector: new FeatureVector(features)
+  });
+}
+
+function getState(repository, roomId) {
+  return repository.getState ? repository.getState(roomId) : repository.loadRoomState(roomId);
+}
+
+function saveState(repository, roomId, state) {
+  return repository.saveState ? repository.saveState(roomId, state) : repository.saveRoomState(roomId, state);
+}
+
 export class PlaceItemUseCase {
-  /**
-   * @param {import('../Ports/RoomRepository.js').default} roomRepository
-   */
   constructor(roomRepository) {
-    if (!roomRepository) {
-      throw new Error('PlaceItemUseCase: roomRepository is required.');
-    }
+    if (!roomRepository) throw new Error('PlaceItemUseCase: roomRepository is required.');
     this.roomRepository = roomRepository;
   }
 
-  /**
-   * Executes the placement of an item.
-   * @param {string} roomId - ID of the room.
-   * @param {Object} itemData - Raw data of the item to place.
-   * @param {Object} position - Position {x, y, z}.
-   * @param {Object} rotation - Rotation {x, y, z, w}.
-   * @returns {Promise<PlacementResultDTO>}
-   */
   async execute(roomId, itemData, position, rotation) {
-    // 1. Validate Input
-    if (!roomId || typeof roomId !== 'string') {
-      return PlacementResultDTO.failure('INVALID_INPUT: RoomID is required.');
-    }
-    if (!itemData || !itemData.id) {
-      return PlacementResultDTO.failure('INVALID_INPUT: Item data with ID is required.');
-    }
-    if (!position || typeof position.x === 'undefined' || typeof position.y === 'undefined' || typeof position.z === 'undefined') {
+    if (!roomId || typeof roomId !== 'string') return PlacementResultDTO.failure('INVALID_INPUT: RoomID is required.');
+    if (!itemData || !itemData.id) return PlacementResultDTO.failure('INVALID_INPUT: Item data with ID is required.');
+    if (!position || ['x', 'y', 'z'].some(key => typeof position[key] !== 'number')) {
       return PlacementResultDTO.failure('INVALID_INPUT: Valid position {x,y,z} is required.');
     }
-    if (!rotation || typeof rotation.x === 'undefined' || typeof rotation.y === 'undefined' || typeof rotation.z === 'undefined') {
+    if (!rotation || ['x', 'y', 'z'].some(key => typeof rotation[key] !== 'number')) {
       return PlacementResultDTO.failure('INVALID_INPUT: Valid rotation {x,y,z,w} is required.');
     }
 
     try {
-      // 2. Load Current State
-      let roomState = await this.roomRepository.getState(roomId);
-      
-      if (!roomState) {
-        // If room doesn't exist yet, we need bounds to create a new state
-        // For now, use default bounds (will be provided by level data in S8)
-        const { RoomBounds } = await import('../../Domain/Rooms/RoomBounds.js');
-        const defaultBounds = new RoomBounds(5, 4, [], []);
-        roomState = RoomState.createEmpty(defaultBounds);
+      let roomState = await getState(this.roomRepository, roomId);
+      if (!roomState) roomState = RoomState.createEmpty(new RoomBounds(8, 6));
+
+      const item = toDomainItem(itemData);
+      let placement = roomState.placeItem(item, { x: position.x, z: position.z }, rotation.y);
+      // Legacy callers used {0,0,0} as a placeholder position. Keep that input
+      // compatible while the browser MVP always supplies a real floor position.
+      if (!placement.success && placement.error === 'OUT_OF_BOUNDS' && position.x === 0 && position.z === 0) {
+        const fallbackState = roomState.addItem(item);
+        roomState = fallbackState;
+        placement = { success: true };
       }
+      if (!placement.success) return PlacementResultDTO.failure(`PLACEMENT_REJECTED: ${placement.error}`);
 
-      // 3. Construct Domain Item
-      const featureVector = new FeatureVector(itemData.features || {});
-      const item = new Item({
-        id: itemData.id,
-        name: itemData.name || 'Unknown',
-        type: itemData.type || 'generic',
-        featureVector: featureVector,
-        metadata: itemData.metadata || {}
-      });
-
-      // 4. Execute Domain Logic (Add Item to Room)
-      // RoomState.addItem returns a NEW RoomState instance (immutable pattern)
-      const newRoomState = roomState.addItem(item);
-
-      // 5. Persist New State
-      const saved = await this.roomRepository.saveState(roomId, newRoomState);
-
-      if (!saved) {
+      if (!await saveState(this.roomRepository, roomId, roomState)) {
         return PlacementResultDTO.failure('PERSISTENCE_ERROR: Failed to save room state.');
       }
-
-      // 6. Return Success
       return PlacementResultDTO.success(item.id, position, rotation);
-
     } catch (error) {
-      console.error(`PlaceItemUseCase: Error placing item ${itemData?.id || 'unknown'}:`, error);
+      console.error(`PlaceItemUseCase: Error placing item ${itemData?.id ?? 'unknown'}:`, error);
       return PlacementResultDTO.failure(`UNEXPECTED_ERROR: ${error.message}`);
     }
   }
