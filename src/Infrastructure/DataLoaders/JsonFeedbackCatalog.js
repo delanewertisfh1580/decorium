@@ -1,7 +1,33 @@
 export class JsonFeedbackCatalog {
-  constructor(path = './data/feedback/scandinavian-feedback.json') {
+  constructor(path = null) {
     this.path = path;
     this.cache = null;
+    
+    // Если path === null, используем встроенные данные
+    if (path === null && window.DECORIUM_DATA?.feedback) {
+      this.cache = this._loadFromEmbedded();
+    }
+  }
+  
+  _loadFromEmbedded() {
+    const allFeedback = [];
+    for (const [path, content] of Object.entries(window.DECORIUM_DATA.feedback)) {
+      if (Array.isArray(content)) {
+        allFeedback.push(...content);
+      }
+    }
+    return allFeedback;
+  }
+  
+  setFeedback(feedbackData) {
+    // Метод для прямой установки данных из EmbeddedDataLoader
+    const allFeedback = [];
+    for (const [path, content] of Object.entries(feedbackData)) {
+      if (Array.isArray(content)) {
+        allFeedback.push(...content);
+      }
+    }
+    this.cache = allFeedback;
   }
 
   async loadAllFeedback() {
@@ -28,22 +54,11 @@ export class JsonFeedbackCatalog {
   async getEvaluationFeedback(stars, violations) {
     const feedback = await this.loadAllFeedback();
     const messages = [];
-
-    for (const violation of violations) {
-      const message = feedback.find(item => item.id === violation.messageKey);
-      if (message) {
-        messages.push(message.template
-          .replaceAll('{threshold}', violation.threshold.toFixed(2))
-          .replaceAll('{value}', violation.actualValue.toFixed(2)));
-      }
-    }
-
-    const successId = stars >= 5 ? 'success-excellent' : stars >= 3 ? 'success-good' : null;
-    const success = successId ? feedback.find(item => item.id === successId) : null;
-    if (success) messages.unshift(success.template);
-    if (messages.length === 0) {
-      const tip = feedback.find(item => item.id === 'tip-more-items');
-      if (tip) messages.push(tip.template);
+    const starFeedback = feedback.find(f => f.id === `stars-${stars}` || f.id === `evaluation-stars-${stars}`);
+    if (starFeedback) messages.push(starFeedback.template);
+    for (const v of violations) {
+      const constraintFeedback = feedback.find(f => f.id === v.messageKey);
+      if (constraintFeedback) messages.push(constraintFeedback.template);
     }
     return messages;
   }

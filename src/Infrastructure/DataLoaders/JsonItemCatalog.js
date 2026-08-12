@@ -2,12 +2,42 @@ import Ajv from 'ajv';
 import { CatalogValidator } from '../../Domain/Items/CatalogValidator.js';
 
 export class JsonItemCatalog {
-  constructor(basePath = './data/items', schema = null) {
+  constructor(basePath = null, schema = null) {
     this.basePath = basePath;
     this.schema = schema;
     this.validator = new CatalogValidator();
     this.validateSchema = schema ? new Ajv().compile(schema) : null;
     this.itemsCache = null;
+    
+    // Если basePath === null, используем встроенные данные
+    if (basePath === null && window.DECORIUM_DATA?.items) {
+      this.itemsCache = this._loadFromEmbedded();
+    }
+  }
+  
+  _loadFromEmbedded() {
+    const allItems = [];
+    for (const [path, content] of Object.entries(window.DECORIUM_DATA.items)) {
+      if (path.endsWith('.json')) {
+        const rawItems = content.items ?? content;
+        const items = this.validator.createItems(rawItems);
+        allItems.push(...items);
+      }
+    }
+    return allItems;
+  }
+  
+  setItems(itemsData) {
+    // Метод для прямой установки данных из EmbeddedDataLoader
+    const allItems = [];
+    for (const [path, content] of Object.entries(itemsData)) {
+      if (path.endsWith('.json')) {
+        const rawItems = content.items ?? content;
+        const items = this.validator.createItems(rawItems);
+        allItems.push(...items);
+      }
+    }
+    this.itemsCache = allItems;
   }
 
   async loadAllItems() {
@@ -38,10 +68,6 @@ export class JsonItemCatalog {
 
   async getAllItems() {
     return this.loadAllItems();
-  }
-
-  clearCache() {
-    this.itemsCache = null;
   }
 }
 

@@ -1,5 +1,6 @@
 import './styles.css';
-import { SchemaLoader } from './Infrastructure/DataLoaders/SchemaLoader.js';
+import './embedded-data.js';  // Импортируем встроенные данные
+import { EmbeddedDataLoader } from './Infrastructure/DataLoaders/EmbeddedDataLoader.js';
 import { JsonLevelRepository } from './Infrastructure/Repositories/JsonLevelRepository.js';
 import { InMemoryRoomRepository } from './Infrastructure/Repositories/InMemoryRoomRepository.js';
 import { JsonItemCatalog } from './Infrastructure/DataLoaders/JsonItemCatalog.js';
@@ -18,33 +19,36 @@ import RotateItemUseCase from './Application/UseCases/RotateItemUseCase.js';
 import RemoveItemUseCase from './Application/UseCases/RemoveItemUseCase.js';
 import { GameController } from './Presentation/Controllers/GameController.js';
 
-async function loadJson(path) {
-  const response = await fetch(path);
-  if (!response.ok) throw new Error(`Не удалось загрузить ${path}`);
-  return response.json();
-}
-
 async function bootstrap() {
   const status = document.getElementById('boot-status');
   try {
+    // Загружаем все данные из встроенного объекта
     const [levelSchema, itemSchema, scoringParameters] = await Promise.all([
-      SchemaLoader.loadLevelSchema(),
-      SchemaLoader.loadItemSchema(),
-      loadJson('./data/scoring/scoring-parameters.json')
+      EmbeddedDataLoader.loadLevelSchema(),
+      EmbeddedDataLoader.loadItemSchema(),
+      EmbeddedDataLoader.loadScoringParameters()
     ]);
     initializeScoringParameters(scoringParameters);
 
-    const levelRepository = new JsonLevelRepository('./data/levels', levelSchema);
-    const itemCatalog = new JsonItemCatalog('./data/items', itemSchema);
+    const levelRepository = new JsonLevelRepository(null, levelSchema);
+    const itemCatalog = new JsonItemCatalog(null, itemSchema);
     const constraintCatalog = new JsonConstraintCatalog();
     const styleCatalog = new JsonStyleCatalog();
     const feedbackCatalog = new JsonFeedbackCatalog();
-    await Promise.all([
-      itemCatalog.loadAllItems(),
-      constraintCatalog.loadAllConstraints(),
-      styleCatalog.loadAllStyles(),
-      feedbackCatalog.loadAllFeedback()
+    
+    // Загружаем данные из встроенного объекта
+    const [itemsData, constraintsData, stylesData, feedbackData] = await Promise.all([
+      EmbeddedDataLoader.loadAllItems(),
+      EmbeddedDataLoader.loadAllConstraints(),
+      EmbeddedDataLoader.loadAllStyles(),
+      EmbeddedDataLoader.loadAllFeedback()
     ]);
+    
+    // Передаем данные напрямую в каталоги
+    itemCatalog.setItems(itemsData);
+    constraintCatalog.setConstraints(constraintsData);
+    styleCatalog.setStyles(stylesData);
+    feedbackCatalog.setFeedback(feedbackData);
 
     const roomRepository = new InMemoryRoomRepository();
     const loadLevelUseCase = new LoadLevelUseCase(levelRepository, itemCatalog, constraintCatalog);
