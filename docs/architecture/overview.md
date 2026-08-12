@@ -36,7 +36,7 @@ Presentation → Application → Domain ← Infrastructure
 
 ### Infrastructure (`src/Infrastructure`)
 
-`JsonItemCatalog`, `JsonLevelRepository`, `JsonConstraintCatalog`, `JsonStyleCatalog`, `JsonFeedbackCatalog`, `SchemaLoader`, `JsonScoringParametersLoader` и `InMemoryRoomRepository`. Все browser fetch-вызовы находятся здесь или в composition root.
+`JsonItemCatalog`, `JsonLevelRepository`, `JsonConstraintCatalog`, `JsonStyleCatalog`, `JsonFeedbackCatalog`, `SchemaLoader`, `JsonScoringParametersLoader`, `staticDataAssets.js` и `InMemoryRoomRepository`. Все browser fetch-вызовы находятся здесь или в composition root; `staticDataAssets.js` фиксирует JSON, которые Vite должен публиковать рядом с HTML.
 
 ### Presentation (`src/Presentation`)
 
@@ -61,4 +61,4 @@ npm test
 npm run build
 ```
 
-Unit/architecture guards проверяют детерминизм и отсутствие запрещённых зависимостей. Build проверяет `src/main.js` и создаёт единый `dist/index.html`.
+Unit/architecture guards проверяют детерминизм и отсутствие запрещённых зависимостей. Build проверяет `src/main.js`, создаёт inline `dist/index.html` и публикует runtime JSON в `dist/data/` для статических хостингов.

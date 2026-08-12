@@ -39,4 +39,4 @@ data/
 
 ## Consequences
 
-Контент редактируется без изменения Domain-кода и поставляется вместе со статическим приложением. Presentation-профили в `visuals/item-visuals.json` также меняются независимо от Domain: они выбирают форму, материал и локальный свет procedural builder-а. MVP не требует filesystem API, backend, database или environment variables. Схемы и loaders должны обновляться вместе с контрактом V2; legacy 8-field format не является runtime-контрактом.
+Контент редактируется без изменения Domain-кода и поставляется вместе со статическим приложением. Presentation-профили в `visuals/item-visuals.json` также меняются независимо от Domain: они выбирают форму, материал и локальный свет procedural builder-а. `STATIC_DATA_FILES` и Vite build plugin публикуют runtime JSON в `dist/data/`, сохраняя относительные fetch-пути для Render и других static hosts. MVP не требует filesystem API, backend, database или environment variables. Схемы и loaders должны обновляться вместе с контрактом V2; legacy 8-field format не является runtime-контрактом.

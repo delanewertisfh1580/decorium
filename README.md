@@ -42,7 +42,7 @@ npm test
 npm run build
 ```
 
-Production-сборка создаёт самодостаточный `dist/index.html` через `vite-plugin-singlefile`.
+Production-сборка создаёт inline `dist/index.html` через `vite-plugin-singlefile` и рядом публикует runtime JSON в `dist/data/`. Для Render Static Site используйте build command `npm ci && npm run build` и publish directory `dist`; environment variables не нужны. Не указывайте корень репозитория как publish directory, иначе JSON-пути и итоговый артефакт будут настроены неверно.
 
 ## Управление
 
@@ -64,6 +64,18 @@ Production-сборка создаёт самодостаточный `dist/inde
 - `data` — уровень, V2-каталог, стиль, ограничения, feedback и схемы.
 
 Текущий entrypoint — `src/main.js`; старого inline bootstrap больше нет.
+
+## Render / static hosting
+
+Приложение не требует backend: JSON-контент загружается браузером как статические файлы. Для Render Static Site:
+
+```text
+Build command: npm install && npm run build
+Publish directory: dist
+Environment variables: не требуются
+```
+
+После изменения этих настроек выполните clean deploy/redeploy. В опубликованном артефакте должны присутствовать `index.html` и `data/` с JSON-файлами. Подробный контракт описан в [INFRA-001](docs/slices/INFRA-001-static-json-deployment.md).
 
 ## Environment variables
 

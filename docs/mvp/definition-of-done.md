@@ -36,11 +36,11 @@
 - [x] Domain does not import Three.js or browser APIs.
 - [x] JSON level and item schema validation is enabled at bootstrap.
 - [x] `npm test` passes with the current Presentation animation contract.
-- [x] `npm run build` passes and emits a single static HTML file.
+- [x] `npm run build` passes and emits inline `dist/index.html` plus all runtime JSON under `dist/data/` for static hosting.
 
 ## Release checks still required
 
-- [ ] Manual browser smoke test on a WebGL-capable desktop browser.
+- [ ] Manual browser smoke test on a WebGL-capable desktop browser, including a deployed Render Static Site and successful JSON bootstrap.
 - [ ] Check interaction at target viewport sizes.
 - [ ] Measure FPS and loading time on target hardware.
 - [ ] Product/UX sign-off and content tuning.

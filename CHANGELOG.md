@@ -15,6 +15,7 @@
 - UI-ROOM-005 перерабатывает живые анимации: gait рук/ног людей, четыре ноги и хвост животного, frame-rate independent колёса, TV content bars/scanlines/glow и единый deterministic animation contract.
 - UI-ROOM-006 исправляет качество animation pass: естественный темп, видимые руки с кистями, разнообразный TV content layer и спокойный матовый пол без debug grid.
 - A-007 добавляет data-driven composition completeness: одна мебель не может получить 5★, а причины незавершённости и успеха приходят из feedback JSON через Evaluation UI.
+- INFRA-001 исправляет static hosting: Vite теперь публикует runtime JSON в `dist/data/`, поэтому Render Static Site не получает 404 при bootstrap.
 
 - Исправлен единый runtime entrypoint: `index.html` импортирует `src/main.js`.
 - Собран рабочий Three.js room flow с каталогом, placement/move/rotate/remove и evaluation UI.
