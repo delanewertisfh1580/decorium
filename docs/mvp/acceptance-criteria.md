@@ -51,9 +51,10 @@
 - [x] Star rating берётся из JSON scoring parameters.
 - [x] Feedback маппится через messageKey в русский JSON-каталог.
 - [x] «Начать заново» очищает in-memory состояние.
-- [x] HUD остаётся scene-first: каталог, summary и action-dock не перекрывают центр комнаты.
-- [x] Inventory отображается компактной горизонтальной лентой с прокруткой.
-- [x] Toolbar сохраняет rotate/delete/undo/clear/evaluate callbacks в компактном action-dock.
+- [x] HUD остаётся scene-first: каталог и summary свернуты по умолчанию и не перекрывают центр комнаты.
+- [x] Каталог раскрывается компактным горизонтальным списком и автоматически сворачивается после выбора предмета.
+- [x] Rotate/delete/undo доступны только из contextual spoiler после выбора или появления undo-действия.
+- [x] Reset и справка по клавишам находятся под вторичным spoiler; постоянные instructional hints отсутствуют.
 - [x] Узкий viewport использует нижние thumb-friendly зоны и safe-area отступы.
 - [x] Evaluation overlay остаётся читаемым и закрываемым без изменения evaluation contract.
 

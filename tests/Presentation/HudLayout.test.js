@@ -17,6 +17,10 @@ describe('UI-VIS-001 calm HUD layout', () => {
     expect(HUD_LAYOUT.controlMinHeight).toBeGreaterThanOrEqual(44);
     expect(HUD_LAYOUT.actionLabelSize).toBeLessThanOrEqual(16);
     expect(HUD_LAYOUT.inventoryCardWidth).toBeGreaterThanOrEqual(132);
+    expect(HUD_LAYOUT.catalogCollapsedByDefault).toBe(true);
+    expect(HUD_LAYOUT.scoreCollapsedByDefault).toBe(true);
+    expect(HUD_LAYOUT.helpCollapsedByDefault).toBe(true);
+    expect(HUD_LAYOUT.contextualHintsOnly).toBe(true);
   });
 
   it('validates the calm responsive contract', () => {

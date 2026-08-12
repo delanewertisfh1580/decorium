@@ -27,7 +27,7 @@
 - [x] Weighted style score, data-driven composition requirements and canonical star thresholds.
 - [x] Russian feedback catalog covers style violations, composition incompleteness and success states.
 - [x] Visible boot error instead of a blank screen.
-- [x] Scene-first compact HUD with horizontal inventory, summary chip, action dock and responsive safe-area layout.
+- [x] Scene-first minimal HUD: catalog and score summary are collapsed by default, contextual item actions/reset/help are hidden under spoilers, and action hints appear only when relevant.
 - [x] Evaluation result is presented as a calm, closable overlay without changing score data.
 
 ## Technical checklist

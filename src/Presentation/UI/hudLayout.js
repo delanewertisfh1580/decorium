@@ -13,7 +13,11 @@ export const HUD_LAYOUT = freeze({
   actionLabelSize: 16,
   inventoryCardWidth: 144,
   mobileBreakpoint: 720,
-  safeAreaPadding: 12
+  safeAreaPadding: 12,
+  catalogCollapsedByDefault: true,
+  scoreCollapsedByDefault: true,
+  helpCollapsedByDefault: true,
+  contextualHintsOnly: true
 });
 
 export function validateHudLayout(layout) {
@@ -27,6 +31,10 @@ export function validateHudLayout(layout) {
   if (!Number.isFinite(layout?.actionLabelSize) || layout.actionLabelSize > 16) errors.push('actionLabelSize');
   if (!Number.isFinite(layout?.inventoryCardWidth) || layout.inventoryCardWidth < 132) errors.push('inventoryCardWidth');
   if (!Number.isFinite(layout?.mobileBreakpoint) || layout.mobileBreakpoint < 560) errors.push('mobileBreakpoint');
+  if (layout?.catalogCollapsedByDefault !== true) errors.push('catalogCollapsedByDefault');
+  if (layout?.scoreCollapsedByDefault !== true) errors.push('scoreCollapsedByDefault');
+  if (layout?.helpCollapsedByDefault !== true) errors.push('helpCollapsedByDefault');
+  if (layout?.contextualHintsOnly !== true) errors.push('contextualHintsOnly');
 
   return errors;
 }

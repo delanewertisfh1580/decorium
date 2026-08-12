@@ -19,7 +19,7 @@ Playable MVP baseline with living-scene presentation
 - Пять стилевых ограничений, data-driven composition requirements, weighted penalty, style score и рейтинг 1–5 звёзд.
 - Русские feedback-сообщения из JSON-каталога, включая причины незавершённой композиции.
 - Runtime-валидация level/item JSON через AJV.
-- Scene-first HUD: компактные inventory/actions docks, room summary, safe-area и reduced-motion presentation states.
+- Scene-first minimal HUD: collapsed catalog and score summary, contextual actions/reset/help spoilers, safe-area и reduced-motion presentation states.
 
 ## Не входит
 

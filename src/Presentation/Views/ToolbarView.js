@@ -22,16 +22,35 @@ export class ToolbarView {
 
   async init() {
     this.container.innerHTML = `
-      <div class="toolbar-group toolbar-session" aria-label="Действия комнаты">
-        <button class="toolbar-button quiet-action" data-action="clear" type="button">
-          <span class="button-icon" aria-hidden="true">＋</span>
-          <span class="button-copy"><span>Сначала</span><small>Новая комната</small></span>
-        </button>
-        <button class="toolbar-button primary" data-action="evaluate" type="button">
+      <div class="toolbar-primary" aria-label="Основное действие">
+        <button class="toolbar-button primary" data-action="evaluate" type="button" aria-label="Оценить комнату">
           <span class="button-icon" aria-hidden="true">✦</span>
           <span class="button-copy"><span>Оценить</span></span>
         </button>
       </div>
+      <details class="toolbar-more">
+        <summary class="toolbar-more-toggle" aria-label="Открыть дополнительные действия и справку">•••</summary>
+        <div class="toolbar-menu">
+          <button class="toolbar-button quiet-action" data-action="clear" type="button">
+            <span class="button-icon" aria-hidden="true">＋</span>
+            <span class="button-copy"><span>Новая попытка</span></span>
+          </button>
+          <details class="help-spoiler" data-help-spoiler>
+            <summary>Как играть</summary>
+            <div class="help-content">
+              <p>Выберите предмет в каталоге, затем разместите его в комнате.</p>
+              <ul>
+                <li><kbd>R</kbd>/<kbd>Q</kbd> — повернуть</li>
+                <li><kbd>Delete</kbd> — удалить выбранный предмет</li>
+                <li><kbd>Z</kbd> — отменить последнее действие</li>
+                <li><kbd>E</kbd> — оценить комнату</li>
+                <li><kbd>Esc</kbd>/<kbd>ПКМ</kbd> — отменить выбор</li>
+                <li><kbd>Home</kbd> — вернуть камеру</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </details>
     `;
     this.container.querySelector('[data-action="clear"]').onclick = this.callbacks.onClear;
     this.container.querySelector('[data-action="evaluate"]').onclick = this.callbacks.onEvaluate;
@@ -49,7 +68,10 @@ export class ToolbarView {
   setSelectionState(selected) {
     for (const action of ['rotate', 'delete']) {
       const button = this.contextContainer?.querySelector(`[data-action="${action}"]`);
-      if (button) button.disabled = !selected;
+      if (button) {
+        button.disabled = !selected;
+        button.hidden = !selected;
+      }
     }
   }
 
@@ -57,6 +79,7 @@ export class ToolbarView {
     const button = this.contextContainer?.querySelector('[data-action="undo"]');
     if (!button) return;
     button.disabled = !canUndo;
+    button.hidden = !canUndo;
     button.title = canUndo && label ? label : 'Нет действий для отмены';
     button.setAttribute('aria-label', canUndo && label ? label : 'Нет действий для отмены');
   }

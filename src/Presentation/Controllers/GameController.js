@@ -32,6 +32,7 @@ export class GameController {
     this.pendingItemId = null;
     this._lastEvaluation = null;
     this.undoBuffer = new UndoBuffer();
+    this._dashboardOpen = false;
   }
 
   async init(canvas, catalogContainer, toolbarContainer, evaluationContainer) {
@@ -94,26 +95,40 @@ export class GameController {
   _renderDashboard() {
     const dashboard = document.getElementById('dashboard-container');
     if (!dashboard || !this.roomViewModel) return;
+    const existingSpoiler = dashboard.querySelector('[data-dashboard-spoiler]');
+    if (existingSpoiler) this._dashboardOpen = existingSpoiler.open;
     const placedCount = this.roomViewModel.placedItems.length;
     const result = this.evaluationViewModel.isVisible ? this.evaluationViewModel : null;
     dashboard.innerHTML = `
-      <span class="eyebrow">${this.roomViewModel.name}</span>
-      <div class="summary-main">
-        <div class="summary-score">
-          <span class="score-label">Оценка</span>
-          <strong class="score-value">${result ? Math.round(result.score * 100) : '—'}</strong>
-        </div>
-        <div class="stars" aria-label="${result ? result.stars : 0} из 5 звёзд">${result ? '★'.repeat(result.stars) + '☆'.repeat(5 - result.stars) : '☆☆☆☆☆'}</div>
-      </div>
-      <div class="summary-meta">
-        <span><b>${placedCount}</b> предметов</span>
-        <span>Scandi</span>
-      </div>
+      <details class="dashboard-spoiler" data-dashboard-spoiler${this._dashboardOpen ? ' open' : ''}>
+        <summary class="dashboard-toggle" aria-label="Открыть сводку оценки">
+          <span class="dashboard-toggle-icon" aria-hidden="true">✦</span>
+          <span class="dashboard-toggle-copy"><b>Сводка</b><small>${placedCount} предметов</small></span>
+          <span class="dashboard-toggle-chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="dashboard-content">
+          <span class="eyebrow">${this.roomViewModel.name}</span>
+          <div class="summary-main">
+            <div class="summary-score">
+              <span class="score-label">Оценка</span>
+              <strong class="score-value">${result ? Math.round(result.score * 100) : '—'}</strong>
+            </div>
+            <div class="stars" aria-label="${result ? result.stars : 0} из 5 звёзд">${result ? '★'.repeat(result.stars) + '☆'.repeat(5 - result.stars) : '☆☆☆☆☆'}</div>
+          </div>
+          <div class="summary-meta">
+            <span><b>${placedCount}</b> предметов</span>
+            <span>Scandi</span>
+          </div>
       <details class="summary-actions">
         <summary>Действия предмета</summary>
-        <div class="context-actions" data-context-actions></div>
+            <div class="context-actions" data-context-actions></div>
+          </details>
+        </div>
       </details>
     `;
+    dashboard.querySelector('[data-dashboard-spoiler]').addEventListener('toggle', event => {
+      this._dashboardOpen = event.currentTarget.open;
+    });
     this.toolbarView?.renderContextActions(dashboard.querySelector('[data-context-actions]'));
     this.toolbarView?.setSelectionState(Boolean(this.roomViewModel.selectedItemId));
     this.toolbarView?.setUndoState(this.undoBuffer.canUndo, this.undoBuffer.nextLabel);
@@ -123,9 +138,10 @@ export class GameController {
     const item = this.roomViewModel.getItemById(itemId);
     if (!item) return;
     this.pendingItemId = itemId;
+    this.catalogView.close();
     this.roomViewModel.clearSelection();
     this.roomView.beginPlacement(item);
-    this._showStatus('Кликните в комнате, чтобы добавить · R/Q — повернуть · ПКМ — отмена');
+    this._showStatus('Размещение доступно: кликните в комнате · R/Q — повернуть · ПКМ — отмена');
     this._render();
   }
 

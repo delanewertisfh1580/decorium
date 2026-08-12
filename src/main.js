@@ -85,8 +85,9 @@ async function bootstrap() {
     );
     await controller.loadLevel('level-001');
     controller.roomView.startRenderLoop();
-    status.textContent = 'Готово · соберите комнату и нажмите «Оценить»';
-    setTimeout(() => status.classList.add('hidden'), 1800);
+    // После загрузки сцена остаётся чистой: подсказки появляются только
+    // как реакция на доступное или выполненное действие.
+    status.classList.add('hidden');
   } catch (error) {
     console.error('Decorium bootstrap error:', error);
     status.className = 'boot-status panel error-card';

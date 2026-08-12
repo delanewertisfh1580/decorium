@@ -5,22 +5,33 @@ export class ItemCatalogView {
   constructor(container, onSelect) {
     this.container = container;
     this.onSelect = onSelect;
+    this.isOpen = false;
   }
 
   async init() {}
 
   render(items, selectedItemId = null) {
+    const open = this.isOpen;
     this.container.innerHTML = `
-      <div class="library-header">
-        <div>
-          <span class="eyebrow">Коллекция</span>
-          <h2>Предметы</h2>
+      <details class="library-spoiler" data-catalog-spoiler${open ? ' open' : ''}>
+        <summary class="library-toggle" aria-label="Открыть каталог предметов">
+          <span class="library-toggle-icon" aria-hidden="true">⌂</span>
+          <span class="library-toggle-copy"><b>Каталог</b><small>${items.length} предметов</small></span>
+          <span class="library-toggle-chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="catalog-content">
+          <div class="catalog-grid" aria-label="Предметы для размещения"></div>
         </div>
-        <span class="library-count">${items.length}</span>
-      </div>
-      <p class="catalog-subtitle">Выберите предмет и разместите его в комнате</p>
-      <div class="catalog-grid" aria-label="Предметы для размещения"></div>
+      </details>
     `;
+
+    const spoiler = this.container.querySelector('[data-catalog-spoiler]');
+    this.container.classList.toggle('is-open', open);
+    spoiler.addEventListener('toggle', () => {
+      this.isOpen = spoiler.open;
+      this.container.classList.toggle('is-open', spoiler.open);
+    });
+
     const grid = this.container.querySelector('.catalog-grid');
     for (const item of items) {
       const button = document.createElement('button');
@@ -36,6 +47,13 @@ export class ItemCatalogView {
       button.addEventListener('click', () => this.onSelect(item.id));
       grid.appendChild(button);
     }
+  }
+
+  close() {
+    this.isOpen = false;
+    this.container.classList.remove('is-open');
+    const spoiler = this.container.querySelector('[data-catalog-spoiler]');
+    if (spoiler) spoiler.open = false;
   }
 
   destroy() { this.container.replaceChildren(); }

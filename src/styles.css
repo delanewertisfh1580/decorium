@@ -70,17 +70,29 @@ button:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 
 .brand-text b { display: block; font-size: 13px; letter-spacing: .02em; line-height: 1.1; }
 .brand-text small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.1; }
 
-/* Compact room summary. It gives context without competing with the room. */
+/* Compact HUD: the room stays visible, status lives behind deliberate disclosures. */
 .dashboard {
   position: absolute;
   z-index: 3;
   top: max(14px, env(safe-area-inset-top));
   right: max(14px, env(safe-area-inset-right));
-  width: 224px;
-  padding: 12px 14px;
-  border-radius: 15px;
-  box-shadow: 0 8px 28px rgba(75, 89, 84, 0.09);
+  width: 154px;
+  padding: 0;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(75, 89, 84, 0.08);
+  overflow: visible;
 }
+.dashboard-spoiler, .library-spoiler { width: 100%; }
+.dashboard-toggle, .library-toggle { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 7px 10px; cursor: pointer; list-style: none; user-select: none; }
+.dashboard-toggle::-webkit-details-marker, .library-toggle::-webkit-details-marker { display: none; }
+.dashboard-toggle-icon, .library-toggle-icon { display: grid; place-items: center; flex: 0 0 28px; width: 28px; height: 28px; border-radius: 9px; background: rgba(111,143,135,.14); color: var(--accent-strong); font-size: 15px; }
+.library-toggle-icon { background: rgba(201,150,84,.14); color: var(--warm); }
+.dashboard-toggle-copy, .library-toggle-copy { display: grid; min-width: 0; gap: 2px; line-height: 1.05; }
+.dashboard-toggle-copy b, .library-toggle-copy b { font-size: 12px; }
+.dashboard-toggle-copy small, .library-toggle-copy small { color: var(--muted); font-size: 10px; white-space: nowrap; }
+.dashboard-toggle-chevron, .library-toggle-chevron { margin-left: auto; color: var(--muted); font-size: 16px; transition: transform var(--motion-press) ease; }
+.dashboard-spoiler[open] .dashboard-toggle-chevron, .library-spoiler[open] .library-toggle-chevron { transform: rotate(180deg); }
+.dashboard-content { padding: 0 12px 12px; }
 .eyebrow { display: block; color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .12em; line-height: 1.2; text-transform: uppercase; }
 .dashboard .eyebrow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .summary-main { display: flex; align-items: end; justify-content: space-between; gap: 10px; margin-top: 6px; }
@@ -93,41 +105,40 @@ button:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 
 .summary-actions { margin-top: 8px; border-top: 1px solid rgba(82,117,110,.1); }
 .summary-actions summary { display: flex; align-items: center; justify-content: space-between; min-height: 36px; color: var(--muted); cursor: pointer; font-size: 12px; list-style: none; user-select: none; }
 .summary-actions summary::-webkit-details-marker { display: none; }
-.summary-actions summary::after { content: '⌄'; color: var(--accent-strong); font-size: 16px; transition: transform var(--motion-press) ease; }
-.summary-actions[open] summary { color: var(--text); }
-.summary-actions[open] summary::after { transform: rotate(180deg); }
+.summary-actions summary::after, .help-spoiler summary::after { content: '⌄'; color: var(--accent-strong); font-size: 16px; transition: transform var(--motion-press) ease; }
+.summary-actions[open] summary, .help-spoiler[open] summary { color: var(--text); }
+.summary-actions[open] summary::after, .help-spoiler[open] summary::after { transform: rotate(180deg); }
 .context-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; padding: 2px 0 3px; }
 .context-actions .toolbar-button { width: 100%; min-height: 42px; padding: 5px 4px; }
 .context-actions .button-copy { display: block; }
 .context-actions .button-copy > span { font-size: 11px; text-align: center; }
 
-/* Inventory is a low-profile horizontal dock instead of a tall sidebar. */
+/* Inventory opens only when the player needs to choose another object. */
 .library {
   position: absolute;
   z-index: 3;
   right: auto;
   bottom: max(14px, env(safe-area-inset-bottom));
   left: max(14px, env(safe-area-inset-left));
-  width: min(454px, calc(100vw - 360px));
-  max-height: 164px;
-  padding: 12px;
-  overflow: hidden;
-  border-radius: 16px;
+  width: 154px;
+  max-height: none;
+  padding: 0;
+  overflow: visible;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(75, 89, 84, 0.08);
 }
-.library-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 3px; }
-.library h2 { margin: 3px 0 0; font-size: 17px; line-height: 1.05; }
-.library-count { display: grid; place-items: center; width: 28px; height: 24px; border-radius: 8px; background: rgba(111,143,135,.13); color: var(--accent-strong); font-size: 12px; font-weight: 750; }
-.catalog-subtitle { margin: 5px 3px 9px; color: var(--muted); font-size: 12px; line-height: 1.25; }
-.catalog-grid { display: flex; gap: 7px; overflow-x: auto; overscroll-behavior-x: contain; padding: 1px 2px 3px; scrollbar-width: thin; scrollbar-color: rgba(82,117,110,.25) transparent; }
-.item-card { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; flex: 0 0 144px; gap: 7px; width: 144px; min-height: 62px; padding: 7px; border: 1px solid rgba(82,117,110,.12); border-radius: 11px; background: rgba(255,255,255,.42); color: var(--text); text-align: left; cursor: pointer; transition: transform var(--motion-press) ease, background var(--motion-press) ease, border-color var(--motion-press) ease, box-shadow var(--motion-press) ease; }
+.library.is-open { width: min(454px, calc(100vw - 360px)); max-height: 190px; overflow: hidden; }
+.catalog-content { padding: 0 10px 10px; }
+.catalog-grid { display: flex; gap: 7px; max-height: 125px; overflow-x: auto; overscroll-behavior-x: contain; padding: 1px 2px 3px; scrollbar-width: thin; scrollbar-color: rgba(82,117,110,.25) transparent; }
+.item-card { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; flex: 0 0 136px; gap: 7px; width: 136px; min-height: 58px; padding: 7px; border: 1px solid rgba(82,117,110,.12); border-radius: 11px; background: rgba(255,255,255,.42); color: var(--text); text-align: left; cursor: pointer; transition: transform var(--motion-press) ease, background var(--motion-press) ease, border-color var(--motion-press) ease, box-shadow var(--motion-press) ease; }
 .item-card:hover, .item-card.selected { border-color: rgba(82,117,110,.52); background: rgba(169,200,189,.24); box-shadow: 0 4px 12px rgba(82,117,110,.1); transform: translateY(-1px); }
-.item-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: color-mix(in srgb, var(--item-color) 24%, transparent); color: var(--item-color); font-size: 17px; }
+.item-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: color-mix(in srgb, var(--item-color) 24%, transparent); color: var(--item-color); font-size: 16px; }
 .item-copy { min-width: 0; }
-.item-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 700; line-height: 1.2; }
-.item-meta { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; line-height: 1.1; }
-.item-add { color: var(--accent-strong); font-size: 20px; font-weight: 450; }
+.item-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 700; line-height: 1.2; }
+.item-meta { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.1; }
+.item-add { color: var(--accent-strong); font-size: 19px; font-weight: 450; }
 
-/* Action dock: actions remain reachable, but do not form a banner over the scene. */
+/* One visible action; reset and help sit behind the quiet overflow control. */
 .toolbar {
   position: absolute;
   z-index: 3;
@@ -136,14 +147,27 @@ button:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 
   left: auto;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   width: max-content;
   max-width: min(310px, calc(100vw - 28px));
-  padding: 7px;
-  border-radius: 16px;
+  padding: 6px;
+  border-radius: 14px;
   overflow: visible;
 }
-.toolbar-group { display: flex; align-items: center; gap: 5px; }
+.toolbar-primary { display: flex; }
+.toolbar-more { position: relative; }
+.toolbar-more-toggle { display: grid; place-items: center; width: 40px; min-height: 40px; border: 1px solid rgba(82,117,110,.12); border-radius: 10px; color: var(--muted); cursor: pointer; font-size: 16px; letter-spacing: 2px; list-style: none; }
+.toolbar-more-toggle::-webkit-details-marker { display: none; }
+.toolbar-more[open] .toolbar-more-toggle { background: rgba(169,200,189,.2); color: var(--text); }
+.toolbar-menu { position: absolute; right: 0; bottom: calc(100% + 8px); display: grid; gap: 6px; width: 220px; padding: 8px; border: 1px solid var(--panel-border); border-radius: 13px; background: var(--panel-solid); box-shadow: var(--shadow-panel); }
+.toolbar-menu .toolbar-button { width: 100%; }
+.help-spoiler { border-top: 1px solid rgba(82,117,110,.1); }
+.help-spoiler summary { display: flex; align-items: center; justify-content: space-between; min-height: 36px; color: var(--muted); cursor: pointer; font-size: 12px; list-style: none; }
+.help-spoiler summary::-webkit-details-marker { display: none; }
+.help-content { color: var(--muted); font-size: 11px; line-height: 1.35; }
+.help-content p { margin: 0 0 6px; }
+.help-content ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+kbd { padding: 1px 4px; border: 1px solid rgba(82,117,110,.2); border-radius: 4px; background: rgba(111,143,135,.08); color: var(--text); font-family: inherit; font-size: 10px; }
 .toolbar-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 5px 9px; border: 1px solid rgba(82,117,110,.14); border-radius: 10px; background: rgba(255,255,255,.46); color: var(--text); cursor: pointer; transition: background var(--motion-press) ease, border-color var(--motion-press) ease, transform var(--motion-press) ease, opacity var(--motion-press) ease; }
 .toolbar-button:hover:not(:disabled) { border-color: rgba(82,117,110,.42); background: rgba(169,200,189,.25); transform: translateY(-1px); }
 .toolbar-button:active:not(:disabled) { transform: translateY(0); }
@@ -170,44 +194,39 @@ button:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 
 .evaluation-card .feedback li { padding: 9px 10px; border-radius: 9px; background: rgba(111,143,135,.09); }
 .evaluation-card .close { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; min-width: var(--touch-min); min-height: var(--touch-min); border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; font-size: 27px; line-height: 1; }
 .evaluation-card .close:hover { background: rgba(111,143,135,.12); color: var(--text); }
-.boot-status { position: absolute; z-index: 8; bottom: 190px; left: 50%; max-width: min(460px, calc(100vw - 32px)); padding: 8px 13px; transform: translateX(-50%); color: var(--muted); font-size: 13px; text-align: center; transition: opacity var(--motion-panel) ease, transform var(--motion-panel) ease; }
+.boot-status { position: absolute; z-index: 8; bottom: 92px; left: 50%; max-width: min(460px, calc(100vw - 32px)); padding: 8px 13px; transform: translateX(-50%); color: var(--muted); font-size: 13px; text-align: center; transition: opacity var(--motion-panel) ease, transform var(--motion-panel) ease; }
 .boot-status.hidden { opacity: 0; transform: translate(-50%, 5px); pointer-events: none; }
 .error-card { border-color: rgba(197,111,104,.45); }
 @keyframes panel-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 @media (max-width: 980px) {
-  .library { width: min(420px, calc(100vw - 330px)); }
+  .library.is-open { width: min(420px, calc(100vw - 330px)); }
   .toolbar { max-width: calc(100vw - 28px); }
 }
 
 @media (max-width: 720px) {
-  .dashboard { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); width: 190px; padding: 10px 12px; }
+  .dashboard { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); width: 146px; }
   .dashboard .score-value { font-size: 22px; }
-  .dashboard .summary-meta span:last-child { display: none; }
-  .library { right: 12px; bottom: calc(70px + max(12px, env(safe-area-inset-bottom))); left: 12px; width: auto; max-height: 145px; }
+  .library { right: 12px; bottom: calc(64px + max(12px, env(safe-area-inset-bottom))); left: 12px; width: 146px; }
+  .library.is-open { width: auto; max-height: 150px; }
   .toolbar { right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); left: auto; justify-content: flex-end; max-width: none; }
-  .toolbar-session { margin-left: 0; }
   .toolbar-button { padding: 5px 8px; }
-  .boot-status { bottom: 225px; }
+  .boot-status { bottom: 86px; }
 }
 
 @media (max-width: 520px) {
   .brand { top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); padding-right: 8px; }
   .brand-text { display: none; }
-  .dashboard { top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); width: 174px; }
+  .dashboard { top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); width: 138px; }
   .dashboard .eyebrow { font-size: 9px; }
-  .library { bottom: calc(70px + max(10px, env(safe-area-inset-bottom))); padding: 9px; }
-  .catalog-subtitle { display: none; }
-  .library h2 { font-size: 15px; }
-  .item-card { flex-basis: 137px; width: 137px; min-height: 58px; }
-  .toolbar { gap: 4px; padding: 6px; }
-  .toolbar-group { gap: 3px; }
+  .library { bottom: calc(64px + max(10px, env(safe-area-inset-bottom))); left: max(10px, env(safe-area-inset-left)); width: 138px; }
+  .library.is-open { right: 10px; width: auto; }
+  .item-card { flex-basis: 132px; width: 132px; min-height: 56px; }
+  .toolbar { gap: 4px; padding: 5px; }
   .toolbar-button { padding: 5px; }
-  .button-copy { display: none; }
+  .toolbar-button.primary .button-copy { display: none; }
   .button-icon { width: 25px; height: 25px; font-size: 20px; }
-  .toolbar-button.primary { padding-inline: 10px; }
-  .toolbar-button.primary .button-copy { display: grid; }
-  .toolbar-button.primary .button-copy > span { font-size: 12px; }
+  .toolbar-more-toggle { width: 38px; min-height: 42px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
