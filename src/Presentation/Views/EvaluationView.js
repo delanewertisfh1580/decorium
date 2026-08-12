@@ -9,14 +9,17 @@ export class EvaluationView {
     const feedback = Array.isArray(result.feedback) ? result.feedback : [result.feedback];
     const feedbackItems = feedback.filter(Boolean).map(message => `<li>${message}</li>`).join('');
     const violations = result.violations?.length
-      ? `<p class="score-label">Нарушений: ${result.violations.length}</p>`
-      : '<p class="score-label">Все ограничения соблюдены</p>';
+      ? `<p class="score-label">${result.violations.length} подсказок для следующей попытки</p>`
+      : '<p class="score-label success-note">Комната собрана гармонично</p>';
     this.container.innerHTML = `
-      <section class="evaluation-card panel">
-        <button class="close" type="button" data-close>Закрыть</button>
-        <h2>Результат расстановки</h2>
-        <div class="stars">${'★'.repeat(result.stars)}${'☆'.repeat(5 - result.stars)}</div>
-        <div class="evaluation-score">${Math.round(result.score * 100)} / 100</div>
+      <section class="evaluation-card panel" aria-labelledby="evaluation-title">
+        <button class="close" type="button" data-close aria-label="Закрыть результат">×</button>
+        <span class="eyebrow">Итоги комнаты</span>
+        <h2 id="evaluation-title">Результат расстановки</h2>
+        <div class="evaluation-result-row">
+          <div class="stars" aria-label="${result.stars} из 5 звёзд">${'★'.repeat(result.stars)}${'☆'.repeat(5 - result.stars)}</div>
+          <div class="evaluation-score">${Math.round(result.score * 100)}<small>/100</small></div>
+        </div>
         ${violations}
         <ul class="feedback">${feedbackItems}</ul>
       </section>

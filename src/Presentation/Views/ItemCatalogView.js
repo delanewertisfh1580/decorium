@@ -11,9 +11,15 @@ export class ItemCatalogView {
 
   render(items, selectedItemId = null) {
     this.container.innerHTML = `
-      <h2>Библиотека предметов</h2>
-      <p class="catalog-subtitle">Клик — добавить в сцену. Можно добавлять один и тот же предмет несколько раз и свободно ставить объекты друг на друга.</p>
-      <div class="catalog-grid"></div>
+      <div class="library-header">
+        <div>
+          <span class="eyebrow">Коллекция</span>
+          <h2>Предметы</h2>
+        </div>
+        <span class="library-count">${items.length}</span>
+      </div>
+      <p class="catalog-subtitle">Выберите предмет и разместите его в комнате</p>
+      <div class="catalog-grid" aria-label="Предметы для размещения"></div>
     `;
     const grid = this.container.querySelector('.catalog-grid');
     for (const item of items) {
@@ -23,9 +29,9 @@ export class ItemCatalogView {
       button.setAttribute('aria-label', `Добавить ${item.name}`);
       button.style.setProperty('--item-color', TYPE_COLORS[item.type] ?? '#6fa8ff');
       button.innerHTML = `
-        <span class="item-icon">${TYPE_ICONS[item.type] ?? '◇'}</span>
-        <span><span class="item-name">${item.name}</span><span class="item-meta">${item.dimensions.x.toFixed(1)} × ${item.dimensions.z.toFixed(1)} м</span></span>
-        <span class="item-add">+</span>
+        <span class="item-icon" aria-hidden="true">${TYPE_ICONS[item.type] ?? '◇'}</span>
+        <span class="item-copy"><span class="item-name">${item.name}</span><span class="item-meta">${item.dimensions.x.toFixed(1)} × ${item.dimensions.z.toFixed(1)} м</span></span>
+        <span class="item-add" aria-hidden="true">+</span>
       `;
       button.addEventListener('click', () => this.onSelect(item.id));
       grid.appendChild(button);

@@ -126,7 +126,8 @@ export class LoadLevelUseCase {
           availableItems,
           constraints,
           styleId: raw.styleId ?? 'default',
-          targetScore: raw.targetScore ?? 3
+          targetScore: raw.targetScore ?? 3,
+          compositionRules: raw.compositionRules ?? {}
         })
       };
     } catch (error) {

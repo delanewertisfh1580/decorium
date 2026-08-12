@@ -14,11 +14,12 @@ Playable MVP baseline with living-scene presentation
 - V2 `FeatureVector` из 16 нормализованных признаков.
 - Drag-and-drop размещение/перемещение, поворот на 90°, удаление и очистка комнаты.
 - Процедурные 3D-модели основных типов, data-driven visual profiles и короткие interaction-анимации.
-- Живой presentation-layer: TV screen, световые акценты, бродящий питомец и нарративные маркеры проходов.
+- Живой presentation-layer: TV screen, световые акценты, бродящий питомец и атмосферная анимация без поясняющих verdict-плашек.
 - Проверка границ; пересечения, stacking и малые зазоры не блокируют творческое размещение.
-- Пять стилевых ограничений, weighted penalty, style score и рейтинг 1–5 звёзд.
-- Русские feedback-сообщения из JSON-каталога.
+- Пять стилевых ограничений, data-driven composition requirements, weighted penalty, style score и рейтинг 1–5 звёзд.
+- Русские feedback-сообщения из JSON-каталога, включая причины незавершённой композиции.
 - Runtime-валидация level/item JSON через AJV.
+- Scene-first HUD: компактные inventory/actions docks, room summary, safe-area и reduced-motion presentation states.
 
 ## Не входит
 

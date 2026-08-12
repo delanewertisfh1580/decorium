@@ -1,5 +1,6 @@
 import EvaluationResultDTO from '../DTOs/EvaluationResultDTO.js';
 import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
+import { evaluateComposition } from '../../Domain/Scoring/CompositionEvaluator.js';
 
 export class EvaluateRoomUseCase {
   constructor(roomRepository, constraintEvaluator, styleScorer, starRatingPolicy, feedbackCatalog = null) {
@@ -14,7 +15,7 @@ export class EvaluateRoomUseCase {
     this.feedbackCatalog = feedbackCatalog;
   }
 
-  async execute(roomId, constraints) {
+  async execute(roomId, constraints, compositionRules = {}) {
     if (!roomId || typeof roomId !== 'string') return EvaluationResultDTO.failure('INVALID_INPUT: RoomID is required.');
     if (!Array.isArray(constraints)) return EvaluationResultDTO.failure('INVALID_INPUT: Constraints must be an array.');
 
@@ -24,6 +25,9 @@ export class EvaluateRoomUseCase {
 
       const placedItems = roomState.getItems();
       if (placedItems.length === 0) {
+        const feedback = this.feedbackCatalog
+          ? await this.feedbackCatalog.formatFeedback('composition-empty')
+          : 'Комната пуста (Room is empty). Добавьте предметы, чтобы получить оценку.';
         return EvaluationResultDTO.success({
           score: 0,
           penalty: 1,
@@ -32,13 +36,15 @@ export class EvaluateRoomUseCase {
           violations: [],
           itemCount: 0,
           roomVector: null,
-          feedback: 'Комната пуста (Room is empty). Добавьте предметы, чтобы получить оценку.'
+          feedback
         });
       }
 
       const roomVector = FeatureVector.average(placedItems.map(placed => placed.featureVector));
       const evaluations = this.constraintEvaluator.evaluateAll(constraints, roomVector);
-      const violations = evaluations.filter(result => !result.isSatisfied).map(result => result.violation);
+      const styleViolations = evaluations.filter(result => !result.isSatisfied).map(result => result.violation);
+      const composition = evaluateComposition(placedItems, compositionRules);
+      const violations = [...styleViolations, ...composition.violations];
       const scoring = this.styleScorer.evaluate(violations);
       const rating = this.starRatingPolicy.evaluate(scoring.score);
       const feedback = this.feedbackCatalog

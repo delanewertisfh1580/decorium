@@ -5,7 +5,7 @@ Accepted — implemented
 
 ## Decision
 
-MVP считает только соответствие стилевым ограничениям. Эргономика не является заглушкой в пользовательском UI: отдельный ergonomics score и spatial rules отложены post-MVP.
+MVP считает соответствие стилевым ограничениям и минимальной завершённости композиции уровня. Отдельный ergonomics score и spatial rules отложены post-MVP; композиционные требования не блокируют свободное размещение.
 
 ## Implemented formula
 
@@ -18,7 +18,7 @@ styleScore = clamp(1 - penalty, 0, 1)
 totalScore = styleScore
 ```
 
-`maxPenalty`, weights и star thresholds приходят из `data/scoring/scoring-parameters.json` и constraints JSON.
+`maxPenalty`, weights и star thresholds приходят из `data/scoring/scoring-parameters.json` и constraints JSON. Минимальная композиция приходит из `compositionRules` level JSON и проверяется `CompositionEvaluator`.
 
 ## User-visible result
 
@@ -26,4 +26,4 @@ totalScore = styleScore
 
 ## Post-MVP
 
-Ergonomics может добавить отдельный evaluator для проходов, доступности и расстояний, после чего нужно будет пересмотреть total score и feedback contracts. До этого style score остаётся единственной оценкой.
+Ergonomics может добавить отдельный evaluator для проходов, доступности и расстояний, после чего нужно будет пересмотреть total score и feedback contracts. До этого style + composition score остаётся единственной оценкой; проходы не объясняются постоянными scene labels.

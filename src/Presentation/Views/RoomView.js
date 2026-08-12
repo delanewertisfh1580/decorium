@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import ItemVisualFactory from '../Scene/ItemVisualFactory.js';
 import SceneLifeSystem from '../Scene/SceneLifeSystem.js';
+import { getWallOpacities } from '../Scene/WallVisibility.js';
+import { getRoomOpenings } from '../Scene/RoomArchitecture.js';
+import { ROOM_SURFACE_CONFIG } from '../Scene/roomSurfaceConfig.js';
 
 const DRAG_THRESHOLD = 5;
 const ANIMATION_MS = 220;
@@ -27,6 +30,8 @@ function makeMaterial(color, options = {}) {
     color,
     roughness: options.roughness ?? 0.78,
     metalness: options.metalness ?? 0,
+    transparent: options.transparent ?? false,
+    opacity: options.opacity ?? 1,
     emissive: options.emissive ?? 0x000000,
     emissiveIntensity: options.emissiveIntensity ?? 0
   });
@@ -66,6 +71,10 @@ export class RoomView {
     this.controls.panSpeed = 0.75;
     this.controls.minPolarAngle = 0.28;
     this.controls.maxPolarAngle = Math.PI / 2.02;
+    this.controls.minDistance = 4;
+    this.controls.maxDistance = 16;
+    // Right mouse button is reserved for deselection; middle mouse keeps panning.
+    this.controls.mouseButtons.RIGHT = null;
 
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
@@ -73,10 +82,12 @@ export class RoomView {
     this.furnitureGroup = new THREE.Group();
     this.scene.add(this.roomGroup, this.furnitureGroup);
     this.floor = null;
+    this.walls = [];
     this.objectsById = new Map();
     this.animations = new Set();
     this.ghost = null;
     this.ghostItem = null;
+    this.ghostRotation = 0;
     this.pointerState = null;
     this._animationFrame = null;
     this._roomSize = { width: 8, depth: 6 };
@@ -88,6 +99,9 @@ export class RoomView {
     this.onMove = () => {};
     this.onFloorClick = () => {};
     this.onCancelMove = () => {};
+    this.onDeselect = () => {};
+    this.onFixtureSelect = () => {};
+    this.onFixtureMove = () => {};
     this.onPreview = () => true;
   }
 
@@ -97,17 +111,20 @@ export class RoomView {
     this.canvas.addEventListener('pointermove', this._handlePointerMove);
     this.canvas.addEventListener('pointerup', this._handlePointerUp);
     this.canvas.addEventListener('pointercancel', this._handlePointerCancel);
-    this.canvas.addEventListener('contextmenu', event => event.preventDefault());
+    this.canvas.addEventListener('contextmenu', this._handleContextMenu);
     window.addEventListener('resize', this._resize);
     this._resize();
   }
 
-  setInteractionHandlers({ onSelect, onPlace, onMove, onFloorClick, onCancelMove, onPreview }) {
+  setInteractionHandlers({ onSelect, onPlace, onMove, onFloorClick, onCancelMove, onDeselect, onFixtureSelect, onFixtureMove, onPreview }) {
     this.onSelect = onSelect ?? (() => {});
     this.onPlace = onPlace ?? (() => {});
     this.onMove = onMove ?? (() => {});
     this.onFloorClick = onFloorClick ?? (() => {});
     this.onCancelMove = onCancelMove ?? (() => {});
+    this.onDeselect = onDeselect ?? (() => {});
+    this.onFixtureSelect = onFixtureSelect ?? (() => {});
+    this.onFixtureMove = onFixtureMove ?? (() => {});
     this.onPreview = onPreview ?? (() => true);
   }
 
@@ -134,35 +151,40 @@ export class RoomView {
   _buildRoom(width, depth) {
     this._roomSize = { width, depth };
     this.roomGroup.clear();
+    this.walls = [];
     this.floor = new THREE.Mesh(
       new THREE.PlaneGeometry(width, depth),
-      makeMaterial(0x2d3d4b, { roughness: 0.9 })
+      makeMaterial(ROOM_SURFACE_CONFIG.color, { roughness: ROOM_SURFACE_CONFIG.roughness })
     );
     this.floor.rotation.x = -Math.PI / 2;
     this.floor.position.set(width / 2, 0, depth / 2);
     this.floor.userData.kind = 'floor';
+    this.floor.userData.surfaceStyle = ROOM_SURFACE_CONFIG.style;
     this.floor.receiveShadow = true;
     this.roomGroup.add(this.floor);
 
-    const grid = new THREE.GridHelper(Math.max(width, depth), Math.round(Math.max(width, depth) * 2), 0x7591ad, 0x40546a);
-    grid.position.set(width / 2, 0.012, depth / 2);
-    grid.scale.set(width / Math.max(width, depth), 1, depth / Math.max(width, depth));
-    grid.material.transparent = true;
-    grid.material.opacity = 0.28;
-    this.roomGroup.add(grid);
-
     const wallMaterial = { color: 0x1c2a37, roughness: 0.96 };
     const wallHeight = 3.2;
+    const openings = getRoomOpenings(width, depth, wallHeight);
+    const windowOpening = openings.window;
+    const windowLeft = windowOpening.centerX - windowOpening.width / 2;
+    const windowRight = windowOpening.centerX + windowOpening.width / 2;
     const walls = [
-      [width, wallHeight, 0.08, width / 2, wallHeight / 2, 0],
-      [width, wallHeight, 0.08, width / 2, wallHeight / 2, depth],
-      [0.08, wallHeight, depth, 0, wallHeight / 2, depth / 2],
-      [0.08, wallHeight, depth, width, wallHeight / 2, depth / 2]
+      ['front', width, wallHeight, 0.08, width / 2, wallHeight / 2, 0],
+      ['back', windowLeft, wallHeight, 0.08, windowLeft / 2, wallHeight / 2, depth],
+      ['back', width - windowRight, wallHeight, 0.08, windowRight + (width - windowRight) / 2, wallHeight / 2, depth],
+      ['back', windowOpening.width, windowOpening.bottom, 0.08, windowOpening.centerX, windowOpening.bottom / 2, depth],
+      ['back', windowOpening.width, wallHeight - windowOpening.top, 0.08, windowOpening.centerX, (wallHeight + windowOpening.top) / 2, depth],
+      ['left', 0.08, wallHeight, depth, 0, wallHeight / 2, depth / 2],
+      ['right', 0.08, wallHeight, depth, width, wallHeight / 2, depth / 2]
     ];
-    for (const [wallWidth, wallHeightValue, wallDepth, x, y, z] of walls) {
-      addRoomBox(this.roomGroup, [wallWidth, wallHeightValue, wallDepth], [x, y, z], wallMaterial.color, wallMaterial);
+    for (const [side, wallWidth, wallHeightValue, wallDepth, x, y, z] of walls) {
+      const wall = addRoomBox(this.roomGroup, [wallWidth, wallHeightValue, wallDepth], [x, y, z], wallMaterial.color, wallMaterial);
+      wall.userData.wallSide = side;
+      this.walls.push(wall);
     }
     this._addRoomDecor(width, depth, wallHeight);
+    this._updateWallVisibility();
     this.sceneLife?.destroy();
     this.sceneLife = new SceneLifeSystem(this.scene, this.roomGroup, { width, depth });
 
@@ -174,16 +196,37 @@ export class RoomView {
   }
 
   _addRoomDecor(width, depth, wallHeight) {
-    // Window, wall panels and a ceiling pendant make the empty starting room read as a place.
-    addRoomBox(this.roomGroup, [2.15, 1.35, 0.035], [width * 0.68, 1.92, depth - 0.055], 0x6d9bb5, {
-      roughness: 0.28,
-      emissive: 0x17374a,
-      emissiveIntensity: 0.35,
-      castShadow: false
+    // The window is a real opening in the back wall, not an opaque panel laid over it.
+    const openings = getRoomOpenings(width, depth, wallHeight);
+    const windowOpening = openings.window;
+    const glass = addRoomBox(this.roomGroup, [windowOpening.width, windowOpening.height, 0.025], [windowOpening.centerX, windowOpening.bottom + windowOpening.height / 2, depth - 0.055], 0x8fc8d1, {
+      roughness: 0.12,
+      metalness: 0.08,
+      transparent: true,
+      opacity: windowOpening.glassOpacity,
+      emissive: 0x2b7285,
+      emissiveIntensity: 0.3,
+      castShadow: false,
+      receiveShadow: false
     });
-    addRoomBox(this.roomGroup, [2.28, 0.08, 0.06], [width * 0.68, 1.92, depth - 0.08], 0xd4aa72, { castShadow: false });
-    addRoomBox(this.roomGroup, [0.08, 1.42, 0.06], [width * 0.68, 1.92, depth - 0.08], 0xd4aa72, { castShadow: false });
-    addRoomBox(this.roomGroup, [0.1, wallHeight - 0.3, 0.06], [0.09, wallHeight / 2, depth / 2], 0x344758, { castShadow: false });
+    glass.material.depthWrite = false;
+    const windowFrameColor = 0xd4aa72;
+    addRoomBox(this.roomGroup, [windowOpening.width + 0.14, 0.08, 0.06], [windowOpening.centerX, windowOpening.bottom, depth - 0.08], windowFrameColor, { castShadow: false });
+    addRoomBox(this.roomGroup, [windowOpening.width + 0.14, 0.08, 0.06], [windowOpening.centerX, windowOpening.top, depth - 0.08], windowFrameColor, { castShadow: false });
+    for (const x of [windowOpening.centerX - windowOpening.width / 2, windowOpening.centerX + windowOpening.width / 2]) {
+      addRoomBox(this.roomGroup, [0.08, windowOpening.height, 0.06], [x, windowOpening.bottom + windowOpening.height / 2, depth - 0.08], windowFrameColor, { castShadow: false });
+    }
+    addRoomBox(this.roomGroup, [0.07, windowOpening.height, 0.06], [windowOpening.centerX, windowOpening.bottom + windowOpening.height / 2, depth - 0.08], windowFrameColor, { castShadow: false });
+
+    // A readable interior door sits on the left wall with frame, panel and handle.
+    const door = openings.door;
+    addRoomBox(this.roomGroup, [0.055, door.height, door.width], [0.065, door.height / 2, door.centerZ], door.color, { roughness: 0.48 });
+    for (const [y, z, size] of [[door.height / 2, door.centerZ - door.width / 2, [0.07, door.height, 0.08]], [door.height / 2, door.centerZ + door.width / 2, [0.07, door.height, 0.08]], [door.height, door.centerZ, [0.07, 0.08, door.width + 0.12]]]) {
+      addRoomBox(this.roomGroup, size, [0.1, y, z], 0xc19b69, { castShadow: false });
+    }
+    const handle = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 8), makeMaterial(0xdab66d, { metalness: 0.65 }));
+    handle.position.set(0.13, door.height * 0.52, door.centerZ - 0.23);
+    this.roomGroup.add(handle);
 
     const pendant = new THREE.Group();
     const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.7, 8), makeMaterial(0x27323e));
@@ -206,6 +249,17 @@ export class RoomView {
       leaf.scale.y = 1.5;
       leaf.castShadow = true;
       this.roomGroup.add(leaf);
+    }
+  }
+
+  _updateWallVisibility() {
+    const opacities = getWallOpacities(this.camera.position, this._roomSize);
+    for (const wall of this.walls) {
+      const opacity = opacities[wall.userData.wallSide] ?? 1;
+      const material = wall.material;
+      material.transparent = opacity < 1;
+      material.opacity = opacity;
+      material.depthWrite = opacity >= 1;
     }
   }
 
@@ -244,7 +298,9 @@ export class RoomView {
   _setObjectInstanceId(object, instanceId) {
     object.userData.itemId = instanceId;
     object.traverse(child => {
-      if (child.userData?.kind === 'item-part') child.userData.itemId = instanceId;
+      if (child.userData?.kind === 'item-part' || child.userData?.kind === 'item-hit-proxy') {
+        child.userData.itemId = instanceId;
+      }
     });
   }
 
@@ -320,8 +376,10 @@ export class RoomView {
   beginPlacement(item) {
     this.cancelPlacement();
     this.ghostItem = item;
+    this.ghostRotation = 0;
     this.ghost = ItemVisualFactory.create(item, { ghost: true });
     this.ghost.position.set(this._roomSize.width / 2, 0, this._roomSize.depth / 2);
+    this.ghost.rotation.y = 0;
     this.scene.add(this.ghost);
     this._setGhostPosition(this.ghost.position.x, this.ghost.position.z);
   }
@@ -333,6 +391,7 @@ export class RoomView {
     }
     this.ghost = null;
     this.ghostItem = null;
+    this.ghostRotation = 0;
     this.pointerState = null;
     this.controls.enabled = true;
   }
@@ -340,7 +399,7 @@ export class RoomView {
   _setGhostPosition(x, z, mode = 'place', itemId = null) {
     if (this.ghost) {
       this.ghost.position.set(x, 0, z);
-      const valid = this.onPreview(this.ghostItem.id, { x, y: 0, z }, mode);
+      const valid = this.onPreview(this.ghostItem.id, { x, y: 0, z }, mode, this.ghostRotation);
       ItemVisualFactory.setGhostValidity(this.ghost, valid);
       this.ghost.userData.valid = valid;
     }
@@ -371,14 +430,23 @@ export class RoomView {
   _getItemHit(event) {
     this._setPointer(event);
     this.raycaster.setFromCamera(this.pointer, this.camera);
-    const hit = this.raycaster.intersectObjects(this.furnitureGroup.children, true)[0];
+    const fixtureObjects = this.sceneLife?.locationEnvironment?.getInteractableObjects?.() ?? [];
+    const hit = this.raycaster.intersectObjects([...this.furnitureGroup.children, ...fixtureObjects], true)[0];
     if (!hit) return null;
     let object = hit.object;
-    while (object && !object.userData.itemId) object = object.parent;
-    return object?.userData.itemId ? object : null;
+    while (object && !object.userData.itemId && !object.userData.fixtureId) object = object.parent;
+    return object?.userData.itemId || object?.userData.fixtureId ? object : null;
   }
 
   _handlePointerDown = event => {
+    if (event.button === 2) {
+      this.pointerState = null;
+      this.controls.enabled = true;
+      this.cancelPlacement();
+      this.onDeselect();
+      event.preventDefault();
+      return;
+    }
     if (event.button !== 0) return;
     const point = { x: event.clientX, y: event.clientY };
     const itemHit = this._getItemHit(event);
@@ -394,9 +462,14 @@ export class RoomView {
     }
 
     if (itemHit) {
-      this.onSelect(itemHit.userData.itemId);
+      const fixtureId = itemHit.userData.fixtureId;
+      if (fixtureId) this.onFixtureSelect(fixtureId);
+      else this.onSelect(itemHit.userData.itemId);
       this.pointerState = {
-        mode: 'move', itemId: itemHit.userData.itemId, pointerId: event.pointerId,
+        mode: fixtureId ? 'fixture' : 'move',
+        itemId: itemHit.userData.itemId,
+        fixtureId,
+        pointerId: event.pointerId,
         start: point, moved: false, lastPosition: null
       };
       this.canvas.setPointerCapture?.(event.pointerId);
@@ -433,6 +506,10 @@ export class RoomView {
         ItemVisualFactory.setPreviewValidity(object, true);
       }
     }
+    if (this.pointerState.mode === 'fixture' && this.pointerState.moved) {
+      this.pointerState.lastPosition = position;
+      this.sceneLife?.locationEnvironment?.moveFixture(this.pointerState.fixtureId, position.x);
+    }
   };
 
   _handlePointerUp = event => {
@@ -446,14 +523,22 @@ export class RoomView {
 
     if (state.mode === 'place') {
       // The only rejected placement is outside the room boundary; overlap is valid.
-      this.onPlace(this.ghostItem.id, position);
+      this.onPlace(this.ghostItem.id, position, this.ghostRotation);
       return;
     }
     if (state.mode === 'move' && state.moved && state.lastPosition) {
       this.onMove(state.itemId, state.lastPosition);
       return;
     }
+    if (state.mode === 'fixture' && state.moved && state.lastPosition) {
+      this.onFixtureMove(state.fixtureId, state.lastPosition.x);
+      return;
+    }
     if (state.mode === 'floor' && !state.moved) this.onFloorClick(position);
+  };
+
+  _handleContextMenu = event => {
+    event.preventDefault();
   };
 
   _handlePointerCancel = event => {
@@ -465,6 +550,14 @@ export class RoomView {
     if (state.mode === 'move') this.onCancelMove(state.itemId);
     if (state.mode === 'place') this.cancelPlacement();
   };
+
+  rotateGhost(delta = 90) {
+    if (!this.ghost) return false;
+    this.ghostRotation = (this.ghostRotation + delta + 360) % 360;
+    this.ghost.rotation.y = THREE.MathUtils.degToRad(this.ghostRotation);
+    this._setGhostPosition(this.ghost.position.x, this.ghost.position.z);
+    return true;
+  }
 
   resetCamera() {
     if (!this._cameraHome) return;
@@ -486,6 +579,7 @@ export class RoomView {
     const render = now => {
       this._tickAnimations(now);
       this.controls.update();
+      this._updateWallVisibility();
       this.renderer.render(this.scene, this.camera);
       this._animationFrame = requestAnimationFrame(render);
     };
@@ -499,6 +593,7 @@ export class RoomView {
     this.canvas.removeEventListener('pointermove', this._handlePointerMove);
     this.canvas.removeEventListener('pointerup', this._handlePointerUp);
     this.canvas.removeEventListener('pointercancel', this._handlePointerCancel);
+    this.canvas.removeEventListener('contextmenu', this._handleContextMenu);
     window.removeEventListener('resize', this._resize);
     this.sceneLife?.destroy();
     this.controls.dispose();

@@ -1,4 +1,6 @@
 import './styles.css';
+import { DESIGN_TOKENS, applyDesignTokens, validateDesignTokens } from './Presentation/UI/designTokens.js';
+import { HUD_LAYOUT, validateHudLayout } from './Presentation/UI/hudLayout.js';
 import { SchemaLoader } from './Infrastructure/DataLoaders/SchemaLoader.js';
 import { JsonLevelRepository } from './Infrastructure/Repositories/JsonLevelRepository.js';
 import { InMemoryRoomRepository } from './Infrastructure/Repositories/InMemoryRoomRepository.js';
@@ -27,6 +29,11 @@ async function loadJson(path) {
 async function bootstrap() {
   const status = document.getElementById('boot-status');
   try {
+    const tokenErrors = validateDesignTokens(DESIGN_TOKENS);
+    const hudErrors = validateHudLayout(HUD_LAYOUT);
+    if (tokenErrors.length > 0) throw new Error(`Invalid presentation tokens: ${tokenErrors.join(', ')}`);
+    if (hudErrors.length > 0) throw new Error(`Invalid HUD layout: ${hudErrors.join(', ')}`);
+    applyDesignTokens(document.documentElement);
     const [levelSchema, itemSchema, scoringParameters] = await Promise.all([
       SchemaLoader.loadLevelSchema(),
       SchemaLoader.loadItemSchema(),

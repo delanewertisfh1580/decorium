@@ -37,7 +37,7 @@ describe('MVP content contracts', () => {
   });
 
   it('keeps presentation shapes in a data-driven visual profile contract', () => {
-    expect(visualProfiles.version).toBe(1);
+    expect(visualProfiles.version).toBe(2);
     expect(visualProfiles.items['coffeetable-001'].shape).toBe('roundTable');
     expect(level.availableItems.every(itemId => (
       visualProfiles.items[itemId] || visualProfiles.defaults[catalog.items.find(item => item.id === itemId)?.type]

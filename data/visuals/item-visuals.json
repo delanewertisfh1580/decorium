@@ -1,8 +1,8 @@
 {
-  "version": 1,
+  "version": 2,
   "defaults": {
     "chair": "chair",
-    "table": "table",
+    "table": "diningTable",
     "sofa": "sofa",
     "bed": "bed",
     "storage": "storage",

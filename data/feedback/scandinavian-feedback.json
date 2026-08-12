@@ -46,5 +46,47 @@
     "category": "tip",
     "template": "Попробуйте добавить больше предметов для завершенности композиции.",
     "severity": "low"
+  },
+  {
+    "id": "composition-empty",
+    "category": "neutral",
+    "template": "Комната пуста. Добавьте мебель и свет, чтобы решить дизайнерскую задачу.",
+    "severity": "high"
+  },
+  {
+    "id": "composition-too-few-items",
+    "category": "violation",
+    "template": "Композиция не завершена: нужно минимум {threshold} предмета, сейчас {value}.",
+    "severity": "high"
+  },
+  {
+    "id": "composition-missing-seating",
+    "category": "violation",
+    "template": "Добавьте место для сидения, чтобы гостиная получила функциональный центр.",
+    "severity": "high"
+  },
+  {
+    "id": "composition-missing-surface",
+    "category": "violation",
+    "template": "Добавьте стол или другую рабочую поверхность для завершения сценария гостиной.",
+    "severity": "medium"
+  },
+  {
+    "id": "composition-missing-lighting",
+    "category": "violation",
+    "template": "Добавьте источник света, чтобы композиция комнаты была завершённой.",
+    "severity": "medium"
+  },
+  {
+    "id": "composition-missing-storage",
+    "category": "violation",
+    "template": "Добавьте систему хранения, если она нужна выбранному сценарию комнаты.",
+    "severity": "medium"
+  },
+  {
+    "id": "composition-missing-decor",
+    "category": "violation",
+    "template": "Добавьте декоративный акцент, чтобы связать мебель в цельную композицию.",
+    "severity": "low"
   }
 ]

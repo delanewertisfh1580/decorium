@@ -26,5 +26,9 @@
     "coffeetable-001"
   ],
   "initialPlacement": [],
-  "targetScore": 3
+  "targetScore": 3,
+  "compositionRules": {
+    "minItems": 4,
+    "requiredRoles": ["seating", "surface", "lighting"]
+  }
 }

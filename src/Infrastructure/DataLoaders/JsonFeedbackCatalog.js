@@ -38,7 +38,9 @@ export class JsonFeedbackCatalog {
       }
     }
 
-    const successId = stars >= 5 ? 'success-excellent' : stars >= 3 ? 'success-good' : null;
+    const successId = violations.length === 0
+      ? (stars >= 5 ? 'success-excellent' : stars >= 3 ? 'success-good' : null)
+      : null;
     const success = successId ? feedback.find(item => item.id === successId) : null;
     if (success) messages.unshift(success.template);
     if (messages.length === 0) {

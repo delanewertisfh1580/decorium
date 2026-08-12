@@ -93,6 +93,25 @@
       "minimum": 0,
       "maximum": 5,
       "description": "Целевое количество звезд для прохождения уровня"
+    },
+    "compositionRules": {
+      "type": "object",
+      "description": "Минимальная завершённость дизайнерской композиции",
+      "properties": {
+        "minItems": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "requiredRoles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["seating", "surface", "lighting", "storage", "decor"]
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
