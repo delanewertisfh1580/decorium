@@ -7,7 +7,7 @@
 - **Content expansion:** дополнительные комнаты, уровни, стили и UGC.
 - **Meta/economy:** валюта, магазин, прогрессия, достижения, лидерборды.
 - **Social/backend:** аккаунты, multiplayer, публикация комнат, cloud API.
-- **Presentation polish:** аудио, particles, post-processing, advanced animations, настройки графики.
+- **Presentation polish:** аудио, particles, post-processing, advanced cinematic effects и настройки графики. Базовые interaction-анимации обязательны для MVP.
 - **Platform expansion:** mobile/touch, VR/AR, consoles.
 - **Services:** analytics, crash reporting, remote config, LLM personalization, payments.
 - **Localization/accessibility:** дополнительные языки, RTL, screen readers, alternate controls.

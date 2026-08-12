@@ -1,213 +1,96 @@
 # Item Catalog System
 
 ## Status
-Draft
-
-## Owner
-Qwen Studio Engineering Team
+Playable MVP in progress
 
 ## Purpose
-Описать систему каталога предметов для Decorium MVP.
 
-## Scope
-Каталог предметов содержит все доступные для размещения предметы с их векторами признаков.
+Описать каталог предметов, который поставляет данные для Domain scoring и Presentation visual builders.
 
-## Inputs
-- JSON файл с данными предметов (`data/items/items.json`)
-- JSON схема валидации (`data/schemas/item.schema.json`)
+## Canonical data
 
-## Outputs
-- Список объектов `Item` доменного слоя
-- Векторы признаков для каждого предмета
+- `data/items/catalog.v2.json` — объект `{ "items": [...] }`, 33 предмета.
+- `data/items/item.v2.schema.json` — JSON Schema V2.
+- `data/levels/level-001.json` — 16 предметов, доступных в playable MVP.
 
-## Domain Model
+Каждый предмет содержит:
 
-### FeatureVector (Value Object)
-```typescript
-export class FeatureVector {
-  constructor(
-    public readonly woodShare: number,        // 0.0-1.0
-    public readonly metalShare: number,       // 0.0-1.0
-    public readonly glassShare: number,       // 0.0-1.0
-    public readonly lightColorShare: number,  // 0.0-1.0
-    public readonly warmPaletteShare: number, // 0.0-1.0
-    public readonly formSimplicity: number    // 0.0-1.0
-  ) {
-    this.validate();
-  }
-
-  private validate() {
-    // Все значения должны быть в диапазоне [0, 1]
-  }
-
-  add(other: FeatureVector): FeatureVector {
-    // Возвращает сумму векторов
-  }
-
-  divide(scalar: number): FeatureVector {
-    // Возвращает вектор, делённый на скаляр
-  }
-}
-```
-
-### Item (Entity)
-```typescript
-export class Item {
-  constructor(
-    public readonly id: string,
-    public readonly name: string,
-    public readonly featureVector: FeatureVector
-  ) {}
-
-  equals(other: Item): boolean {
-    return this.id === other.id;
-  }
-}
-```
-
-## Application Layer
-
-### Ports
-```typescript
-export interface IItemCatalog {
-  loadItems(path: string): Promise<Item[]>;
-  getItemById(id: string): Promise<Item | null>;
-  getAllItems(): Promise<Item[]>;
-}
-```
-
-### Use Cases
-- Загрузка каталога при старте уровня
-- Получение предмета по ID для размещения
-
-## Infrastructure Layer
-
-### JsonItemCatalog
-```typescript
-export class JsonItemCatalog implements IItemCatalog {
-  constructor(
-    private schemaValidator: SchemaValidator,
-    private fileSystem: FileSystem
-  ) {}
-
-  async loadItems(path: string): Promise<Item[]> {
-    const json = await this.fileSystem.readJson(path);
-    this.schemaValidator.validate(json, itemSchema);
-    
-    return json.items.map(data => 
-      new Item(
-        data.id,
-        data.name,
-        new FeatureVector(
-          data.featureVector.wood_share,
-          data.featureVector.metal_share,
-          data.featureVector.glass_share,
-          data.featureVector.lightcolorshare,
-          data.featureVector.warmpaletteshare,
-          data.featureVector.form_simplicity
-        )
-      )
-    );
-  }
-}
-```
-
-## Data Contract
-
-### Item JSON Format
 ```json
 {
-  "items": [
-    {
-      "id": "item-001",
-      "name": "Wooden Chair",
-      "featureVector": {
-        "wood_share": 0.8,
-        "metal_share": 0.1,
-        "glass_share": 0.0,
-        "lightcolorshare": 0.6,
-        "warmpaletteshare": 0.7,
-        "form_simplicity": 0.5
-      }
-    }
-  ]
-}
-```
-
-### JSON Schema
-```json
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "required": ["items"],
-  "properties": {
-    "items": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["id", "name", "featureVector"],
-        "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "featureVector": {
-            "type": "object",
-            "required": ["wood_share", "metal_share", "glass_share", "lightcolorshare", "warmpaletteshare", "form_simplicity"],
-            "properties": {
-              "wood_share": { "type": "number", "minimum": 0, "maximum": 1 },
-              "metal_share": { "type": "number", "minimum": 0, "maximum": 1 },
-              "glass_share": { "type": "number", "minimum": 0, "maximum": 1 },
-              "lightcolorshare": { "type": "number", "minimum": 0, "maximum": 1 },
-              "warmpaletteshare": { "type": "number", "minimum": 0, "maximum": 1 },
-              "form_simplicity": { "type": "number", "minimum": 0, "maximum": 1 }
-            }
-          }
-        }
-      }
-    }
+  "id": "sofa-001",
+  "name": "Диван",
+  "type": "sofa",
+  "dimensions": { "x": 2.0, "z": 0.9 },
+  "price": 420,
+  "featureVector": {
+    "woodShare": 0.2,
+    "metalShare": 0.1,
+    "glassShare": 0.0,
+    "plasticShare": 0.1,
+    "textileShare": 0.8,
+    "lightColorShare": 0.6,
+    "darkColorShare": 0.4,
+    "warmPaletteShare": 0.7,
+    "saturationLevel": 0.3,
+    "formSimplicity": 0.8,
+    "roundnessShare": 0.4,
+    "rectilinearShare": 0.6,
+    "sizeNorm": 0.7,
+    "priceNorm": 0.4,
+    "lightingFunctionShare": 0.0,
+    "storageFunctionShare": 0.0
   }
 }
 ```
+
+## Runtime responsibilities
+
+`JsonItemCatalog`:
+
+1. Загружает `catalog.v2.json` через browser fetch.
+2. Валидирует envelope и 16 полей через AJV.
+3. Передаёт данные `CatalogValidator`.
+4. Создаёт immutable Domain `Item` и `FeatureVector`.
+5. Кэширует результат в рамках сессии.
+
+`ItemVisualFactory` (`src/Presentation/Scene`) не меняет Domain item. Он строит процедурный `THREE.Group` по `type`, dimensions и data-driven профилю из `data/visuals/item-visuals.json`. Профиль задаёт `shape`, `material/accent` и, при необходимости, локальный `light`; Domain не знает об этих деталях.
+
+## Playable MVP visual types
+
+- sofa
+- chair
+- table
+- lighting
+- storage
+- bed
+- decor: plant, mirror, rug, clock и vase variants
+- profile-specific shapes: `roundTable`, `diningTable`, `lowTable`, `desk`, `wallShelf`, `bookcase`, `cabinet`, `floorLamp`
+
+Все визуальные builders должны:
+
+- сохранять габариты предмета по X/Z;
+- иметь origin на полу;
+- быть различимыми по силуэту;
+- поддерживать selection и ghost-preview;
+- не импортироваться в Domain/Application.
+
+## Catalog UX
+
+Карточка предмета должна показывать имя, категорию, dimensions и понятный способ действия. При выборе карточки объект становится ghost-preview; внутри комнаты позиция принимается, а за пределами габаритов подсвечивается красным. Один каталоговый предмет можно добавлять многократно.
 
 ## Rules
 
-1. **Уникальность ID**: Каждый предмет должен иметь уникальный ID
-2. **Диапазон признаков**: Все значения вектора должны быть в диапазоне [0, 1]
-3. **Сумма материалов**: wood_share + metal_share + glass_share ≈ 1.0 (допускается небольшая погрешность)
-4. **Минимальный каталог**: MVP должен содержать 5-10 предметов
+1. ID уникален.
+2. Все 16 признаков находятся в диапазоне [0, 1].
+3. `dimensions.x` и `dimensions.z` валидны по V2 schema.
+4. Все `level-001.availableItems` существуют в каталоге.
+5. В доступном наборе достаточно разных типов, чтобы placement имел визуальное и scoring-разнообразие.
 
-## Test Requirements
+## Test requirements
 
-### Unit Tests
-- `FeatureVectorTests`: конструктор, валидация, операции
-- `ItemTests`: создание, сравнение
-- `JsonItemCatalogTests`: загрузка, валидация, маппинг
-
-### Integration Tests
-- Загрузка реального JSON файла
-- Валидация по схеме
-- Обработка ошибок (невалидные данные, отсутствующий файл)
-
-## Observability
-
-### Logs
-- Info: "Loaded N items from catalog"
-- Error: "Failed to load item catalog: {reason}"
-- Warning: "Item {id} has invalid feature vector"
-
-### Metrics
-- `item_catalog_load_time_ms` - время загрузки каталога
-- `item_catalog_size` - количество предметов
-
-## Related Documents
-- [[Data Contracts]](../data-contracts/)
-- [[Scoring System]](./scoring.md)
-- [[ADR-003: JSON Content Pipeline]](../adr/adr-003-json-content-pipeline.md)
-
-## Open Questions
-- Нужно ли кэшировать загруженный каталог?
-- Нужна ли поддержка нескольких каталогов (разные уровни)?
-
-## Change History
-| Date | Version | Author | Changes |
-|------|---------|--------|---------|
-| 2024-01-01 | 0.1 | Qwen Studio | Initial draft |
+- AJV schema validation.
+- Проверка 16 полей каждого item.
+- Проверка ссылок уровня на каталог.
+- Проверка builder для каждого type.
+- Browser smoke: выбор, ghost-preview, placement и повторное размещение нескольких предметов.
+- Проверка профилей: каждый доступный item имеет явный профиль или валидный type-default; `coffeetable-001` остаётся круглым.

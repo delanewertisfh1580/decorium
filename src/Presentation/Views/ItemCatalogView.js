@@ -12,7 +12,7 @@ export class ItemCatalogView {
   render(items, selectedItemId = null) {
     this.container.innerHTML = `
       <h2>Библиотека предметов</h2>
-      <p class="catalog-subtitle">Выберите предмет, затем кликните по полу, чтобы переместить выбранный объект.</p>
+      <p class="catalog-subtitle">Клик — добавить в сцену. Можно добавлять один и тот же предмет несколько раз и свободно ставить объекты друг на друга.</p>
       <div class="catalog-grid"></div>
     `;
     const grid = this.container.querySelector('.catalog-grid');
@@ -20,6 +20,7 @@ export class ItemCatalogView {
       const button = document.createElement('button');
       button.className = `item-card${item.id === selectedItemId ? ' selected' : ''}`;
       button.type = 'button';
+      button.setAttribute('aria-label', `Добавить ${item.name}`);
       button.style.setProperty('--item-color', TYPE_COLORS[item.type] ?? '#6fa8ff');
       button.innerHTML = `
         <span class="item-icon">${TYPE_ICONS[item.type] ?? '◇'}</span>

@@ -10,7 +10,7 @@ export class ToolbarView {
       <button data-action="delete" disabled>Удалить <b>Del</b></button>
       <button data-action="clear">Начать заново</button>
       <button class="primary" data-action="evaluate">Оценить <b>E</b></button>
-      <span class="toolbar-hint">Клик по предмету — выбрать · клик по полу — переместить</span>
+      <span class="toolbar-hint">Перетаскивайте · R — поворот · PgUp/PgDn — высота · Home — камера · E — оценка</span>
     `;
     this.container.querySelector('[data-action="rotate"]').onclick = this.callbacks.onRotate;
     this.container.querySelector('[data-action="delete"]').onclick = this.callbacks.onDelete;

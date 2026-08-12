@@ -26,7 +26,11 @@ export class MoveItemUseCase {
       if (!roomState) return MoveResultDTO.failure(`ROOM_NOT_FOUND: Room ${roomId} not found.`);
       if (!roomState.getItem(itemId)) return MoveResultDTO.failure(`ITEM_NOT_FOUND: Item ${itemId} not found in room.`);
 
-      const result = roomState.moveItem(itemId, { x: newPosition.x, z: newPosition.z });
+      const result = roomState.moveItem(itemId, {
+        x: newPosition.x,
+        y: newPosition.y,
+        z: newPosition.z
+      });
       const success = typeof result === 'boolean' ? result : result.success;
       if (!success) return MoveResultDTO.failure(`MOVE_REJECTED: ${result.error ?? 'Domain rule violation.'}`);
 

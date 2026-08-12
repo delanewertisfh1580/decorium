@@ -1,7 +1,7 @@
 # Decorium Layer Responsibilities
 
 ## Status
-Implemented MVP baseline
+Playable MVP baseline with living-scene presentation
 
 ## Domain
 
@@ -11,7 +11,7 @@ Implemented MVP baseline
 
 - `Items/FeatureVector.js` — immutable V2 vector из 16 полей.
 - `Items/Item.js`, `Items/CatalogValidator.js` — сущность предмета и validation.
-- `Rooms/RoomBounds.js`, `Rooms/RoomState.js` — размещение, move, rotate, remove, bounds, collision и gap.
+- `Rooms/RoomBounds.js`, `Rooms/RoomState.js` — размещение, move по X/Y/Z, rotate, remove и bounds; overlap/stacking намеренно разрешены.
 - `Constraints/*` — линейные ограничения и violations.
 - `Scoring/*` — constraint evaluation, weighted style score и star policy.
 
@@ -47,11 +47,13 @@ Infrastructure адаптирует сеть/JSON и не меняет бизн�
 **Path:** `src/Presentation`
 
 - `GameController` связывает input, use cases и views.
-- `RoomView` — Three.js scene, OrbitControls, raycasting, room geometry и visual meshes.
+- `RoomView` — Three.js scene, OrbitControls, raycasting, room geometry, visual meshes и animation loop.
+- `SceneLifeSystem` — presentation-only TV animation, local lights, pet movement, particles and passage hints.
+- `ItemVisualFactory` — procedural builders driven by the bundled `data/visuals/item-visuals.json` profile contract.
 - Catalog/toolbar/evaluation views — DOM-представление.
 - ViewModels преобразуют DTO/Domain state к данным UI.
 
-Presentation не пересчитывает score и не читает JSON-файлы напрямую.
+Presentation не пересчитывает score и не меняет Domain state напрямую; visual profile JSON — единственное presentation-data исключение и бандлится вместе с procedural renderer-ом.
 
 ## Composition root
 

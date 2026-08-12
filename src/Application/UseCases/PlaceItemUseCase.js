@@ -46,7 +46,11 @@ export class PlaceItemUseCase {
       if (!roomState) roomState = RoomState.createEmpty(new RoomBounds(8, 6));
 
       const item = toDomainItem(itemData);
-      let placement = roomState.placeItem(item, { x: position.x, z: position.z }, rotation.y);
+      let placement = roomState.placeItem(item, {
+        x: position.x,
+        y: typeof position.y === 'number' ? position.y : 0,
+        z: position.z
+      }, rotation.y);
       // Legacy callers used {0,0,0} as a placeholder position. Keep that input
       // compatible while the browser MVP always supplies a real floor position.
       if (!placement.success && placement.error === 'OUT_OF_BOUNDS' && position.x === 0 && position.z === 0) {
@@ -59,7 +63,9 @@ export class PlaceItemUseCase {
       if (!await saveState(this.roomRepository, roomId, roomState)) {
         return PlacementResultDTO.failure('PERSISTENCE_ERROR: Failed to save room state.');
       }
-      return PlacementResultDTO.success(item.id, position, rotation);
+      const placedItems = roomState.getItems().filter(placed => placed.itemId === item.id);
+      const placedInstance = placedItems[placedItems.length - 1];
+      return PlacementResultDTO.success(placedInstance?.id ?? item.id, position, rotation);
     } catch (error) {
       console.error(`PlaceItemUseCase: Error placing item ${itemData?.id ?? 'unknown'}:`, error);
       return PlacementResultDTO.failure(`UNEXPECTED_ERROR: ${error.message}`);

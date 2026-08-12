@@ -19,7 +19,7 @@
 ### Then
 
 - Предмет появляется в Three.js-сцене.
-- Некорректные позиции возвращают понятную ошибку и не меняют состояние.
+- Позиции внутри комнаты принимаются свободно: пересечения и наложения разрешены; только выход за границы возвращает понятную ошибку.
 - Оценка строит `Vroom = average(Vitems)` по 16 полям.
 - Для каждого ограничения вычисляется нарушение и severity.
 - Итоговый score находится в диапазоне 0..1.
@@ -31,8 +31,13 @@
 - [x] Один entrypoint `src/main.js`; inline bootstrap отсутствует.
 - [x] Three.js renderer и OrbitControls инициализируются.
 - [x] Выбор предмета из каталога работает.
+- [x] Drag-and-drop с ghost-preview и pointer capture реализован.
+- [x] Data-driven visual profiles отделяют форму/материал предмета от Domain-контракта; круглый журнальный столик строится цилиндрической моделью.
+- [x] Процедурные визуальные builders различают основные типы предметов.
+- [x] Живая сцена содержит animated TV screen, локальные light accents, питомца и нарративные маркеры свободного прохода.
+- [x] Размещение, перемещение, поворот и удаление сопровождаются короткими анимациями.
 - [x] Размещение, перемещение, поворот и удаление делегируются use cases.
-- [x] Room bounds, collision и minimum gap проверяются в Domain.
+- [x] Room bounds проверяются в Domain; collision и minimum gap не блокируют творческое размещение.
 - [x] Level и item catalog валидируются схемами.
 - [x] Style constraints и weighted style score вычисляются в Domain/Application.
 - [x] Star rating берётся из JSON scoring parameters.
@@ -41,11 +46,11 @@
 
 ## Non-functional criteria
 
-- [x] `npm test`: 17 файлов, 130 тестов проходят.
+- [x] `npm test`: 17 файлов, 134 теста проходят.
 - [x] `npm run build` создаёт `dist/index.html`.
 - [x] Domain/Application не используют browser APIs или nondeterministic calls.
 - [x] Runtime не требует backend, аккаунта или env vars.
 
 ## Known MVP boundaries
 
-Browser/WebGL smoke check и UX/performance testing на целевых устройствах остаются release-проверками, а не частью unit suite. Persistence, ergonomics, extra content и production observability — post-MVP.
+Browser/WebGL smoke check и UX/performance testing на целевых устройствах остаются release-проверками, а не частью unit suite. Визуальные ergonomics hints присутствуют как нарративный слой, но persistence, числовой ergonomics score, extra content и production observability — post-MVP.

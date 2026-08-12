@@ -71,19 +71,17 @@ describe('RoomState', () => {
     expect(state.getItems()).toHaveLength(0);
   });
 
-  it('should reject placement overlapping with existing item', () => {
+  it('should allow placement overlapping with existing item', () => {
     const bounds = createBounds(10, 10);
     const state = new RoomState(bounds);
     const item1 = createTestItem('item-1', 1, 1);
     const item2 = createTestItem('item-2', 1, 1);
 
     state.placeItem(item1, { x: 2.5, z: 2.5 }, 0);
-    // Слишком близко - пересечение
     const result = state.placeItem(item2, { x: 2.6, z: 2.5 }, 0);
-    
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('COLLISION');
-    expect(state.getItems()).toHaveLength(1);
+
+    expect(result.success).toBe(true);
+    expect(state.getItems()).toHaveLength(2);
   });
 
   it('should allow placement with sufficient gap (0.9m)', () => {
@@ -99,18 +97,38 @@ describe('RoomState', () => {
     expect(result.success).toBe(true);
   });
 
-  it('should reject placement with insufficient gap (<0.9m)', () => {
+  it('should allow placement with any gap', () => {
     const bounds = createBounds(10, 10);
     const state = new RoomState(bounds);
     const item1 = createTestItem('item-1', 1, 1);
     const item2 = createTestItem('item-2', 1, 1);
 
     state.placeItem(item1, { x: 2.5, z: 2.5 }, 0);
-    // Расстояние между центрами 1.5: края 3.0 и 2.0, зазор = 0.5м < 0.9м
     const result = state.placeItem(item2, { x: 3.5, z: 3.5 }, 0);
-    
+
+    expect(result.success).toBe(true);
+  });
+
+  it('should preview placement without mutating room state', () => {
+    const state = new RoomState(createBounds(5, 5));
+    const item = createTestItem('item-1', 1, 1);
+
+    const result = state.validatePlacement(item, { x: 2.5, z: 2.5 });
+
+    expect(result.success).toBe(true);
+    expect(state.getItems()).toHaveLength(0);
+  });
+
+  it('should preview move against domain rules', () => {
+    const state = new RoomState(createBounds(5, 5));
+    const item = createTestItem('item-1', 1, 1);
+    state.placeItem(item, { x: 2.5, z: 2.5 });
+
+    const result = state.validateMove('item-1', { x: 10, z: 10 });
+
     expect(result.success).toBe(false);
-    expect(result.error).toBe('INSUFFICIENT_GAP');
+    expect(result.error).toBe('OUT_OF_BOUNDS');
+    expect(state.getItems()[0].position).toEqual({ x: 2.5, y: 0, z: 2.5 });
   });
 
   it('should move item successfully', () => {
@@ -123,7 +141,7 @@ describe('RoomState', () => {
     
     expect(result.success).toBe(true);
     const items = state.getItems();
-    expect(items[0].position).toEqual({ x: 3.5, z: 3.5 });
+    expect(items[0].position).toEqual({ x: 3.5, y: 0, z: 3.5 });
   });
 
   it('should reject move if new position is invalid', () => {
@@ -149,6 +167,18 @@ describe('RoomState', () => {
     expect(result.success).toBe(true);
     const items = state.getItems();
     expect(items[0].rotation).toBe(90);
+  });
+
+  it('should assign unique instance ids when the same catalog item is placed twice', () => {
+    const state = new RoomState(createBounds(5, 5));
+    const item = createTestItem('repeatable-item', 1, 1);
+
+    state.placeItem(item, { x: 2.5, y: 0, z: 2.5 });
+    state.placeItem(item, { x: 2.5, y: 1, z: 2.5 });
+
+    expect(state.getItems()).toHaveLength(2);
+    expect(state.getItems().map(placed => placed.id)).toEqual(['repeatable-item', 'repeatable-item#2']);
+    expect(state.getItems()[1].position).toEqual({ x: 2.5, y: 1, z: 2.5 });
   });
 
   it('should remove item successfully', () => {
@@ -185,6 +215,6 @@ describe('RoomState', () => {
     
     expect(restored.getItems()).toHaveLength(1);
     expect(restored.getItems()[0].id).toBe('item-1');
-    expect(restored.getItems()[0].position).toEqual({ x: 2.5, z: 2.5 });
+    expect(restored.getItems()[0].position).toEqual({ x: 2.5, y: 0, z: 2.5 });
   });
 });

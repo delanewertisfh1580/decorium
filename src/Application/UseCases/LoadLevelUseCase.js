@@ -106,7 +106,11 @@ export class LoadLevelUseCase {
         if (!item) return { success: false, error: `INVALID_LEVEL_DATA: Unknown initial item ${placement.itemId}` };
         const result = roomState.placeItem(
           item,
-          { x: placement.position.x, z: placement.position.z },
+          {
+            x: placement.position.x,
+            y: placement.position.y ?? 0,
+            z: placement.position.z
+          },
           placement.rotation?.y ?? 0
         );
         if (!result.success) return { success: false, error: `INVALID_LEVEL_DATA: ${result.error}` };

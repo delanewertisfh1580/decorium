@@ -12,13 +12,19 @@ class RoomOperationResult {
 }
 
 class PlacedItem {
-  constructor(item, position, rotation = 0) {
+  constructor(item, position, rotation = 0, instanceId = item.id) {
     this._item = item;
-    this._position = { x: position.x, z: position.z };
+    this._instanceId = instanceId;
+    this._position = {
+      x: position.x,
+      y: typeof position.y === 'number' ? position.y : 0,
+      z: position.z
+    };
     this._rotation = rotation;
   }
 
-  get id() { return this._item.id; }
+  get id() { return this._instanceId; }
+  get itemId() { return this._item.id; }
   get item() { return this._item; }
   get featureVector() { return this._item.featureVector; }
   get position() { return { ...this._position }; }
@@ -28,16 +34,12 @@ class PlacedItem {
 
 export class RoomState {
   constructor(bounds, items = []) {
-    if (!(bounds instanceof RoomBounds)) {
-      throw new Error('RoomState requires RoomBounds');
-    }
+    if (!(bounds instanceof RoomBounds)) throw new Error('RoomState requires RoomBounds');
     this._bounds = bounds;
     this._placedItems = [...items];
   }
 
-  static createEmpty(bounds) {
-    return new RoomState(bounds, []);
-  }
+  static createEmpty(bounds) { return new RoomState(bounds, []); }
 
   get bounds() { return this._bounds; }
   get width() { return this._bounds.width; }
@@ -48,6 +50,7 @@ export class RoomState {
   getItems() {
     return this._placedItems.map(placed => ({
       id: placed.id,
+      itemId: placed.itemId,
       item: placed.item,
       featureVector: placed.featureVector,
       position: placed.position,
@@ -57,15 +60,16 @@ export class RoomState {
   }
 
   getItem(itemId) {
-    return this._placedItems.find(placed => placed.id === itemId) ?? null;
+    return this._placedItems.find(placed => placed.id === itemId || placed.itemId === itemId) ?? null;
   }
 
-  getItemCount() {
-    return this._placedItems.length;
-  }
+  getItemCount() { return this._placedItems.length; }
 
-  _dimensionsFor(item) {
-    return item?.dimensions ?? { x: 1, z: 1 };
+  _dimensionsFor(item, rotation = 0) {
+    const dimensions = item?.dimensions ?? { x: 1, z: 1 };
+    return rotation % 180 === 0
+      ? dimensions
+      : { x: dimensions.z, z: dimensions.x };
   }
 
   _isWithinBounds(position, dimensions) {
@@ -75,42 +79,46 @@ export class RoomState {
       position.z - halfZ >= 0 && position.z + halfZ <= this._bounds.depth;
   }
 
-  _calculateGap(a, b) {
-    const aHalfX = a.dimensions.x / 2;
-    const aHalfZ = a.dimensions.z / 2;
-    const bHalfX = b.dimensions.x / 2;
-    const bHalfZ = b.dimensions.z / 2;
-    const dx = Math.abs(a.position.x - b.position.x);
-    const dz = Math.abs(a.position.z - b.position.z);
-    return Math.min(dx - aHalfX - bHalfX, dz - aHalfZ - bHalfZ);
-  }
-
-  _checkCollisionsAndGaps(position, dimensions, excludeId = null) {
-    const candidate = { position, dimensions };
-    for (const placed of this._placedItems) {
-      if (excludeId && placed.id === excludeId) continue;
-      const gap = this._calculateGap(candidate, placed);
-      if (gap < 0) return { collision: true, insufficientGap: false };
-      if (gap < 0.9) return { collision: false, insufficientGap: true };
-    }
-    return { collision: false, insufficientGap: false };
-  }
-
-  placeItem(item, position, rotation = 0) {
-    if (!item || !item.id || !position || typeof position.x !== 'number' || typeof position.z !== 'number') {
+  /**
+   * Placement rules intentionally only protect the room boundary.
+   * Overlap, stacking and small gaps are valid creative choices and are
+   * reported by scoring/content rules rather than blocking the interaction.
+   */
+  validatePlacement(item, position, rotation = 0) {
+    if (!item || !item.id || !position ||
+        typeof position.x !== 'number' || typeof position.z !== 'number' ||
+        Number.isNaN(position.x) || Number.isNaN(position.z)) {
       return RoomOperationResult.failure('INVALID_INPUT');
     }
 
-    const dimensions = this._dimensionsFor(item);
-    if (!this._isWithinBounds(position, dimensions)) {
-      return RoomOperationResult.failure('OUT_OF_BOUNDS');
-    }
+    const dimensions = this._dimensionsFor(item, rotation);
+    if (!this._isWithinBounds(position, dimensions)) return RoomOperationResult.failure('OUT_OF_BOUNDS');
+    return RoomOperationResult.success();
+  }
 
-    const checks = this._checkCollisionsAndGaps(position, dimensions);
-    if (checks.collision) return RoomOperationResult.failure('COLLISION');
-    if (checks.insufficientGap) return RoomOperationResult.failure('INSUFFICIENT_GAP');
+  validateMove(itemId, newPosition) {
+    const placed = this._placedItems.find(candidate => candidate.id === itemId || candidate.itemId === itemId);
+    if (!placed) return RoomOperationResult.failure('NOT_FOUND');
+    return this.validatePlacement(placed.item, newPosition, placed.rotation);
+  }
 
-    this._placedItems.push(new PlacedItem(item, position, rotation));
+  _nextInstanceId(itemId) {
+    if (!this._placedItems.some(placed => placed.id === itemId)) return itemId;
+    let index = 2;
+    while (this._placedItems.some(placed => placed.id === `${itemId}#${index}`)) index += 1;
+    return `${itemId}#${index}`;
+  }
+
+  placeItem(item, position, rotation = 0, instanceId = null) {
+    const validation = this.validatePlacement(item, position, rotation);
+    if (!validation.success) return validation;
+
+    this._placedItems.push(new PlacedItem(
+      item,
+      position,
+      rotation,
+      instanceId ?? this._nextInstanceId(item.id)
+    ));
     return RoomOperationResult.success();
   }
 
@@ -119,18 +127,13 @@ export class RoomState {
     const step = 0.5;
     for (let z = Math.max(dimensions.z / 2, 0.5); z <= this._bounds.depth - dimensions.z / 2; z += step) {
       for (let x = Math.max(dimensions.x / 2, 0.5); x <= this._bounds.width - dimensions.x / 2; x += step) {
-        if (this._isWithinBounds({ x, z }, dimensions)) {
-          const checks = this._checkCollisionsAndGaps({ x, z }, dimensions);
-          if (!checks.collision && !checks.insufficientGap) return { x, z };
-        }
+        if (this._isWithinBounds({ x, z }, dimensions)) return { x, y: 0, z };
       }
     }
     return null;
   }
 
-  findAvailablePosition(item) {
-    return this._findDefaultPosition(item);
-  }
+  findAvailablePosition(item) { return this._findDefaultPosition(item); }
 
   addItem(item) {
     const newState = new RoomState(this._bounds, [...this._placedItems]);
@@ -142,53 +145,40 @@ export class RoomState {
   }
 
   moveItem(itemId, newPosition) {
-    const index = this._placedItems.findIndex(placed => placed.id === itemId);
+    const index = this._placedItems.findIndex(placed => placed.id === itemId || placed.itemId === itemId);
     if (index === -1) return RoomOperationResult.failure('NOT_FOUND');
 
     const placed = this._placedItems[index];
-    const dimensions = placed.dimensions;
-    if (!this._isWithinBounds(newPosition, dimensions)) {
-      return RoomOperationResult.failure('OUT_OF_BOUNDS');
-    }
+    const position = {
+      x: newPosition.x,
+      y: typeof newPosition.y === 'number' ? newPosition.y : placed.position.y,
+      z: newPosition.z
+    };
+    const validation = this.validatePlacement(placed.item, position, placed.rotation);
+    if (!validation.success) return validation;
 
-    const checks = this._checkCollisionsAndGaps(newPosition, dimensions, itemId);
-    if (checks.collision) return RoomOperationResult.failure('COLLISION');
-    if (checks.insufficientGap) return RoomOperationResult.failure('INSUFFICIENT_GAP');
-
-    this._placedItems[index] = new PlacedItem(placed.item, newPosition, placed.rotation);
+    this._placedItems[index] = new PlacedItem(placed.item, position, placed.rotation, placed.id);
     return RoomOperationResult.success();
   }
 
   rotateItem(itemId, rotationDelta = 90) {
-    const index = this._placedItems.findIndex(placed => placed.id === itemId);
+    const index = this._placedItems.findIndex(placed => placed.id === itemId || placed.itemId === itemId);
     if (index === -1) return RoomOperationResult.failure('NOT_FOUND');
 
     const placed = this._placedItems[index];
     const delta = typeof rotationDelta === 'number' ? rotationDelta : rotationDelta.y;
-    if (typeof delta !== 'number' || delta % 90 !== 0) {
-      return RoomOperationResult.failure('INVALID_ROTATION');
-    }
+    if (typeof delta !== 'number' || delta % 90 !== 0) return RoomOperationResult.failure('INVALID_ROTATION');
 
     const rotation = (placed.rotation + delta + 360) % 360;
-    const original = placed.dimensions;
-    const rotatedDimensions = rotation % 180 === 0
-      ? original
-      : { x: original.z, z: original.x };
+    const validation = this.validatePlacement(placed.item, placed.position, rotation);
+    if (!validation.success) return validation;
 
-    if (!this._isWithinBounds(placed.position, rotatedDimensions)) {
-      return RoomOperationResult.failure('OUT_OF_BOUNDS');
-    }
-
-    const checks = this._checkCollisionsAndGaps(placed.position, rotatedDimensions, itemId);
-    if (checks.collision) return RoomOperationResult.failure('COLLISION');
-    if (checks.insufficientGap) return RoomOperationResult.failure('INSUFFICIENT_GAP');
-
-    this._placedItems[index] = new PlacedItem(placed.item, placed.position, rotation);
+    this._placedItems[index] = new PlacedItem(placed.item, placed.position, rotation, placed.id);
     return RoomOperationResult.success();
   }
 
   removeItem(itemId) {
-    const index = this._placedItems.findIndex(placed => placed.id === itemId);
+    const index = this._placedItems.findIndex(placed => placed.id === itemId || placed.itemId === itemId);
     if (index === -1) return null;
     const items = [...this._placedItems];
     items.splice(index, 1);
@@ -200,6 +190,7 @@ export class RoomState {
       bounds: { width: this._bounds.width, depth: this._bounds.depth },
       items: this._placedItems.map(placed => ({
         id: placed.id,
+        itemId: placed.itemId,
         position: placed.position,
         rotation: placed.rotation
       }))
@@ -209,8 +200,13 @@ export class RoomState {
   static deserialize(data, bounds, itemCatalog) {
     const placedItems = [];
     for (const itemData of data.items ?? []) {
-      const item = itemCatalog.get(itemData.id);
-      if (item) placedItems.push(new PlacedItem(item, itemData.position, itemData.rotation));
+      const item = itemCatalog.get(itemData.itemId ?? itemData.id);
+      if (item) placedItems.push(new PlacedItem(
+        item,
+        itemData.position,
+        itemData.rotation,
+        itemData.id ?? item.id
+      ));
     }
     return new RoomState(bounds, placedItems);
   }

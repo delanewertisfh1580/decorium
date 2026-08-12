@@ -22,7 +22,7 @@ Domain не зависит от Three.js, AJV, HTTP или DOM. Infrastructure �
 `Item`, `FeatureVector` и `CatalogValidator` поддерживают V2-вектор из 16 полей: `woodShare`, `metalShare`, `glassShare`, `plasticShare`, `textileShare`, `lightColorShare`, `darkColorShare`, `warmPaletteShare`, `saturationLevel`, `formSimplicity`, `roundnessShare`, `rectilinearShare`, `sizeNorm`, `priceNorm`, `lightingFunctionShare`, `storageFunctionShare`.
 
 ### Room System
-`RoomBounds` и `RoomState` реализуют размещение, перемещение, поворот на 90° и удаление. Проверяются границы, коллизии и минимальный зазор 0.9 м. Состояние сессии хранится в `InMemoryRoomRepository`.
+`RoomBounds` и `RoomState` реализуют размещение, перемещение по X/Y/Z, поворот на 90° и удаление. Границы комнаты проверяются, но collision/minimum-gap не блокируют композицию: наложение и stacking — валидные творческие действия. Состояние сессии хранится в `InMemoryRoomRepository`.
 
 ### Scoring System
 `FeatureVector.average()` рассчитывает вектор комнаты. `ConstraintEvaluator` проверяет пять `LinearConstraint` для Scandinavian. `StyleScorer` суммирует взвешенные нарушения, ограничивает штраф единицей и вычисляет `score = 1 - penalty`. `StarRatingPolicy` использует пороги из `data/scoring/scoring-parameters.json`.
@@ -34,7 +34,7 @@ Domain не зависит от Three.js, AJV, HTTP или DOM. Infrastructure �
 `JsonLevelRepository` валидирует `data/levels/level-001.json` и `LoadLevelUseCase` собирает `LevelDTO` с размером комнаты, доступными предметами, состоянием и ограничениями.
 
 ### 3D & Input
-`RoomView` создаёт Three.js-сцену комнаты, освещение, пол, стены, сетку и простые box-меши предметов. OrbitControls отвечает за камеру; raycasting — за выбор объекта и точку на полу. Клавиши: `R`, `Delete`, `E`, `Escape`.
+`RoomView` создаёт Three.js-сцену комнаты, освещение, пол, стены, сетку и процедурные группы предметов из primitives через `ItemVisualFactory`. Pointer events и raycasting обеспечивают drag/drop, ghost-preview, выбор и перемещение; OrbitControls отвечает за камеру. Клавиши: `R`, `Delete`, `E`, `Escape`, `Home`, `PageUp`, `PageDown`. Появление, перемещение, вращение и удаление анимируются.
 
 ## 4. Границы зависимостей
 
@@ -58,14 +58,14 @@ score = clamp(1 - penalty, 0, 1)
 ## 6. Контракты данных
 
 - `data/items/catalog.v2.json` — объект `{ "items": [...] }`, минимум 30 предметов; каждый `featureVector` содержит 16 полей.
-- `data/levels/level-001.json` — `roomDimensions`, `availableItems`, `initialPlacement`, `styleId`.
+- `data/levels/level-001.json` — `roomDimensions`, 16 `availableItems`, `initialPlacement`, `styleId`.
 - `data/constraints/scandinavian-constraints.json` — пять ограничений с feature/operator/threshold/weight/messageKey.
 - `data/feedback/scandinavian-feedback.json` — русские шаблоны feedback.
 - `data/scoring/scoring-parameters.json` — пороги звёзд и параметры штрафа.
 
 ## 7. Тесты и проверки
 
-`npm test` запускает 17 файлов и 130 тестов: Domain/Application use cases, scoring, constraints, guards детерминизма и документации. `npm run build` проверяет `src/main.js` и собирает единый `dist/index.html`.
+`npm test` запускает 17 файлов и 133 теста: Domain/Application use cases, scoring, constraints, guards детерминизма и документации. `npm run build` проверяет `src/main.js` и собирает единый `dist/index.html`.
 
 ## 8. Не входит в MVP
 
