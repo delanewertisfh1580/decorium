@@ -6,6 +6,7 @@ import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
 import { LinearConstraint } from '../../Domain/Constraints/LinearConstraint.js';
 import MinimumClearanceRule from '../../Domain/Ergonomics/MinimumClearanceRule.js';
 import PassageZone from '../../Domain/Ergonomics/PassageZone.js';
+import FunctionalLayoutRule from '../../Domain/Ergonomics/FunctionalLayoutRule.js';
 
 const FEATURE_ALIASES = {
   wood_share: 'woodShare',
@@ -63,6 +64,11 @@ function createErgonomicsRules(data = {}) {
   }
   if (Array.isArray(data?.passageZones)) {
     rules.passageZones = Object.freeze(data.passageZones.map(zone => new PassageZone(zone)));
+  }
+  if (Array.isArray(data?.functionalLayoutRules)) {
+    rules.functionalLayoutRules = Object.freeze(
+      data.functionalLayoutRules.map(rule => new FunctionalLayoutRule(rule))
+    );
   }
   return Object.freeze(rules);
 }

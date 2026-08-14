@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import Ajv from 'ajv';
 
 const readJson = path => JSON.parse(readFileSync(path, 'utf8'));
-const catalog = readJson('data/items/catalog.v2.json');
-const itemSchema = readJson('data/items/item.v2.schema.json');
+const catalog = readJson('data/items/catalog.v3.json');
+const itemSchema = readJson('data/items/item.v3.schema.json');
 const level = readJson('data/levels/level-001.json');
 const levelManifest = readJson('data/levels/manifest.json');
 const levels = levelManifest.levels.map(summary => readJson(`data/levels/${summary.id}.json`));
@@ -17,7 +17,7 @@ const itemIds = new Set(catalog.items.map(item => item.id));
 const feedbackIds = new Set(feedback.map(message => message.id));
 
 describe('Production content contracts', () => {
-  it('validates the V2 catalog and every authored level against their schemas', () => {
+  it('validates the V3 catalog and every authored level against their schemas', () => {
     const ajv = new Ajv();
     const validateItems = ajv.compile(itemSchema);
     const validateLevel = ajv.compile(levelSchema);

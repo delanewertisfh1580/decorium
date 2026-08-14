@@ -10,7 +10,7 @@ export class SchemaLoader {
   }
 
   static async loadItemSchema() {
-    return this.load('./data/items/item.v2.schema.json');
+    return this.load('./data/items/item.v3.schema.json');
   }
 }
 

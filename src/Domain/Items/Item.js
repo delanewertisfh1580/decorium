@@ -1,7 +1,8 @@
 import { FeatureVector } from './FeatureVector.js';
+import InteractionProfile from './InteractionProfile.js';
 
 export class Item {
-  constructor({ id, name, type, featureVector, dimensions, price = 0 }) {
+  constructor({ id, name, type, featureVector, dimensions, price = 0, interactionProfile = InteractionProfile.empty() }) {
     if (id === undefined || id === null) throw new Error('Item ID is required');
     if (typeof id !== 'string' || id.trim() === '') throw new Error('Item ID cannot be empty');
     if (!name) throw new Error('Item name is required');
@@ -11,6 +12,9 @@ export class Item {
     }
     if (!(featureVector instanceof FeatureVector)) {
       throw new Error('featureVector must be an instance of FeatureVector');
+    }
+    if (!(interactionProfile instanceof InteractionProfile)) {
+      throw new Error('Item interactionProfile must be an instance of InteractionProfile');
     }
     if (dimensions !== undefined && (!dimensions || typeof dimensions.x !== 'number' || typeof dimensions.z !== 'number')) {
       throw new Error('Item dimensions must contain numeric x and z values');
@@ -22,6 +26,7 @@ export class Item {
     this._featureVector = featureVector;
     this._dimensions = dimensions;
     this._price = price;
+    this._interactionProfile = interactionProfile;
     Object.freeze(this);
   }
 
@@ -32,6 +37,7 @@ export class Item {
   get featureVector() { return this._featureVector; }
   get dimensions() { return this._dimensions; }
   get price() { return this._price; }
+  get interactionProfile() { return this._interactionProfile; }
 }
 
 export default Item;

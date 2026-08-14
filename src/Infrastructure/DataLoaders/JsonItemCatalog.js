@@ -13,8 +13,8 @@ export class JsonItemCatalog {
   async loadAllItems() {
     if (this.itemsCache) return this.itemsCache;
 
-    const response = await fetch(`${this.basePath}/catalog.v2.json`);
-    if (!response.ok) throw new Error(`Failed to load V2 item catalog: ${response.status}`);
+    const response = await fetch(`${this.basePath}/catalog.v3.json`);
+    if (!response.ok) throw new Error(`Failed to load V3 item catalog: ${response.status}`);
     const catalog = await response.json();
 
     if (this.validateSchema && !this.validateSchema(catalog)) {

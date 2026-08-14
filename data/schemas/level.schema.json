@@ -126,6 +126,61 @@
             },
             "additionalProperties": false
           }
+        },
+        "functionalLayoutRules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "schemaVersion",
+              "id",
+              "kind",
+              "anchorSelector",
+              "partnerSelector",
+              "minPartners",
+              "distance",
+              "weight",
+              "messageKey"
+            ],
+            "properties": {
+              "schemaVersion": { "const": 1 },
+              "id": { "type": "string", "minLength": 1 },
+              "kind": { "enum": ["adjacency"] },
+              "anchorSelector": {
+                "type": "object",
+                "required": ["affordance"],
+                "properties": {
+                  "affordance": {
+                    "enum": ["dining-seat", "dining-surface", "lounge-seat", "coffee-surface", "view-target"]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "partnerSelector": {
+                "type": "object",
+                "required": ["affordance"],
+                "properties": {
+                  "affordance": {
+                    "enum": ["dining-seat", "dining-surface", "lounge-seat", "coffee-surface", "view-target"]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "minPartners": { "type": "integer", "minimum": 1 },
+              "distance": {
+                "type": "object",
+                "required": ["min", "max"],
+                "properties": {
+                  "min": { "type": "number", "minimum": 0 },
+                  "max": { "type": "number", "exclusiveMinimum": 0 }
+                },
+                "additionalProperties": false
+              },
+              "weight": { "type": "number", "exclusiveMinimum": 0 },
+              "messageKey": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
