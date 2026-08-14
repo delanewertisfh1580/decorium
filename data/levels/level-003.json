@@ -1,0 +1,29 @@
+{
+  "id": "level-003",
+  "name": "Светлая студия",
+  "styleId": "scandinavian",
+  "roomDimensions": {
+    "width": 9.0,
+    "height": 3.0,
+    "depth": 7.0
+  },
+  "availableItems": [
+    "sofa-001",
+    "chair-002",
+    "table-001",
+    "desk-001",
+    "cabinet-001",
+    "shelf-002",
+    "lamp-002",
+    "plant-001",
+    "mirror-001",
+    "rug-001",
+    "coffeetable-001"
+  ],
+  "initialPlacement": [],
+  "targetScore": 4,
+  "compositionRules": {
+    "minItems": 5,
+    "requiredRoles": ["seating", "surface", "lighting", "storage"]
+  }
+}

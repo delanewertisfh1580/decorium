@@ -21,8 +21,11 @@ import MoveItemUseCase from './Application/UseCases/MoveItemUseCase.js';
 import RotateItemUseCase from './Application/UseCases/RotateItemUseCase.js';
 import RemoveItemUseCase from './Application/UseCases/RemoveItemUseCase.js';
 import LoadPlayerProfileUseCase from './Application/UseCases/LoadPlayerProfileUseCase.js';
+import SavePlayerProfileUseCase from './Application/UseCases/SavePlayerProfileUseCase.js';
+import ListAuthoredLevelsUseCase from './Application/UseCases/ListAuthoredLevelsUseCase.js';
 import { GameController } from './Presentation/Controllers/GameController.js';
 import { loadPlayerProfileForApp } from './Presentation/bootstrap/loadPlayerProfileForApp.js';
+import { initializeLevelSelectForApp } from './Presentation/bootstrap/initializeLevelSelectForApp.js';
 
 async function loadJson(path) {
   const response = await fetch(path);
@@ -45,7 +48,7 @@ async function bootstrap() {
       timestampProvider: () => new Date().toISOString()
     });
     const loadPlayerProfileUseCase = new LoadPlayerProfileUseCase(profileRepository, profileFactory);
-    await loadPlayerProfileForApp({
+    let playerProfile = await loadPlayerProfileForApp({
       loadPlayerProfileUseCase,
       profileContainer: document.getElementById('profile-container'),
       appRoot: document.getElementById('app')
@@ -100,7 +103,17 @@ async function bootstrap() {
       document.getElementById('toolbar-container'),
       document.getElementById('evaluation-container')
     );
-    await controller.loadLevel('level-001');
+    const listAuthoredLevelsUseCase = new ListAuthoredLevelsUseCase(levelRepository);
+    const savePlayerProfileUseCase = new SavePlayerProfileUseCase(profileRepository);
+    const levelSelection = await initializeLevelSelectForApp({
+      listAuthoredLevelsUseCase,
+      savePlayerProfileUseCase,
+      gameController: controller,
+      profile: playerProfile,
+      levelSelectContainer: document.getElementById('level-select-container'),
+      timestampProvider: () => new Date().toISOString()
+    });
+    playerProfile = levelSelection.profile;
     controller.roomView.startRenderLoop();
     // После загрузки сцена остаётся чистой: подсказки появляются только
     // как реакция на доступное или выполненное действие.

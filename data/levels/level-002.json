@@ -1,0 +1,28 @@
+{
+  "id": "level-002",
+  "name": "Уютный уголок",
+  "styleId": "scandinavian",
+  "roomDimensions": {
+    "width": 6.0,
+    "height": 3.0,
+    "depth": 5.0
+  },
+  "availableItems": [
+    "sofa-002",
+    "chair-001",
+    "table-002",
+    "coffeetable-001",
+    "lamp-001",
+    "lamp-002",
+    "rug-001",
+    "plant-001",
+    "shelf-001",
+    "mirror-001"
+  ],
+  "initialPlacement": [],
+  "targetScore": 3,
+  "compositionRules": {
+    "minItems": 4,
+    "requiredRoles": ["seating", "surface", "lighting"]
+  }
+}

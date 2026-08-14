@@ -20,6 +20,17 @@ export class JsonLevelRepository extends LevelRepository {
     }
     return data;
   }
+
+  async listLevels() {
+    const response = await fetch(`${this.basePath}/manifest.json`);
+    if (!response.ok) throw new Error(`Failed to load level manifest: ${response.status}`);
+
+    const manifest = await response.json();
+    if (manifest?.schemaVersion !== 1 || !Array.isArray(manifest.levels)) {
+      throw new Error('Level manifest validation failed: expected schemaVersion 1 and levels array.');
+    }
+    return manifest.levels;
+  }
 }
 
 export default JsonLevelRepository;
