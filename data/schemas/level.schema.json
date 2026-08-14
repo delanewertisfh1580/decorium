@@ -94,6 +94,24 @@
       "maximum": 5,
       "description": "Целевое количество звезд для прохождения уровня"
     },
+    "ergonomicsRules": {
+      "type": "object",
+      "description": "Детерминированные правила эргономической оценки уровня",
+      "properties": {
+        "minimumClearance": {
+          "type": "object",
+          "required": ["minimumDistance"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "minimumDistance": { "type": "number", "exclusiveMinimum": 0 },
+            "weight": { "type": "number", "exclusiveMinimum": 0 },
+            "messageKey": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "compositionRules": {
       "type": "object",
       "description": "Минимальная завершённость дизайнерской композиции",

@@ -8,7 +8,7 @@
     "5": 0.86
   },
   "maxPenalty": 1.0,
-  "styleWeight": 1.0,
-  "ergonomicsWeight": 0.0,
+  "styleWeight": 0.7,
+  "ergonomicsWeight": 0.3,
   "defaultWeight": 1.0
 }

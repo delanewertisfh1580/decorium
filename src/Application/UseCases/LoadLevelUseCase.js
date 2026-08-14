@@ -4,6 +4,7 @@ import { RoomBounds } from '../../Domain/Rooms/RoomBounds.js';
 import { Item } from '../../Domain/Items/Item.js';
 import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
 import { LinearConstraint } from '../../Domain/Constraints/LinearConstraint.js';
+import MinimumClearanceRule from '../../Domain/Ergonomics/MinimumClearanceRule.js';
 
 const FEATURE_ALIASES = {
   wood_share: 'woodShare',
@@ -52,6 +53,13 @@ function createConstraint(data) {
     data.weight ?? 1,
     data.messageKey ?? null
   );
+}
+
+function createErgonomicsRules(data = {}) {
+  if (!data?.minimumClearance) return {};
+  return Object.freeze({
+    minimumClearance: new MinimumClearanceRule(data.minimumClearance)
+  });
 }
 
 export class LoadLevelUseCase {
@@ -127,7 +135,8 @@ export class LoadLevelUseCase {
           constraints,
           styleId: raw.styleId ?? 'default',
           targetScore: raw.targetScore ?? 3,
-          compositionRules: raw.compositionRules ?? {}
+          compositionRules: raw.compositionRules ?? {},
+          ergonomicsRules: createErgonomicsRules(raw.ergonomicsRules)
         })
       };
     } catch (error) {

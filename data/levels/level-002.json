@@ -21,6 +21,12 @@
   ],
   "initialPlacement": [],
   "targetScore": 3,
+  "ergonomicsRules": {
+    "minimumClearance": {
+      "minimumDistance": 0.8,
+      "weight": 1.0
+    }
+  },
   "compositionRules": {
     "minItems": 4,
     "requiredRoles": ["seating", "surface", "lighting"]

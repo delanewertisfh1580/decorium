@@ -11,6 +11,13 @@ export class EvaluationView {
     const violations = result.violations?.length
       ? `<p class="score-label">${result.violations.length} подсказок для следующей попытки</p>`
       : '<p class="score-label success-note">Комната собрана гармонично</p>';
+    const hasSubScores = typeof result.styleScore === 'number' && typeof result.ergonomicsScore === 'number';
+    const subScores = hasSubScores ? `
+      <dl class="score-channels" aria-label="Состав оценки">
+        <div data-score-channel="style"><dt>Стиль</dt><dd>${Math.round(result.styleScore * 100)}<small>/100</small></dd></div>
+        <div data-score-channel="ergonomics"><dt>Эргономика</dt><dd>${Math.round(result.ergonomicsScore * 100)}<small>/100</small></dd></div>
+      </dl>
+    ` : '';
     this.container.innerHTML = `
       <section class="evaluation-card panel" aria-labelledby="evaluation-title">
         <button class="close" type="button" data-close aria-label="Закрыть результат">×</button>
@@ -20,6 +27,7 @@ export class EvaluationView {
           <div class="stars" aria-label="${result.stars} из 5 звёзд">${'★'.repeat(result.stars)}${'☆'.repeat(5 - result.stars)}</div>
           <div class="evaluation-score">${Math.round(result.score * 100)}<small>/100</small></div>
         </div>
+        ${subScores}
         ${violations}
         <ul class="feedback">${feedbackItems}</ul>
       </section>

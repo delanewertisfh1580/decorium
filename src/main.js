@@ -13,6 +13,9 @@ import { JsonFeedbackCatalog } from './Infrastructure/DataLoaders/JsonFeedbackCa
 import { ConstraintEvaluator } from './Domain/Constraints/ConstraintEvaluator.js';
 import { StyleScorer } from './Domain/Scoring/StyleScorer.js';
 import { StarRatingPolicy } from './Domain/Scoring/StarRatingPolicy.js';
+import ClearanceEvaluator from './Domain/Ergonomics/ClearanceEvaluator.js';
+import ErgonomicsScorer from './Domain/Scoring/ErgonomicsScorer.js';
+import EvaluationScoreAggregator from './Domain/Scoring/EvaluationScoreAggregator.js';
 import { initializeScoringParameters, getScoringParameters } from './Domain/Scoring/scoringParameters.js';
 import EvaluateRoomUseCase from './Application/UseCases/EvaluateRoomUseCase.js';
 import LoadLevelUseCase from './Application/UseCases/LoadLevelUseCase.js';
@@ -85,7 +88,13 @@ async function bootstrap() {
       new ConstraintEvaluator(),
       new StyleScorer(scoring),
       new StarRatingPolicy(scoring.starRatingThresholds),
-      feedbackCatalog
+      feedbackCatalog,
+      new ClearanceEvaluator(),
+      new ErgonomicsScorer(scoring),
+      new EvaluationScoreAggregator({
+        styleWeight: scoring.styleWeight,
+        ergonomicsWeight: scoring.ergonomicsWeight
+      })
     );
 
     const controller = new GameController({

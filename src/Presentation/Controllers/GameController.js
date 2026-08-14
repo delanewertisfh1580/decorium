@@ -343,7 +343,8 @@ export class GameController {
     const result = await this.evaluateRoomUseCase.execute(
       this.level.roomId,
       this.roomViewModel.constraints,
-      this.level.compositionRules
+      this.level.compositionRules,
+      this.level.ergonomicsRules
     );
     if (!result.success) {
       this._showStatus(result.error);

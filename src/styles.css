@@ -229,6 +229,11 @@ kbd { padding: 1px 4px; border: 1px solid rgba(82,117,110,.2); border-radius: 4p
 .evaluation-card .stars { font-size: 22px; letter-spacing: 2px; }
 .evaluation-card .evaluation-score { color: var(--accent-strong); font-size: 32px; font-weight: 850; letter-spacing: -.05em; }
 .evaluation-card .evaluation-score small { margin-left: 2px; color: var(--muted); font-size: 14px; font-weight: 650; letter-spacing: 0; }
+.score-channels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
+.score-channels > div { padding: 8px 9px; border: 1px solid rgba(82,117,110,.1); border-radius: 9px; background: rgba(111,143,135,.07); }
+.score-channels dt { color: var(--muted); font-size: 11px; font-weight: 700; }
+.score-channels dd { margin: 3px 0 0; color: var(--text); font-size: 19px; font-weight: 800; letter-spacing: -.03em; }
+.score-channels small { margin-left: 1px; color: var(--muted); font-size: 10px; font-weight: 650; letter-spacing: 0; }
 .evaluation-card .score-label { margin: 0 0 12px; font-size: 13px; }
 .success-note { color: var(--accent-strong); }
 .evaluation-card .feedback { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 14px; line-height: 1.4; }

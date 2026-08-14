@@ -2,20 +2,51 @@ import EvaluationResultDTO from '../DTOs/EvaluationResultDTO.js';
 import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
 import { evaluateComposition } from '../../Domain/Scoring/CompositionEvaluator.js';
 
+function serializeViolation(violation, type = null) {
+  return {
+    id: violation.constraintId,
+    feature: violation.featureName,
+    operator: violation.operator,
+    threshold: violation.threshold,
+    actualValue: violation.actualValue,
+    severity: violation.severity,
+    messageKey: violation.messageKey,
+    message: violation.constraint.description,
+    ...(type ? { type } : {}),
+    ...(Array.isArray(violation.itemIds) ? { itemIds: [...violation.itemIds] } : {})
+  };
+}
+
 export class EvaluateRoomUseCase {
-  constructor(roomRepository, constraintEvaluator, styleScorer, starRatingPolicy, feedbackCatalog = null) {
+  constructor(
+    roomRepository,
+    constraintEvaluator,
+    styleScorer,
+    starRatingPolicy,
+    feedbackCatalog = null,
+    ergonomicsEvaluator = null,
+    ergonomicsScorer = null,
+    scoreAggregator = null
+  ) {
     if (!roomRepository) throw new Error('EvaluateRoomUseCase: roomRepository is required.');
     if (!constraintEvaluator) throw new Error('EvaluateRoomUseCase: constraintEvaluator is required.');
     if (!styleScorer) throw new Error('EvaluateRoomUseCase: styleScorer is required.');
     if (!starRatingPolicy) throw new Error('EvaluateRoomUseCase: starRatingPolicy is required.');
+    const ergonomicsDependencies = [ergonomicsEvaluator, ergonomicsScorer, scoreAggregator];
+    if (ergonomicsDependencies.some(Boolean) && !ergonomicsDependencies.every(Boolean)) {
+      throw new Error('EvaluateRoomUseCase: ergonomics dependencies must be provided together.');
+    }
     this.roomRepository = roomRepository;
     this.constraintEvaluator = constraintEvaluator;
     this.styleScorer = styleScorer;
     this.starRatingPolicy = starRatingPolicy;
     this.feedbackCatalog = feedbackCatalog;
+    this.ergonomicsEvaluator = ergonomicsEvaluator;
+    this.ergonomicsScorer = ergonomicsScorer;
+    this.scoreAggregator = scoreAggregator;
   }
 
-  async execute(roomId, constraints, compositionRules = {}) {
+  async execute(roomId, constraints, compositionRules = {}, ergonomicsRules = {}) {
     if (!roomId || typeof roomId !== 'string') return EvaluationResultDTO.failure('INVALID_INPUT: RoomID is required.');
     if (!Array.isArray(constraints)) return EvaluationResultDTO.failure('INVALID_INPUT: Constraints must be an array.');
 
@@ -44,31 +75,45 @@ export class EvaluateRoomUseCase {
       const evaluations = this.constraintEvaluator.evaluateAll(constraints, roomVector);
       const styleViolations = evaluations.filter(result => !result.isSatisfied).map(result => result.violation);
       const composition = evaluateComposition(placedItems, compositionRules);
-      const violations = [...styleViolations, ...composition.violations];
-      const scoring = this.styleScorer.evaluate(violations);
-      const rating = this.starRatingPolicy.evaluate(scoring.score);
+      const styleChannelViolations = [...styleViolations, ...composition.violations];
+      const styleScoring = this.styleScorer.evaluate(styleChannelViolations);
+
+      const hasErgonomicsChannel = Boolean(this.ergonomicsEvaluator);
+      const ergonomicsViolations = hasErgonomicsChannel && ergonomicsRules.minimumClearance
+        ? this.ergonomicsEvaluator.evaluate(roomState, ergonomicsRules.minimumClearance)
+        : [];
+      const ergonomicsScoring = hasErgonomicsChannel
+        ? this.ergonomicsScorer.evaluate(ergonomicsViolations)
+        : null;
+      const aggregate = hasErgonomicsChannel
+        ? this.scoreAggregator.aggregate({ styleScore: styleScoring.score, ergonomicsScore: ergonomicsScoring.score })
+        : null;
+      const score = aggregate?.totalScore ?? styleScoring.score;
+      const rating = this.starRatingPolicy.evaluate(score);
+      const allViolations = [...styleChannelViolations, ...ergonomicsViolations];
       const feedback = this.feedbackCatalog
-        ? await this.feedbackCatalog.getEvaluationFeedback(rating.stars, violations)
-        : this._generateFeedback(rating.stars, violations);
+        ? await this.feedbackCatalog.getEvaluationFeedback(rating.stars, allViolations)
+        : this._generateFeedback(rating.stars, allViolations);
 
       return EvaluationResultDTO.success({
-        score: scoring.score,
-        penalty: scoring.penalty,
+        score,
+        penalty: styleScoring.penalty,
         stars: rating.stars,
         nextThreshold: rating.nextThreshold,
-        violations: violations.map(violation => ({
-          id: violation.constraintId,
-          feature: violation.featureName,
-          operator: violation.operator,
-          threshold: violation.threshold,
-          actualValue: violation.actualValue,
-          severity: violation.severity,
-          messageKey: violation.messageKey,
-          message: violation.constraint.description
-        })),
+        violations: [
+          ...styleChannelViolations.map(violation => serializeViolation(violation)),
+          ...ergonomicsViolations.map(violation => serializeViolation(violation, 'ergonomics'))
+        ],
         itemCount: placedItems.length,
         roomVector: roomVector.toArray(),
-        feedback
+        feedback,
+        ...(hasErgonomicsChannel ? {
+          styleScore: styleScoring.score,
+          ergonomicsScore: ergonomicsScoring.score,
+          stylePenalty: styleScoring.penalty,
+          ergonomicsPenalty: ergonomicsScoring.penalty,
+          scoreWeights: { style: aggregate.styleWeight, ergonomics: aggregate.ergonomicsWeight }
+        } : {})
       });
     } catch (error) {
       console.error(`EvaluateRoomUseCase: Error evaluating room ${roomId}:`, error);
@@ -80,7 +125,7 @@ export class EvaluateRoomUseCase {
     if (stars >= 5) return 'Excellent! Your room design perfectly matches the style.';
     if (stars >= 4) return 'Great job! The room looks good with minor improvements needed.';
     if (stars >= 3) return 'Not bad. Some adjustments could improve the overall style.';
-    if (stars >= 2) return 'The room needs significant changes to match the desired style.';
+    if (stars >= 2) return 'The room needs significant changes to match the style.';
     if (stars >= 1) return 'Poor result. Try reviewing the style guidelines and rearranging items.';
     return 'Very poor. Start by placing items that match the style constraints.';
   }

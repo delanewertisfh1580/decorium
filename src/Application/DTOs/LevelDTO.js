@@ -1,5 +1,5 @@
 export default class LevelDTO {
-  constructor({ levelId, roomId, name, roomState, availableItems, constraints, styleId, targetScore = 3, compositionRules = {} }) {
+  constructor({ levelId, roomId, name, roomState, availableItems, constraints, styleId, targetScore = 3, compositionRules = {}, ergonomicsRules = {} }) {
     if (!levelId || typeof levelId !== 'string') throw new Error('LevelDTO: levelId is required');
     if (!roomId || typeof roomId !== 'string') throw new Error('LevelDTO: roomId is required');
     if (!roomState) throw new Error('LevelDTO: roomState is required');
@@ -16,5 +16,6 @@ export default class LevelDTO {
     this.styleId = styleId;
     this.targetScore = targetScore;
     this.compositionRules = Object.freeze({ ...compositionRules });
+    this.ergonomicsRules = Object.freeze({ ...ergonomicsRules });
   }
 }

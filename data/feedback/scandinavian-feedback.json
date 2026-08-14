@@ -88,5 +88,11 @@
     "category": "violation",
     "template": "Добавьте декоративный акцент, чтобы связать мебель в цельную композицию.",
     "severity": "low"
+  },
+  {
+    "id": "ergonomics-minimum-clearance",
+    "category": "violation",
+    "template": "Оставьте больше прохода между предметами: нужно минимум {threshold} м, сейчас {value} м.",
+    "severity": "high"
   }
 ]
