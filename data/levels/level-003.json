@@ -26,7 +26,18 @@
     "minimumClearance": {
       "minimumDistance": 0.9,
       "weight": 1.2
-    }
+    },
+    "passageZones": [
+      {
+        "id": "entry-passage",
+        "label": "Входной проход",
+        "x": 0,
+        "z": 2.5,
+        "width": 1.0,
+        "depth": 2.0,
+        "weight": 1.5
+      }
+    ]
   },
   "compositionRules": {
     "minItems": 5,

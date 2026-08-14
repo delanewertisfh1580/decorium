@@ -43,7 +43,16 @@ describe('EvaluateRoomUseCase ergonomics channel', () => {
       itemIds: ['chair-a', 'chair-b'],
       constraint: { weight: 1, description: 'Недостаточный проход.' }
     };
-    const ergonomicsEvaluator = { evaluate: () => [clearanceViolation] };
+    const rules = {
+      minimumClearance: { minimumDistance: 0.9 },
+      passageZones: [{ id: 'entry' }]
+    };
+    const ergonomicsEvaluator = {
+      evaluate: (_room, receivedRules) => {
+        expect(receivedRules).toBe(rules);
+        return [clearanceViolation];
+      }
+    };
     const ergonomicsScorer = { evaluate: violations => ({ penalty: 1, score: 0.5, violations }) };
     const scoreAggregator = { aggregate: () => ({ totalScore: 0.85, styleWeight: 0.7, ergonomicsWeight: 0.3 }) };
     const useCase = new EvaluateRoomUseCase(
@@ -57,7 +66,7 @@ describe('EvaluateRoomUseCase ergonomics channel', () => {
       scoreAggregator
     );
 
-    const result = await useCase.execute('room-001', [], {}, { minimumClearance: { minimumDistance: 0.9 } });
+    const result = await useCase.execute('room-001', [], {}, rules);
 
     expect(result.success).toBe(true);
     expect(result.evaluationData).toMatchObject({

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Item } from '../../../src/Domain/Items/Item.js';
 import { FeatureVector } from '../../../src/Domain/Items/FeatureVector.js';
 import MinimumClearanceRule from '../../../src/Domain/Ergonomics/MinimumClearanceRule.js';
+import PassageZone from '../../../src/Domain/Ergonomics/PassageZone.js';
 import LoadLevelUseCase from '../../../src/Application/UseCases/LoadLevelUseCase.js';
 
 const item = new Item({
@@ -19,7 +20,8 @@ const rawLevel = {
   roomDimensions: { width: 6, height: 3, depth: 5 },
   availableItems: ['chair-001'], initialPlacement: [],
   ergonomicsRules: {
-    minimumClearance: { minimumDistance: 0.9, weight: 1.5 }
+    minimumClearance: { minimumDistance: 0.9, weight: 1.5 },
+    passageZones: [{ id: 'entry', label: 'Вход', x: 0, z: 2, width: 1.2, depth: 2, weight: 1.4 }]
   }
 };
 
@@ -37,5 +39,7 @@ describe('LoadLevelUseCase ergonomics rules', () => {
     expect(result.data.ergonomicsRules.minimumClearance).toBeInstanceOf(MinimumClearanceRule);
     expect(result.data.ergonomicsRules.minimumClearance.minimumDistance).toBe(0.9);
     expect(result.data.ergonomicsRules.minimumClearance.weight).toBe(1.5);
+    expect(result.data.ergonomicsRules.passageZones[0]).toBeInstanceOf(PassageZone);
+    expect(result.data.ergonomicsRules.passageZones[0].label).toBe('Вход');
   });
 });

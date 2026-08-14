@@ -5,6 +5,7 @@ import { Item } from '../../Domain/Items/Item.js';
 import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
 import { LinearConstraint } from '../../Domain/Constraints/LinearConstraint.js';
 import MinimumClearanceRule from '../../Domain/Ergonomics/MinimumClearanceRule.js';
+import PassageZone from '../../Domain/Ergonomics/PassageZone.js';
 
 const FEATURE_ALIASES = {
   wood_share: 'woodShare',
@@ -56,10 +57,14 @@ function createConstraint(data) {
 }
 
 function createErgonomicsRules(data = {}) {
-  if (!data?.minimumClearance) return {};
-  return Object.freeze({
-    minimumClearance: new MinimumClearanceRule(data.minimumClearance)
-  });
+  const rules = {};
+  if (data?.minimumClearance) {
+    rules.minimumClearance = new MinimumClearanceRule(data.minimumClearance);
+  }
+  if (Array.isArray(data?.passageZones)) {
+    rules.passageZones = Object.freeze(data.passageZones.map(zone => new PassageZone(zone)));
+  }
+  return Object.freeze(rules);
 }
 
 export class LoadLevelUseCase {

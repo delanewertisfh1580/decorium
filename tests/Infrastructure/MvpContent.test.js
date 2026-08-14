@@ -34,12 +34,14 @@ describe('Production content contracts', () => {
     expect(level.availableItems).toHaveLength(16);
     expect(levels.every(levelDefinition => levelDefinition.availableItems.every(itemId => itemIds.has(itemId)))).toBe(true);
     expect(levels.every(levelDefinition => levelDefinition.ergonomicsRules?.minimumClearance?.minimumDistance > 0)).toBe(true);
+    expect(levels.every(levelDefinition => levelDefinition.ergonomicsRules?.passageZones?.length > 0)).toBe(true);
   });
 
   it('maps every style and ergonomics rule to a feedback message', () => {
     expect(constraints).toHaveLength(5);
     expect(constraints.every(constraint => feedbackIds.has(constraint.messageKey))).toBe(true);
     expect(feedbackIds.has('ergonomics-minimum-clearance')).toBe(true);
+    expect(feedbackIds.has('ergonomics-passage-zone-free')).toBe(true);
   });
 
   it('keeps presentation shapes in a data-driven visual profile contract', () => {

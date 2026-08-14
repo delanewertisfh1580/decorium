@@ -108,6 +108,24 @@
             "messageKey": { "type": "string", "minLength": 1 }
           },
           "additionalProperties": false
+        },
+        "passageZones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "x", "z", "width", "depth"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 },
+              "x": { "type": "number" },
+              "z": { "type": "number" },
+              "width": { "type": "number", "exclusiveMinimum": 0 },
+              "depth": { "type": "number", "exclusiveMinimum": 0 },
+              "weight": { "type": "number", "exclusiveMinimum": 0 },
+              "messageKey": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

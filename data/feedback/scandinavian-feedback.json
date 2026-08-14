@@ -94,5 +94,11 @@
     "category": "violation",
     "template": "Оставьте больше прохода между предметами: нужно минимум {threshold} м, сейчас {value} м.",
     "severity": "high"
+  },
+  {
+    "id": "ergonomics-passage-zone-free",
+    "category": "violation",
+    "template": "Освободите входной проход: предмет перекрывает необходимую зону движения.",
+    "severity": "high"
   }
 ]
