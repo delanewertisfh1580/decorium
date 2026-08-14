@@ -68,3 +68,6 @@ coverage/
 *.lz
 *.lzo
 ```
+
+# Generated release identity (created by scripts/generate-release-manifest.mjs)
+public/release-manifest.json

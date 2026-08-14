@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Decorium - интерьерная игра-таймкиллер с AI-driven оценкой дизайна (DDD + Three.js)",
   "scripts": {
-    "dev": "vite",
-    "build": "node scripts/check-main.js && vite build",
+    "dev": "node scripts/generate-release-manifest.mjs && vite",
+    "build": "node scripts/check-main.js && node scripts/generate-release-manifest.mjs && vite build",
     "preview": "vite preview",
     "test": "vitest run"
   },

@@ -3,6 +3,7 @@ import { DESIGN_TOKENS, applyDesignTokens, validateDesignTokens } from './Presen
 import { HUD_LAYOUT, validateHudLayout } from './Presentation/UI/hudLayout.js';
 import { SchemaLoader } from './Infrastructure/DataLoaders/SchemaLoader.js';
 import { JsonLevelRepository } from './Infrastructure/Repositories/JsonLevelRepository.js';
+import JsonReleaseManifestRepository from './Infrastructure/Repositories/JsonReleaseManifestRepository.js';
 import { InMemoryRoomRepository } from './Infrastructure/Repositories/InMemoryRoomRepository.js';
 import BrowserLocalPlayerProfileRepository from './Infrastructure/Repositories/BrowserLocalPlayerProfileRepository.js';
 import BrowserPlayerProfileFactory from './Infrastructure/Factories/BrowserPlayerProfileFactory.js';
@@ -28,11 +29,13 @@ import SavePlayerProfileUseCase from './Application/UseCases/SavePlayerProfileUs
 import GetCampaignLevelsUseCase from './Application/UseCases/GetCampaignLevelsUseCase.js';
 import RecordLevelCompletionUseCase from './Application/UseCases/RecordLevelCompletionUseCase.js';
 import UpdatePlayerSettingsUseCase from './Application/UseCases/UpdatePlayerSettingsUseCase.js';
+import GetBuildInfoUseCase from './Application/UseCases/GetBuildInfoUseCase.js';
 import ProgressionPolicy from './Domain/Progression/ProgressionPolicy.js';
 import { GameController } from './Presentation/Controllers/GameController.js';
 import { loadPlayerProfileForApp } from './Presentation/bootstrap/loadPlayerProfileForApp.js';
 import { initializeLevelSelectForApp } from './Presentation/bootstrap/initializeLevelSelectForApp.js';
 import { initializePlayerSettingsForApp } from './Presentation/bootstrap/initializePlayerSettingsForApp.js';
+import { initializeReleaseInfoForApp } from './Presentation/bootstrap/initializeReleaseInfoForApp.js';
 
 async function loadJson(path) {
   const response = await fetch(path);
@@ -48,6 +51,13 @@ async function bootstrap() {
     if (tokenErrors.length > 0) throw new Error(`Invalid presentation tokens: ${tokenErrors.join(', ')}`);
     if (hudErrors.length > 0) throw new Error(`Invalid HUD layout: ${hudErrors.join(', ')}`);
     applyDesignTokens(document.documentElement);
+
+    const releaseManifestRepository = new JsonReleaseManifestRepository('./release-manifest.json');
+    const getBuildInfoUseCase = new GetBuildInfoUseCase(releaseManifestRepository);
+    await initializeReleaseInfoForApp({
+      getBuildInfoUseCase,
+      releaseInfoContainer: document.getElementById('release-info-container')
+    });
 
     const profileRepository = new BrowserLocalPlayerProfileRepository(window.localStorage);
     const profileFactory = new BrowserPlayerProfileFactory({

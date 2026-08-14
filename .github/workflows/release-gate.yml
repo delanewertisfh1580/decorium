@@ -1,0 +1,49 @@
+name: Release gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-gate:
+    name: Test, build and retain web release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run unit and integration tests
+        run: npm test
+
+      - name: Build web release
+        run: npm run build
+
+      - name: Validate generated release manifest
+        run: node scripts/verify-release-artifact.mjs dist/release-manifest.json
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Retain rollback-capable web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: decorium-web-release
+          path: dist
+          if-no-files-found: error
+          retention-days: 14

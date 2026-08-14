@@ -329,3 +329,29 @@ kbd { padding: 1px 4px; border: 1px solid rgba(82,117,110,.2); border-radius: 4p
   .settings-panel { top: max(88px, calc(env(safe-area-inset-top) + 78px)); left: max(10px, env(safe-area-inset-left)); width: 160px; }
   .level-select-panel { top: max(132px, calc(env(safe-area-inset-top) + 122px)); }
 }
+
+/* PROD-006: release identity is support-visible but never competes with gameplay controls. */
+.release-info-panel {
+  position: absolute;
+  z-index: 2;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+.release-info {
+  margin: 0;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 7px;
+  background: rgba(20, 30, 29, 0.58);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 10px;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(6px);
+}
+.release-info-unavailable { color: rgba(255, 255, 255, 0.58); }
+@media (max-width: 720px) {
+  .release-info-panel { right: max(10px, env(safe-area-inset-right)); bottom: max(10px, env(safe-area-inset-bottom)); }
+  .release-info { font-size: 9px; }
+}
