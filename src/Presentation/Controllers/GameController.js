@@ -38,6 +38,7 @@ export class GameController {
     this._lastEvaluation = null;
     this.undoBuffer = new UndoBuffer();
     this._dashboardOpen = false;
+    this.completionProfileListener = null;
   }
 
   async init(canvas, catalogContainer, toolbarContainer, evaluationContainer) {
@@ -74,6 +75,13 @@ export class GameController {
     // Capture phase keeps shortcuts active even when a catalog/toolbar control owns focus.
     // event.code (handled by getKeyboardAction) makes R/E work on Cyrillic layouts too.
     document.addEventListener('keydown', this._onKeyDown, true);
+  }
+
+  setCompletionProfileListener(listener) {
+    if (listener !== null && typeof listener !== 'function') {
+      throw new Error('GameController completion profile listener must be a function or null.');
+    }
+    this.completionProfileListener = listener;
   }
 
   setPlayerProfile(profile) {
@@ -376,8 +384,12 @@ export class GameController {
         targetScore: this.level.targetScore,
         profile: this.playerProfile
       });
-      if (completion.success) this.setPlayerProfile(completion.data);
-      else this._showStatus(`Оценка рассчитана, но прогресс не сохранён: ${completion.error}`);
+      if (completion.success) {
+        this.setPlayerProfile(completion.data);
+        if (completion.didComplete && this.completionProfileListener) {
+          await this.completionProfileListener(completion.data);
+        }
+      } else this._showStatus(`Оценка рассчитана, но прогресс не сохранён: ${completion.error}`);
     }
 
     this._lastEvaluation = result.evaluationData;

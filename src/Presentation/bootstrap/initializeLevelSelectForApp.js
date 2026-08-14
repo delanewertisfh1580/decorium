@@ -23,12 +23,18 @@ export async function initializeLevelSelectForApp({
     throw new Error('initializeLevelSelectForApp: timestampProvider is required.');
   }
 
-  const campaign = await getCampaignLevelsUseCase.execute(profile);
-  if (!campaign.success) throw new Error(campaign.error);
-  if (campaign.data.length === 0) throw new Error('LEVEL_CATALOG_EMPTY: At least one authored level is required.');
+  const loadCampaign = async campaignProfile => {
+    const campaign = await getCampaignLevelsUseCase.execute(campaignProfile);
+    if (!campaign.success) throw new Error(campaign.error);
+    if (campaign.data.length === 0) throw new Error('LEVEL_CATALOG_EMPTY: At least one authored level is required.');
+    if (!campaign.data.some(level => level.isUnlocked !== false)) {
+      throw new Error('CAMPAIGN_NO_UNLOCKED_LEVEL: At least one level must be unlocked.');
+    }
+    return campaign.data;
+  };
 
-  const unlockedLevels = campaign.data.filter(level => level.isUnlocked !== false);
-  if (unlockedLevels.length === 0) throw new Error('CAMPAIGN_NO_UNLOCKED_LEVEL: At least one level must be unlocked.');
+  let campaignLevels = await loadCampaign(profile);
+  const unlockedLevels = campaignLevels.filter(level => level.isUnlocked !== false);
 
   let currentProfile = profile;
   let activeLevelId = unlockedLevels.some(level => level.id === profile.lastSession.levelId)
@@ -38,7 +44,7 @@ export async function initializeLevelSelectForApp({
 
   const selectLevel = async levelId => {
     currentProfile = gameController.playerProfile ?? currentProfile;
-    if (!campaign.data.some(level => level.id === levelId && level.isUnlocked !== false)) {
+    if (!campaignLevels.some(level => level.id === levelId && level.isUnlocked !== false)) {
       throw new Error(`UNKNOWN_OR_LOCKED_LEVEL: ${levelId}`);
     }
 
@@ -49,7 +55,17 @@ export async function initializeLevelSelectForApp({
 
     currentProfile = saved.data;
     activeLevelId = levelId;
-    levelSelectView.render(campaign.data, activeLevelId);
+    levelSelectView.render(campaignLevels, activeLevelId);
+  };
+
+  const refresh = async updatedProfile => {
+    if (!updatedProfile) throw new Error('initializeLevelSelectForApp: updated profile is required for refresh.');
+    currentProfile = updatedProfile;
+    campaignLevels = await loadCampaign(currentProfile);
+    const unlocked = campaignLevels.filter(level => level.isUnlocked !== false);
+    if (!unlocked.some(level => level.id === activeLevelId)) activeLevelId = unlocked[0].id;
+    levelSelectView.render(campaignLevels, activeLevelId);
+    return campaignLevels;
   };
 
   levelSelectView = new LevelSelectView(levelSelectContainer, levelId => {
@@ -60,6 +76,7 @@ export async function initializeLevelSelectForApp({
 
   return {
     activeLevelId,
-    profile: currentProfile
+    profile: currentProfile,
+    refresh
   };
 }

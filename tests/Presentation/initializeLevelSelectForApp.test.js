@@ -95,6 +95,41 @@ describe('initializeLevelSelectForApp', () => {
     expect(saved[0].settings).toEqual(updatedProfile.settings);
   });
 
+  it('refreshes campaign availability after a completed profile unlocks the next level', async () => {
+    const container = document.createElement('aside');
+    const initialProfile = profileWithLastSession(null);
+    const completedProfile = initialProfile.recordLevelCompletion({
+      levelId: 'level-001', stars: 3, updatedAt: '2026-08-14T10:03:00.000Z'
+    });
+    const lockedCampaign = [
+      campaignLevels[0],
+      { ...campaignLevels[1], isUnlocked: false }
+    ];
+    const campaign = {
+      requestedProfiles: [],
+      useCase: {
+        execute: async profile => {
+          campaign.requestedProfiles.push(profile);
+          const isComplete = Boolean(profile.progress.completedLevels['level-001']);
+          return { success: true, data: isComplete ? campaignLevels : lockedCampaign };
+        }
+      }
+    };
+    const result = await initializeLevelSelectForApp({
+      getCampaignLevelsUseCase: campaign.useCase,
+      savePlayerProfileUseCase: { execute: async profile => ({ success: true, data: profile }) },
+      gameController: { loadLevel: async () => {} },
+      profile: initialProfile,
+      levelSelectContainer: container,
+      timestampProvider: () => '2026-08-14T10:02:00.000Z'
+    });
+
+    expect(container.querySelector('[data-level-id="level-002"]').disabled).toBe(true);
+    await result.refresh(completedProfile);
+    expect(campaign.requestedProfiles).toEqual([initialProfile, completedProfile]);
+    expect(container.querySelector('[data-level-id="level-002"]').disabled).toBe(false);
+  });
+
   it('returns an actionable error when campaign availability cannot be loaded', async () => {
     await expect(initializeLevelSelectForApp({
       getCampaignLevelsUseCase: campaignUseCase([], { success: false, error: 'INVALID_LEVEL_CATALOG: missing manifest' }).useCase,

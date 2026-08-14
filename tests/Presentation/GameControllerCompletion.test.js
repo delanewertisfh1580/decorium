@@ -50,6 +50,22 @@ describe('GameController completion integration', () => {
     expect(controller.playerProfile).toBe(updatedProfile);
   });
 
+  it('notifies a campaign refresh listener after a persisted level completion', async () => {
+    const updatedProfile = createProfile().recordLevelCompletion({
+      levelId: 'level-001', stars: 3, updatedAt: '2026-08-14T10:05:00.000Z'
+    });
+    const { controller } = createController({
+      evaluationData: { score: 0.72, stars: 3, feedback: [], violations: [] },
+      recordResult: { success: true, data: updatedProfile, didComplete: true }
+    });
+    const refreshCampaign = vi.fn(async () => {});
+    controller.setCompletionProfileListener(refreshCampaign);
+
+    await controller._onEvaluate();
+
+    expect(refreshCampaign).toHaveBeenCalledWith(updatedProfile);
+  });
+
   it('still delegates an unsuccessful attempt so the application layer, not UI, applies the target policy', async () => {
     const profile = createProfile();
     const { controller, recordLevelCompletionUseCase } = createController({

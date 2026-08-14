@@ -20,5 +20,6 @@ describe('PROD-004 progression composition root', () => {
     expect(mainSource).toContain('playerProfile,');
     expect(mainSource).toContain('getCampaignLevelsUseCase,');
     expect(mainSource).toContain('controller.setPlayerProfile(playerProfile);');
+    expect(mainSource).toContain('controller.setCompletionProfileListener(levelSelection.refresh);');
   });
 });

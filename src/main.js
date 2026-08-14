@@ -157,6 +157,7 @@ async function bootstrap() {
     });
     playerProfile = levelSelection.profile;
     controller.setPlayerProfile(playerProfile);
+    controller.setCompletionProfileListener(levelSelection.refresh);
     controller.roomView.startRenderLoop();
     // После загрузки сцена остаётся чистой: подсказки появляются только
     // как реакция на доступное или выполненное действие.
