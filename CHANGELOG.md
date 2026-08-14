@@ -1,40 +1,32 @@
 # Changelog
 
-Все изменения в Decorium документируются здесь.
+Decorium использует [Semantic Versioning](https://semver.org/). Этот файл содержит пользовательски и операционно значимые изменения; подробное engineering evidence находится в [Documentation hub](docs/README.md) и Git history.
 
 ## [Unreleased]
 
-### MVP alignment
+### Changed
 
-- Добавлен UI-VIS-001 Calm HUD: scene-first компоновка, компактный summary, горизонтальный inventory-dock, нижний action-dock, safe-area и reduced-motion адаптация.
-- UI-VIS-002 убирает постоянные кнопки предмета из нижнего dock и переносит их в раскрываемый блок room summary справа сверху; contextual action popups сохранены.
-- UI-VIS-004 сжимает HUD до scene-first состояния: каталог и рейтинг свернуты по умолчанию, дополнительные действия и справка скрыты под спойлерами, а status hints появляются только в контексте действия.
-- UI-ROOM-002 добавляет процедурную living location: фасад, тротуар, дорогу, уличные маршруты людей/машин/животного и бытовые детали с отдыхающим котом в квартире.
-- UI-ROOM-003 исправляет архитектуру комнаты: задняя стена получила оконный проём с прозрачным стеклом, а на левой стене появилась дверь с рамой и ручкой.
-- UI-ROOM-004 разносит встроенные TV/bookshelf/mirror и добавляет presentation-only перемещение ambient fixtures и hit areas для тонких каталоговых предметов.
-- UI-VIS-003 перерабатывает процедурные предметные визуалы: rich-detail builders, vase/clock profiles, selection halo и выразительный valid/invalid ghost feedback.
-- UI-ROOM-005 перерабатывает живые анимации: gait рук/ног людей, четыре ноги и хвост животного, frame-rate independent колёса, TV content bars/scanlines/glow и единый deterministic animation contract.
-- UI-ROOM-006 исправляет качество animation pass: естественный темп, видимые руки с кистями, разнообразный TV content layer и спокойный матовый пол без debug grid.
-- A-007 добавляет data-driven composition completeness: одна мебель не может получить 5★, а причины незавершённости и успеха приходят из feedback JSON через Evaluation UI.
-- INFRA-001 исправляет static hosting: Vite теперь публикует runtime JSON в `dist/data/`, поэтому Render Static Site не получает 404 при bootstrap.
+- Документация консолидирована в active guides для продукта, architecture, content authoring и operations; исторические MVP/slice материалы перенесены в `docs/history/`.
+- Корневой README теперь является concise запускным entry point и ведёт в единый documentation hub.
 
-- Исправлен единый runtime entrypoint: `index.html` импортирует `src/main.js`.
-- Собран рабочий Three.js room flow с каталогом, placement/move/rotate/remove и evaluation UI.
-- Контент выровнен на V2: 16 признаков, level-001, 16 доступных предметов, Scandinavian constraints, feedback и scoring JSON.
-- Добавлены procedural Three.js builders, drag/drop, ghost-preview и базовые interaction-анимации.
-- Пороги звёзд зафиксированы на 0.86 / 0.71 / 0.56 / 0.40.
-- Use cases, repositories, DTO и Domain rules согласованы между собой.
-- Удалён неиспользуемый legacy `src/config.js` от отдельного storage-box прототипа.
-- README, MVP-документы и ADR обновлены под фактический код.
-- Свободное overlap/stacking-размещение, уникальные instance IDs и позиция X/Y/Z исправляют замену предметов и блокирующее collision-поведение.
-- Проверки: полный test suite и production build проходят.
-- Добавлен data-driven presentation contract `data/visuals/item-visuals.json`; круглый журнальный столик теперь строится круглой процедурной моделью.
-- Добавлен `SceneLifeSystem` с animated TV, локальными световыми акцентами, пылинками и бродящим питомцем; scene-side плашка «СВОБОДНЫЙ ПРОХОД» удалена, чтобы пояснения исходили из evaluation UI.
-- Исправлена идентификация экземпляра предмета во всех дочерних mesh-частях, поэтому `R`/кнопка поворота применяются к выбранному объекту, включая повторно добавленные экземпляры.
+## [1.0.0] — 2026-08-15
 
-## Текущие post-MVP кандидаты
+### Added
 
-- Browser smoke/performance hardening.
-- Ergonomics scoring.
-- Persistence and additional content.
-- Progression, social features and optional external services.
+- Versioned local player profile V3, persisted settings, campaign progress и authored level selection.
+- Кампания из трёх уровней с deterministic progression и refresh unlock state после completion.
+- Style, composition и spatial ergonomics evaluation с data-driven feedback, stars и score aggregation 70% / 30%.
+- Passage zones, minimum clearance и functional layout scoring: dining seats, sofa-to-TV orientation и coffee table in front of sofa.
+- Item catalog V3 с semantic `InteractionProfile`; explicit `tv-001` view target и dedicated television visual profile.
+- Touch/keyboard intent parity, undo, reduced motion, UI scale и quality tier settings.
+- BuildInfo V1, generated release manifest, CI release gate и release runbook.
+
+### Fixed
+
+- Completion workflow uses canonical `levelId`.
+- Campaign availability refreshes immediately after successful completion.
+- Valid functional furniture pairs are excluded from generic clearance penalty without suppressing unrelated spatial violations.
+
+### Verification
+
+- Full test suite, production build и production dependency audit are required release gates.

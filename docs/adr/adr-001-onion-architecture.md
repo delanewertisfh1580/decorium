@@ -60,7 +60,7 @@ Presentation → Application → Domain ← Infrastructure
 
 ## Related Documents
 - [[Architecture Overview]](../architecture/overview.md)
-- [[Layer Responsibilities]](../architecture/layers.md)
+- [[Layer Responsibilities]](../architecture/overview.md)
 - [[Dependency Rule]](./adr-002-domain-without-threejs.md)
 
 ## Change History

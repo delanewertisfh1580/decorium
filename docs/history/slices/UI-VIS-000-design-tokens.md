@@ -19,7 +19,7 @@ COMPLETED
 В слайс не входят:
 
 - изменение scoring, constraints, level generation или persistence;
-- mobile/touch gameplay, которые остаются post-MVP согласно `docs/mvp/out-of-scope.md`;
+- mobile/touch gameplay, которые остаются post-MVP согласно `docs/history/mvp/out-of-scope.md`;
 - новые игровые экраны, audio или внешние сервисы.
 
 ## Canonical token values

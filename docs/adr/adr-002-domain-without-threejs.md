@@ -80,7 +80,7 @@ Architecture tests должны проверять:
 
 ## Related Documents
 - [[Architecture Overview]](../architecture/overview.md)
-- [[Layer Responsibilities]](../architecture/layers.md)
+- [[Layer Responsibilities]](../architecture/overview.md)
 - [[ADR-001: Onion Architecture]](./adr-001-onion-architecture.md)
 
 ## Change History

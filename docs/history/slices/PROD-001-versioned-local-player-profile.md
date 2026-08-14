@@ -56,7 +56,7 @@ window.localStorage
 - Профильный статус доступен через `aria-live="polite"` и не раскрывает `profileId`.
 - Сохранённая настройка `reducedMotion` применяется к корню приложения.
 - Guard `no-nondeterminism` продолжает запрещать browser/time API в Domain и Application.
-- Browser smoke test зафиксирован в `docs/production/verification/PROD-001-browser-smoke.md`.
+- Browser smoke test зафиксирован в `docs/history/verification/production/PROD-001-browser-smoke.md`.
 
 ## Явно не входит
 

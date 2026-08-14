@@ -97,6 +97,6 @@ PlayerProfile {
 
 ## References
 
-- [Production strategy](../../decorium_production_strategy_2026-08-13.md)
-- [Target decomposition](../decomposition.md)
-- [MVP architecture baseline](../architecture/overview.md)
+- [Current production roadmap](../product/roadmap.md)
+- [Historical target decomposition](mvp-decomposition.md)
+- [Current architecture overview](../architecture/overview.md)

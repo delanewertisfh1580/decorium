@@ -60,7 +60,7 @@ Workflow `.github/workflows/release-gate.yml` запускается для pull
 | Presentation view/bootstrap | `ReleaseInfoView.test.js`, `initializeReleaseInfoForApp.test.js` |
 | Composition root | `ReleaseInfoWiring.test.js` |
 | CI policy | `ReleaseCiWorkflow.test.js` |
-| Browser acceptance | `docs/verification/PROD-006-release-manifest-browser-smoke.md` |
+| Browser acceptance | `docs/history/verification/PROD-006-release-manifest-browser-smoke.md` |
 
 ## Scope boundary
 

@@ -1,91 +1,73 @@
 # Decorium
 
-Decorium — браузерная 3D-игра на Three.js о создании скандинавского интерьера. Игрок собирает комнату из предметов, перемещает и поворачивает их, а затем получает детерминированную стилевую оценку со звёздами и русской обратной связью.
+Decorium — браузерная 3D-игра о создании интерьеров в скандинавском стиле. Игрок размещает, перемещает и поворачивает мебель в Three.js-комнате, затем получает детерминированную оценку стиля, композиции и эргономики с объяснимой обратной связью.
 
-## MVP сейчас
+> Актуальная карта проекта находится в **[Documentation hub](docs/README.md)**. Он отделяет active product/architecture/content guides от исторических MVP и slice reports.
 
-- Один уровень: `level-001` — гостиная 8 × 6 м.
-- Один стиль: Scandinavian.
-- Каталог V2: 33 предмета с вектором из 16 признаков; в уровне доступен набор из 16 предметов.
-- Drag-and-drop размещение и перемещение, вращение на 90° и удаление предметов.
-- Свободное размещение внутри комнаты: пересечения и stacking разрешены; границы не дают потерять объект.
-- Оценка по пяти стилевым ограничениям и data-driven требованиям завершённой композиции; нарушения показываются в evaluation UI.
-- Пять порогов рейтинга: 5★ ≥ 0.86, 4★ ≥ 0.71, 3★ ≥ 0.56, 2★ ≥ 0.40, иначе 1★.
-- Three.js-сцена с OrbitControls, data-driven визуальными профилями (`data/visuals/item-visuals.json`), rich-detail процедурными моделями мебели и декора, отдельным selection halo, ghost-preview, спокойным матовым полом без debug-сетки и анимациями действий.
-- Живой слой сцены: работающий экран ТВ с content blocks/bars/scanlines/glow, локальные световые акценты, плавающие пылинки и бродящий питомец с естественной gait-анимацией; постоянных поясняющих плашек в сцене нет.
-- Живая локация вокруг дома: фасад с окнами и дверью, тротуар, дорога, фонари, проходящие люди с анимацией рук/ног, машины с непрерывным вращением колёс и пробегающее животное; внутри — прозрачное окно с внешним видом улицы, отдельная дверь, бытовые детали и отдыхающий кот.
-- Встроенные зеркало и книжная полка разнесены от телевизора и перемещаются вдоль стен; тонкие каталоговые предметы имеют стабильные зоны выбора.
-- JSON-контент с runtime-валидацией уровня и каталога предметов.
-- Scene-first HUD: компактные trigger-панели в существующей тёплой sage/brass палитре. Каталог и рейтинг свернуты по умолчанию; rotate/delete/undo, reset и справка открываются через спойлеры, а status hints появляются только при доступном действии.
+## Что доступно сейчас
 
-Эргономика не блокирует расстановку и не входит в числовой score MVP. Для `level-001` одна мебель не считается решённой дизайнерской задачей: нужно минимум 4 предмета и роли seating/surface/lighting. Все причины и успешные решения показываются evaluation UI из feedback JSON. Сохранения, прогрессия, экономика, мультиплеер, звук и дополнительные уровни находятся за пределами MVP.
+| Capability | Production baseline |
+|---|---|
+| Кампания и профиль | Три authored levels, local profile schema V3, progress и unlocks между перезагрузками. |
+| Управление | Placement, move, 90° rotate, remove, undo; keyboard и touch intent paths. |
+| Оценка | Style + composition + spatial ergonomics; итоговая агрегация 70% / 30%. |
+| Functional layout | Стулья у стола, диван к ТВ и журнальный столик перед диваном оцениваются через explicit semantic rules. |
+| Presentation | Three.js room, data-driven procedural item visuals, settings для reduced motion, UI scale и quality tier. |
+| Delivery | Versioned release manifest, CI release gate и static Vite build. |
 
-## Требования
+## Быстрый старт
 
-- Node.js 18+ и npm.
-- Браузер с поддержкой WebGL.
-- Внешние сервисы и environment variables не требуются.
-
-## Запуск
+**Требования:** Node.js 18+ и браузер с WebGL. Внешние сервисы и environment variables не нужны.
 
 ```bash
 npm ci
 npm run dev -- --host 0.0.0.0
 ```
 
-Затем откройте адрес Vite, обычно `http://localhost:5173`.
+Откройте Vite address, обычно `http://localhost:5173`.
 
-Проверки:
+## Проверки и production build
 
 ```bash
 npm test
 npm run build
+npm audit --omit=dev --audit-level=high
 ```
 
-Production-сборка создаёт inline `dist/index.html` через `vite-plugin-singlefile` и рядом публикует runtime JSON в `dist/data/`. Для Render Static Site используйте build command `npm ci && npm run build` и publish directory `dist`; environment variables не нужны. Не указывайте корень репозитория как publish directory, иначе JSON-пути и итоговый артефакт будут настроены неверно.
+`npm run build` validates the entry point, generates `public/release-manifest.json`, creates `dist/index.html` and publishes runtime JSON to `dist/data/`. Для static hosting используйте:
+
+```text
+Build command: npm ci && npm run build
+Publish directory: dist
+Environment variables: none
+```
+
+Не публикуйте repository root: built HTML depends on adjacent `data/` content.
 
 ## Управление
 
-1. Откройте компактный «Каталог» и выберите предмет.
-2. Каталог свернётся после выбора: разместите ghost-object в комнате или кликните по любой точке пола; один предмет можно добавлять многократно.
-3. Выберите размещённый предмет и кликните по другой точке пола. `PageUp/PageDown` меняют высоту для stacking.
-4. «Оценить» остаётся единственной постоянной action-кнопкой. Поворот, удаление и undo появляются в «Сводке» после выбора предмета.
-5. В меню `•••` доступна свернутая справка по клавишам и кнопка новой попытки.
-6. Нажмите `E` или «Оценить», чтобы получить результат.
-
-## Архитектура
-
-Код разделён на слои DDD/Onion:
-
-- `src/Domain` — сущности, value objects и правила комнаты/оценки без Three.js и HTTP.
-- `src/Application` — use cases, DTO и порты.
-- `src/Infrastructure` — JSON-загрузчики, AJV-валидация и in-memory repository.
-- `src/Presentation` — Three.js-сцена, контроллер и UI.
-- `data` — уровень, V2-каталог, стиль, ограничения, feedback и схемы.
-
-Текущий entrypoint — `src/main.js`; старого inline bootstrap больше нет.
-
-## Render / static hosting
-
-Приложение не требует backend: JSON-контент загружается браузером как статические файлы. Для Render Static Site:
-
-```text
-Build command: npm install && npm run build
-Publish directory: dist
-Environment variables: не требуются
-```
-
-После изменения этих настроек выполните clean deploy/redeploy. В опубликованном артефакте должны присутствовать `index.html` и `data/` с JSON-файлами. Подробный контракт описан в [INFRA-001](docs/slices/INFRA-001-static-json-deployment.md).
-
-## Environment variables
-
-Приложение не читает `process.env` или `import.meta.env`. API keys, база данных, авторизация и backend для MVP не нужны.
+1. Откройте «Каталог», выберите предмет и разместите его на полу.
+2. Выберите размещённый предмет, чтобы переместить его; используйте rotate, delete и undo из contextual summary.
+3. Нажмите **«Оценить»** или `E`, чтобы увидеть score, stars и actionable feedback.
+4. После успешного прохождения уровень открывает следующий доступный этап кампании.
 
 ## Документация
 
-- [MVP charter](docs/mvp/charter.md)
-- [MVP scope](docs/mvp/scope.md)
-- [Acceptance criteria](docs/mvp/acceptance-criteria.md)
-- [Definition of Done](docs/mvp/definition-of-done.md)
-- [Architecture overview](docs/architecture/overview.md)
-- [System decomposition](docs/decomposition.md)
+| Нужно понять или изменить | Документ |
+|---|---|
+| Игровой цикл, scope и shipped scenarios | [Product overview](docs/product/overview.md) |
+| Следующие production направления и TDD discipline | [Production roadmap](docs/product/roadmap.md) |
+| Слои, data flow и архитектурные invariants | [Architecture overview](docs/architecture/overview.md) |
+| Catalog V3, levels, scoring, feedback и functional rules | [Content model](docs/systems/content-model.md) |
+| Выпуск, проверка и rollback web build | [Release runbook](docs/operations/release-runbook.md) |
+| Полная навигация, ADR и historical evidence | [Documentation hub](docs/README.md) |
+
+## Архитектура
+
+```text
+Presentation → Application → Domain ← Infrastructure
+```
+
+Domain сохраняет игровые правила чистыми и детерминированными. Application оркестрирует use cases. Infrastructure загружает и валидирует versioned JSON/persistence. Presentation отображает Three.js-сцену и результаты, но не вычисляет gameplay rules.
+
+Подробнее: [Architecture overview](docs/architecture/overview.md).

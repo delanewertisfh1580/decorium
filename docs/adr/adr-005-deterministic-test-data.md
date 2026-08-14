@@ -160,8 +160,8 @@ export class DeterministicRng {
 
 ## Related Documents
 - [[Test Policy]](../test-policy.md)
-- [[MVP Acceptance Criteria]](../mvp/acceptance-criteria.md)
-- [[Definition of Done]](../mvp/definition-of-done.md)
+- [[MVP Acceptance Criteria]](../history/mvp/acceptance-criteria.md)
+- [[Definition of Done]](../history/mvp/definition-of-done.md)
 
 ## Change History
 | Date | Version | Author | Changes |

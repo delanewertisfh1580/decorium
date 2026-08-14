@@ -6,8 +6,8 @@
 **Value:** Базовый строительный блок для системы оценки стиля. Детерминированный, тестируемый, без зависимостей.  
 
 **Relevant docs:**
-- docs/mvp/charter.md
-- docs/mvp/scope.md
+- docs/history/mvp/charter.md
+- docs/history/mvp/scope.md
 - docs/architecture/layers.md
 - docs/systems/item-catalog.md
 - data/schemas/item.schema.json
