@@ -14,7 +14,8 @@ describe('LevelSummary', () => {
       id: 'level-001',
       name: 'Гостиная: Первые шаги',
       description: 'Соберите спокойную скандинавскую гостиную.',
-      sortOrder: 1
+      sortOrder: 1,
+      prerequisiteLevelId: null
     });
     expect(Object.isFrozen(summary)).toBe(true);
   });

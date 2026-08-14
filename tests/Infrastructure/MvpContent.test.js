@@ -37,6 +37,14 @@ describe('Production content contracts', () => {
     expect(levels.every(levelDefinition => levelDefinition.ergonomicsRules?.passageZones?.length > 0)).toBe(true);
   });
 
+  it('defines a deterministic prerequisite chain for the authored campaign', () => {
+    expect(levelManifest.levels.map(levelSummary => levelSummary.prerequisiteLevelId ?? null)).toEqual([
+      null,
+      'level-001',
+      'level-002'
+    ]);
+  });
+
   it('maps every style and ergonomics rule to a feedback message', () => {
     expect(constraints).toHaveLength(5);
     expect(constraints.every(constraint => feedbackIds.has(constraint.messageKey))).toBe(true);

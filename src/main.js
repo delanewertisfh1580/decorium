@@ -25,7 +25,9 @@ import RotateItemUseCase from './Application/UseCases/RotateItemUseCase.js';
 import RemoveItemUseCase from './Application/UseCases/RemoveItemUseCase.js';
 import LoadPlayerProfileUseCase from './Application/UseCases/LoadPlayerProfileUseCase.js';
 import SavePlayerProfileUseCase from './Application/UseCases/SavePlayerProfileUseCase.js';
-import ListAuthoredLevelsUseCase from './Application/UseCases/ListAuthoredLevelsUseCase.js';
+import GetCampaignLevelsUseCase from './Application/UseCases/GetCampaignLevelsUseCase.js';
+import RecordLevelCompletionUseCase from './Application/UseCases/RecordLevelCompletionUseCase.js';
+import ProgressionPolicy from './Domain/Progression/ProgressionPolicy.js';
 import { GameController } from './Presentation/Controllers/GameController.js';
 import { loadPlayerProfileForApp } from './Presentation/bootstrap/loadPlayerProfileForApp.js';
 import { initializeLevelSelectForApp } from './Presentation/bootstrap/initializeLevelSelectForApp.js';
@@ -65,6 +67,13 @@ async function bootstrap() {
     initializeScoringParameters(scoringParameters);
 
     const levelRepository = new JsonLevelRepository('./data/levels', levelSchema);
+    const savePlayerProfileUseCase = new SavePlayerProfileUseCase(profileRepository);
+    const progressionPolicy = new ProgressionPolicy();
+    const getCampaignLevelsUseCase = new GetCampaignLevelsUseCase(levelRepository, progressionPolicy);
+    const recordLevelCompletionUseCase = new RecordLevelCompletionUseCase(
+      savePlayerProfileUseCase,
+      () => new Date().toISOString()
+    );
     const itemCatalog = new JsonItemCatalog('./data/items', itemSchema);
     const constraintCatalog = new JsonConstraintCatalog();
     const styleCatalog = new JsonStyleCatalog();
@@ -104,6 +113,8 @@ async function bootstrap() {
       rotateItemUseCase,
       removeItemUseCase,
       evaluateRoomUseCase,
+      recordLevelCompletionUseCase,
+      playerProfile,
       roomRepository
     });
     await controller.init(
@@ -112,10 +123,8 @@ async function bootstrap() {
       document.getElementById('toolbar-container'),
       document.getElementById('evaluation-container')
     );
-    const listAuthoredLevelsUseCase = new ListAuthoredLevelsUseCase(levelRepository);
-    const savePlayerProfileUseCase = new SavePlayerProfileUseCase(profileRepository);
     const levelSelection = await initializeLevelSelectForApp({
-      listAuthoredLevelsUseCase,
+      getCampaignLevelsUseCase,
       savePlayerProfileUseCase,
       gameController: controller,
       profile: playerProfile,
@@ -123,6 +132,7 @@ async function bootstrap() {
       timestampProvider: () => new Date().toISOString()
     });
     playerProfile = levelSelection.profile;
+    controller.setPlayerProfile(playerProfile);
     controller.roomView.startRenderLoop();
     // После загрузки сцена остаётся чистой: подсказки появляются только
     // как реакция на доступное или выполненное действие.

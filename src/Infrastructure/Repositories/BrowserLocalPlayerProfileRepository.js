@@ -11,17 +11,25 @@ function migrateToCurrent(data) {
     return { data, migrated: false };
   }
 
-  if (data.schemaVersion === 0) {
-    return {
-      migrated: true,
-      data: {
-        schemaVersion: PlayerProfile.schemaVersion,
+  const versionOneData = data.schemaVersion === 0
+    ? {
+        schemaVersion: 1,
         profileId: data.profileId,
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
         displayName: data.displayName ?? null,
         settings: { reducedMotion: Boolean(data.reducedMotion) },
         lastSession: { levelId: data.lastLevelId ?? null }
+      }
+    : data;
+
+  if (versionOneData.schemaVersion === 1) {
+    return {
+      migrated: true,
+      data: {
+        ...versionOneData,
+        schemaVersion: PlayerProfile.schemaVersion,
+        progress: { completedLevels: {} }
       }
     };
   }

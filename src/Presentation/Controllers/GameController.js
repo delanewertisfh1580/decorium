@@ -17,6 +17,8 @@ export class GameController {
     rotateItemUseCase,
     removeItemUseCase,
     evaluateRoomUseCase,
+    recordLevelCompletionUseCase,
+    playerProfile = null,
     roomRepository
   }) {
     this.loadLevelUseCase = loadLevelUseCase;
@@ -25,6 +27,8 @@ export class GameController {
     this.rotateItemUseCase = rotateItemUseCase;
     this.removeItemUseCase = removeItemUseCase;
     this.evaluateRoomUseCase = evaluateRoomUseCase;
+    this.recordLevelCompletionUseCase = recordLevelCompletionUseCase;
+    this.playerProfile = playerProfile;
     this.roomRepository = roomRepository;
     this.roomView = null;
     this.roomViewModel = null;
@@ -65,6 +69,10 @@ export class GameController {
     // Capture phase keeps shortcuts active even when a catalog/toolbar control owns focus.
     // event.code (handled by getKeyboardAction) makes R/E work on Cyrillic layouts too.
     document.addEventListener('keydown', this._onKeyDown, true);
+  }
+
+  setPlayerProfile(profile) {
+    this.playerProfile = profile;
   }
 
   async loadLevel(levelId) {
@@ -350,6 +358,17 @@ export class GameController {
       this._showStatus(result.error);
       return;
     }
+    if (this.recordLevelCompletionUseCase && this.playerProfile) {
+      const completion = await this.recordLevelCompletionUseCase.execute({
+        levelId: this.level.id,
+        stars: result.evaluationData.stars,
+        targetScore: this.level.targetScore,
+        profile: this.playerProfile
+      });
+      if (completion.success) this.playerProfile = completion.data;
+      else this._showStatus(`Оценка рассчитана, но прогресс не сохранён: ${completion.error}`);
+    }
+
     this._lastEvaluation = result.evaluationData;
     this.evaluationViewModel.update(result.evaluationData);
     this.evaluationView.render(result.evaluationData);

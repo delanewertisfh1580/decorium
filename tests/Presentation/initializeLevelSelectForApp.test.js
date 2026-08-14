@@ -3,9 +3,15 @@ import { describe, expect, it } from 'vitest';
 import PlayerProfile from '../../src/Domain/Profile/PlayerProfile.js';
 import { initializeLevelSelectForApp } from '../../src/Presentation/bootstrap/initializeLevelSelectForApp.js';
 
-const levels = [
-  { id: 'level-001', name: 'Первые шаги', description: 'Освойте основу композиции.', sortOrder: 1 },
-  { id: 'level-002', name: 'Уютный уголок', description: 'Соберите зону отдыха.', sortOrder: 2 }
+const campaignLevels = [
+  {
+    id: 'level-001', name: 'Первые шаги', description: 'Освойте основу композиции.', sortOrder: 1,
+    prerequisiteLevelId: null, isUnlocked: true, bestStars: 3
+  },
+  {
+    id: 'level-002', name: 'Уютный уголок', description: 'Соберите зону отдыха.', sortOrder: 2,
+    prerequisiteLevelId: 'level-001', isUnlocked: true, bestStars: null
+  }
 ];
 
 function profileWithLastSession(levelId) {
@@ -15,32 +21,52 @@ function profileWithLastSession(levelId) {
   }).withLastSession(levelId, '2026-08-14T10:01:00.000Z');
 }
 
+function campaignUseCase(levels = campaignLevels, result = { success: true }) {
+  const requestedProfiles = [];
+  return {
+    requestedProfiles,
+    useCase: {
+      execute: async profile => {
+        requestedProfiles.push(profile);
+        return { ...result, data: levels };
+      }
+    }
+  };
+}
+
 describe('initializeLevelSelectForApp', () => {
-  it('restores the last authored level and persists the selected session through application use cases', async () => {
+  it('restores an unlocked last campaign level and persists selected session through application use cases', async () => {
     const loaded = [];
     const saved = [];
+    const profile = profileWithLastSession('level-002');
+    const campaign = campaignUseCase();
     const result = await initializeLevelSelectForApp({
-      listAuthoredLevelsUseCase: { execute: async () => ({ success: true, data: levels }) },
-      savePlayerProfileUseCase: { execute: async profile => { saved.push(profile); return { success: true, data: profile }; } },
+      getCampaignLevelsUseCase: campaign.useCase,
+      savePlayerProfileUseCase: { execute: async nextProfile => { saved.push(nextProfile); return { success: true, data: nextProfile }; } },
       gameController: { loadLevel: async levelId => loaded.push(levelId) },
-      profile: profileWithLastSession('level-002'),
+      profile,
       levelSelectContainer: document.createElement('aside'),
       timestampProvider: () => '2026-08-14T10:02:00.000Z'
     });
 
+    expect(campaign.requestedProfiles).toEqual([profile]);
     expect(loaded).toEqual(['level-002']);
     expect(saved).toHaveLength(1);
     expect(saved[0].lastSession.levelId).toBe('level-002');
     expect(result.activeLevelId).toBe('level-002');
   });
 
-  it('falls back to the first authored level when the saved level is no longer available', async () => {
+  it('falls back to the first unlocked campaign level when the saved session is unavailable or locked', async () => {
     const loaded = [];
+    const lockedCampaign = [
+      campaignLevels[0],
+      { ...campaignLevels[1], isUnlocked: false }
+    ];
     const result = await initializeLevelSelectForApp({
-      listAuthoredLevelsUseCase: { execute: async () => ({ success: true, data: levels }) },
+      getCampaignLevelsUseCase: campaignUseCase(lockedCampaign).useCase,
       savePlayerProfileUseCase: { execute: async profile => ({ success: true, data: profile }) },
       gameController: { loadLevel: async levelId => loaded.push(levelId) },
-      profile: profileWithLastSession('level-999'),
+      profile: profileWithLastSession('level-002'),
       levelSelectContainer: document.createElement('aside'),
       timestampProvider: () => '2026-08-14T10:02:00.000Z'
     });
@@ -49,9 +75,9 @@ describe('initializeLevelSelectForApp', () => {
     expect(result.activeLevelId).toBe('level-001');
   });
 
-  it('returns an actionable error when authored-level catalog cannot be loaded', async () => {
+  it('returns an actionable error when campaign availability cannot be loaded', async () => {
     await expect(initializeLevelSelectForApp({
-      listAuthoredLevelsUseCase: { execute: async () => ({ success: false, error: 'INVALID_LEVEL_CATALOG: missing manifest' }) },
+      getCampaignLevelsUseCase: campaignUseCase([], { success: false, error: 'INVALID_LEVEL_CATALOG: missing manifest' }).useCase,
       savePlayerProfileUseCase: { execute: async () => ({ success: true }) },
       gameController: { loadLevel: async () => {} },
       profile: profileWithLastSession(null),

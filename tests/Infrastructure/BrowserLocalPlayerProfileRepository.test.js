@@ -52,7 +52,7 @@ describe('BrowserLocalPlayerProfileRepository', () => {
     expect(restored.profile.toJSON()).toEqual(profile.toJSON());
   });
 
-  it('migrates supported v0 data to v1 and persists the migrated contract', async () => {
+  it('migrates supported v0 data to v2 and persists the migrated contract', async () => {
     const storage = new MemoryStorage({
       [PROFILE_KEY]: JSON.stringify({
         schemaVersion: 0,
@@ -69,12 +69,39 @@ describe('BrowserLocalPlayerProfileRepository', () => {
 
     expect(result.status).toBe('migrated');
     expect(result.profile.toJSON()).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       profileId: 'legacy-profile-001',
       settings: { reducedMotion: true },
-      lastSession: { levelId: 'level-001' }
+      lastSession: { levelId: 'level-001' },
+      progress: { completedLevels: {} }
     });
-    expect(JSON.parse(storage.getItem(PROFILE_KEY)).schemaVersion).toBe(1);
+    expect(JSON.parse(storage.getItem(PROFILE_KEY)).schemaVersion).toBe(2);
+  });
+
+  it('migrates persisted v1 data to v2 without losing settings or last session', async () => {
+    const storage = new MemoryStorage({
+      [PROFILE_KEY]: JSON.stringify({
+        schemaVersion: 1,
+        profileId: 'profile-v1',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        displayName: 'Alex',
+        settings: { reducedMotion: true },
+        lastSession: { levelId: 'level-002' }
+      })
+    });
+    const repository = new BrowserLocalPlayerProfileRepository(storage, PROFILE_KEY);
+
+    const result = await repository.load();
+
+    expect(result.status).toBe('migrated');
+    expect(result.profile.toJSON()).toMatchObject({
+      schemaVersion: 2,
+      profileId: 'profile-v1',
+      settings: { reducedMotion: true },
+      lastSession: { levelId: 'level-002' },
+      progress: { completedLevels: {} }
+    });
   });
 
   it('removes malformed storage data and returns a recovery status instead of throwing', async () => {
@@ -88,13 +115,14 @@ describe('BrowserLocalPlayerProfileRepository', () => {
   it('rejects data that does not satisfy the current profile contract', async () => {
     const storage = new MemoryStorage({
       [PROFILE_KEY]: JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         profileId: '',
         createdAt: timestamp,
         updatedAt: timestamp,
         displayName: null,
         settings: { reducedMotion: false },
-        lastSession: { levelId: null }
+        lastSession: { levelId: null },
+        progress: { completedLevels: {} }
       })
     });
     const repository = new BrowserLocalPlayerProfileRepository(storage, PROFILE_KEY);

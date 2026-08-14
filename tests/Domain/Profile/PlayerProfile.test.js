@@ -4,41 +4,44 @@ import PlayerProfile from '../../../src/Domain/Profile/PlayerProfile.js';
 describe('PlayerProfile', () => {
   const timestamp = '2026-08-13T09:30:00.000Z';
 
-  it('creates an immutable version 1 profile from trusted bootstrap values', () => {
+  it('creates an immutable version 2 profile from trusted bootstrap values', () => {
     const profile = PlayerProfile.create({
       profileId: 'profile-001',
       timestamp
     });
 
-    expect(profile.schemaVersion).toBe(1);
+    expect(profile.schemaVersion).toBe(2);
     expect(profile.profileId).toBe('profile-001');
     expect(profile.createdAt).toBe(timestamp);
     expect(profile.updatedAt).toBe(timestamp);
     expect(profile.displayName).toBeNull();
     expect(profile.settings).toEqual({ reducedMotion: false });
     expect(profile.lastSession).toEqual({ levelId: null });
+    expect(profile.progress).toEqual({ completedLevels: {} });
     expect(Object.isFrozen(profile)).toBe(true);
   });
 
   it('rebuilds a valid persisted profile without changing its data', () => {
     const profile = PlayerProfile.fromData({
-      schemaVersion: 1,
+      schemaVersion: 2,
       profileId: 'profile-001',
       createdAt: timestamp,
       updatedAt: '2026-08-13T10:00:00.000Z',
       displayName: '  Alex  ',
       settings: { reducedMotion: true },
-      lastSession: { levelId: 'level-002' }
+      lastSession: { levelId: 'level-002' },
+      progress: { completedLevels: {} }
     });
 
     expect(profile.toJSON()).toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       profileId: 'profile-001',
       createdAt: timestamp,
       updatedAt: '2026-08-13T10:00:00.000Z',
       displayName: 'Alex',
       settings: { reducedMotion: true },
-      lastSession: { levelId: 'level-002' }
+      lastSession: { levelId: 'level-002' },
+      progress: { completedLevels: {} }
     });
   });
 
@@ -67,22 +70,24 @@ describe('PlayerProfile', () => {
     ['missing profile id', { profileId: '', timestamp }],
     ['invalid timestamp', { profileId: 'profile-001', timestamp: 'not-a-timestamp' }],
     ['blank last session id', {
-      schemaVersion: 1,
-      profileId: 'profile-001',
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      displayName: null,
-      settings: { reducedMotion: false },
-      lastSession: { levelId: ' ' }
-    }],
-    ['unsupported schema version', {
       schemaVersion: 2,
       profileId: 'profile-001',
       createdAt: timestamp,
       updatedAt: timestamp,
       displayName: null,
       settings: { reducedMotion: false },
-      lastSession: { levelId: null }
+      lastSession: { levelId: ' ' },
+      progress: { completedLevels: {} }
+    }],
+    ['unsupported schema version', {
+      schemaVersion: 3,
+      profileId: 'profile-001',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      displayName: null,
+      settings: { reducedMotion: false },
+      lastSession: { levelId: null },
+      progress: { completedLevels: {} }
     }]
   ])('rejects %s', (_label, input) => {
     expect(() => {

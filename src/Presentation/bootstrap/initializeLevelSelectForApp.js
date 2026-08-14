@@ -1,15 +1,15 @@
 import LevelSelectView from '../Views/LevelSelectView.js';
 
 export async function initializeLevelSelectForApp({
-  listAuthoredLevelsUseCase,
+  getCampaignLevelsUseCase,
   savePlayerProfileUseCase,
   gameController,
   profile,
   levelSelectContainer,
   timestampProvider
 }) {
-  if (!listAuthoredLevelsUseCase || typeof listAuthoredLevelsUseCase.execute !== 'function') {
-    throw new Error('initializeLevelSelectForApp: listAuthoredLevelsUseCase is required.');
+  if (!getCampaignLevelsUseCase || typeof getCampaignLevelsUseCase.execute !== 'function') {
+    throw new Error('initializeLevelSelectForApp: getCampaignLevelsUseCase is required.');
   }
   if (!savePlayerProfileUseCase || typeof savePlayerProfileUseCase.execute !== 'function') {
     throw new Error('initializeLevelSelectForApp: savePlayerProfileUseCase is required.');
@@ -23,19 +23,22 @@ export async function initializeLevelSelectForApp({
     throw new Error('initializeLevelSelectForApp: timestampProvider is required.');
   }
 
-  const catalog = await listAuthoredLevelsUseCase.execute();
-  if (!catalog.success) throw new Error(catalog.error);
-  if (catalog.data.length === 0) throw new Error('LEVEL_CATALOG_EMPTY: At least one authored level is required.');
+  const campaign = await getCampaignLevelsUseCase.execute(profile);
+  if (!campaign.success) throw new Error(campaign.error);
+  if (campaign.data.length === 0) throw new Error('LEVEL_CATALOG_EMPTY: At least one authored level is required.');
+
+  const unlockedLevels = campaign.data.filter(level => level.isUnlocked !== false);
+  if (unlockedLevels.length === 0) throw new Error('CAMPAIGN_NO_UNLOCKED_LEVEL: At least one level must be unlocked.');
 
   let currentProfile = profile;
-  let activeLevelId = catalog.data.some(level => level.id === profile.lastSession.levelId)
+  let activeLevelId = unlockedLevels.some(level => level.id === profile.lastSession.levelId)
     ? profile.lastSession.levelId
-    : catalog.data[0].id;
+    : unlockedLevels[0].id;
   let levelSelectView;
 
   const selectLevel = async levelId => {
-    if (!catalog.data.some(level => level.id === levelId)) {
-      throw new Error(`UNKNOWN_LEVEL: ${levelId}`);
+    if (!campaign.data.some(level => level.id === levelId && level.isUnlocked !== false)) {
+      throw new Error(`UNKNOWN_OR_LOCKED_LEVEL: ${levelId}`);
     }
 
     await gameController.loadLevel(levelId);
@@ -45,7 +48,7 @@ export async function initializeLevelSelectForApp({
 
     currentProfile = saved.data;
     activeLevelId = levelId;
-    levelSelectView.render(catalog.data, activeLevelId);
+    levelSelectView.render(campaign.data, activeLevelId);
   };
 
   levelSelectView = new LevelSelectView(levelSelectContainer, levelId => {

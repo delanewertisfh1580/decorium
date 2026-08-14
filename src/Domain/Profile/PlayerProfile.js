@@ -1,4 +1,4 @@
-const PROFILE_SCHEMA_VERSION = 1;
+const PROFILE_SCHEMA_VERSION = 2;
 
 function requireNonEmptyString(value, label) {
   if (typeof value !== 'string' || value.trim() === '') {
@@ -44,6 +44,28 @@ function normalizeLastSession(value) {
   return Object.freeze({ levelId: typeof levelId === 'string' ? levelId.trim() : null });
 }
 
+function normalizeProgress(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || !value.completedLevels || typeof value.completedLevels !== 'object' || Array.isArray(value.completedLevels)) {
+    throw new Error('PlayerProfile progress.completedLevels must be an object');
+  }
+
+  const completedLevels = {};
+  for (const [levelId, completion] of Object.entries(value.completedLevels)) {
+    const normalizedLevelId = requireNonEmptyString(levelId, 'progress levelId');
+    if (!completion || typeof completion !== 'object' || Array.isArray(completion)) {
+      throw new Error(`PlayerProfile progress for ${normalizedLevelId} must be an object`);
+    }
+    if (!Number.isInteger(completion.bestStars) || completion.bestStars < 0 || completion.bestStars > 5) {
+      throw new Error(`PlayerProfile progress bestStars for ${normalizedLevelId} must be an integer between 0 and 5`);
+    }
+    completedLevels[normalizedLevelId] = Object.freeze({
+      bestStars: completion.bestStars,
+      completedAt: requireIsoTimestamp(completion.completedAt, `progress completedAt for ${normalizedLevelId}`)
+    });
+  }
+  return Object.freeze({ completedLevels: Object.freeze(completedLevels) });
+}
+
 export class PlayerProfile {
   static get schemaVersion() {
     return PROFILE_SCHEMA_VERSION;
@@ -57,7 +79,8 @@ export class PlayerProfile {
       updatedAt: timestamp,
       displayName: null,
       settings: { reducedMotion: false },
-      lastSession: { levelId: null }
+      lastSession: { levelId: null },
+      progress: { completedLevels: {} }
     });
   }
 
@@ -65,7 +88,7 @@ export class PlayerProfile {
     return new PlayerProfile(data);
   }
 
-  constructor({ schemaVersion, profileId, createdAt, updatedAt, displayName, settings, lastSession }) {
+  constructor({ schemaVersion, profileId, createdAt, updatedAt, displayName, settings, lastSession, progress }) {
     if (schemaVersion !== PROFILE_SCHEMA_VERSION) {
       throw new Error(`Unsupported PlayerProfile schema version: ${schemaVersion}`);
     }
@@ -77,6 +100,7 @@ export class PlayerProfile {
     this._displayName = normalizeDisplayName(displayName);
     this._settings = normalizeSettings(settings);
     this._lastSession = normalizeLastSession(lastSession);
+    this._progress = normalizeProgress(progress);
     Object.freeze(this);
   }
 
@@ -87,6 +111,7 @@ export class PlayerProfile {
   get displayName() { return this._displayName; }
   get settings() { return this._settings; }
   get lastSession() { return this._lastSession; }
+  get progress() { return this._progress; }
 
   withReducedMotion(reducedMotion, updatedAt) {
     if (typeof reducedMotion !== 'boolean') {
@@ -105,6 +130,26 @@ export class PlayerProfile {
     });
   }
 
+  recordLevelCompletion({ levelId, stars, updatedAt }) {
+    const normalizedLevelId = requireNonEmptyString(levelId, 'completion levelId');
+    if (!Number.isInteger(stars) || stars < 0 || stars > 5) {
+      throw new Error('PlayerProfile completion stars must be an integer between 0 and 5');
+    }
+    const timestamp = requireIsoTimestamp(updatedAt, 'completion updatedAt');
+    const previous = this.progress.completedLevels[normalizedLevelId];
+    const bestStars = Math.max(previous?.bestStars ?? 0, stars);
+
+    return this._copy({
+      updatedAt: timestamp,
+      progress: {
+        completedLevels: {
+          ...this.progress.completedLevels,
+          [normalizedLevelId]: { bestStars, completedAt: timestamp }
+        }
+      }
+    });
+  }
+
   toJSON() {
     return {
       schemaVersion: this.schemaVersion,
@@ -113,7 +158,12 @@ export class PlayerProfile {
       updatedAt: this.updatedAt,
       displayName: this.displayName,
       settings: { ...this.settings },
-      lastSession: { ...this.lastSession }
+      lastSession: { ...this.lastSession },
+      progress: {
+        completedLevels: Object.fromEntries(
+          Object.entries(this.progress.completedLevels).map(([levelId, completion]) => [levelId, { ...completion }])
+        )
+      }
     };
   }
 

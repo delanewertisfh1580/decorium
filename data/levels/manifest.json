@@ -11,13 +11,15 @@
       "id": "level-002",
       "name": "Уютный уголок",
       "description": "Создайте небольшую зону отдыха со светом, посадочным местом и журнальным столиком.",
-      "sortOrder": 2
+      "sortOrder": 2,
+      "prerequisiteLevelId": "level-001"
     },
     {
       "id": "level-003",
       "name": "Светлая студия",
       "description": "Сбалансируйте открытую комнату, добавив хранение, свет и функциональные акценты.",
-      "sortOrder": 3
+      "sortOrder": 3,
+      "prerequisiteLevelId": "level-002"
     }
   ]
 }
