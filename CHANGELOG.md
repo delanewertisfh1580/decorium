@@ -6,6 +6,7 @@ Decorium использует [Semantic Versioning](https://semver.org/). Это
 
 ### Changed
 
+- Product canon уточнён: Decorium развивается как мультистилевая client-brief-driven игра; текущий Scandinavian dataset помечен как MVP-derived starter scenario, а не как global style.
 - Документация консолидирована в active guides для продукта, architecture, content authoring и operations; исторические MVP/slice материалы перенесены в `docs/history/`.
 - Корневой README теперь является concise запускным entry point и ведёт в единый documentation hub.
 

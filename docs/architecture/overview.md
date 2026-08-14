@@ -21,7 +21,7 @@ Presentation → Application → Domain ← Infrastructure
 | `src/Application` | Use cases, orchestration и DTO boundary. | Load/evaluate room, profile settings, campaign levels, completion recording. |
 | `src/Infrastructure` | JSON fetch/validation, static asset inventory, browser-local profile persistence, repositories. | `SchemaLoader`, JSON catalogs, AJV validators, local profile adapter. |
 | `src/Presentation` | Three.js scene, controller, view models и DOM views. | `GameController`, `RoomView`, `EvaluationView`, item visual factory. |
-| `data` | Versioned authored content and schemas. | Catalog V3, levels, feedback, scoring parameters, style constraints, visual profiles. |
+| `data` | Versioned authored content and schemas. | Catalog V3, levels, starter style dataset, feedback, scoring parameters and visual profiles. |
 
 ## Runtime flows
 
@@ -40,7 +40,15 @@ Player intent → GameController → Application use case → RoomState
 Evaluate → constraint/style/composition/spatial evaluators → score aggregation → authored feedback → EvaluationView
 ```
 
-Evaluation is deterministic. Presentation receives serialized feedback and score data; it never reimplements rule logic.
+Evaluation is deterministic. Presentation receives serialized feedback and score data; it never reimplements rule logic. Current runtime receives one starter style dataset; it does not yet load multi-style client briefs.
+
+### Target: client-brief evaluation
+
+```text
+ClientBrief JSON + style catalogs + level → Infrastructure validation → ClientBrief Domain value → evaluation inputs → deterministic style-fit and constraint channels → feedback UI
+```
+
+`ClientBrief v1` is the planned boundary for multi-style product policy. It will provide primary/secondary/accent style targets, controlled mixing, client priorities, functional scenarios and hard constraints. Domain owns validation and deterministic interpretation; Infrastructure only loads versioned data; Presentation displays the brief and result without choosing styles or resolving conflicts.
 
 ### Profile and campaign
 
@@ -60,6 +68,7 @@ Player settings and completed level progress are persisted in profile schema V3.
 | Level definition | Bounds, available items, composition/spatial rules and prerequisites. | `data/levels`, level schema |
 | `InteractionProfile v1` | Affordances, local front axis and usable sides. | Domain item semantics |
 | `FunctionalLayoutRule v1` | Adjacency or directional `front-adjacency` functional relationships. | Domain ergonomics |
+| `ClientBrief v1` *(target)* | Multi-style targets, mixing policy, client priorities and hard constraints. | Future Domain + content boundary; not yet runtime-loaded |
 | BuildInfo / release manifest | Build identity for release verification. | Release pipeline |
 
 ## Non-negotiable invariants
@@ -70,6 +79,7 @@ Player settings and completed level progress are persisted in profile schema V3.
 4. Every persisted or authored contract is versioned and validated.
 5. Deterministic outcomes are reproducible from saved state and authored inputs.
 6. Functional matches are evaluated before generic clearance exclusions, so valid pairs are not double-penalized.
+7. Style mixing is interpreted only from explicit client-brief policy; no global default aesthetic is hidden in UI or evaluator heuristics.
 
 ## Verification
 

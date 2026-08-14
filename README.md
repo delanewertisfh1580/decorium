@@ -1,8 +1,8 @@
 # Decorium
 
-Decorium — браузерная 3D-игра о создании интерьеров в скандинавском стиле. Игрок размещает, перемещает и поворачивает мебель в Three.js-комнате, затем получает детерминированную оценку стиля, композиции и эргономики с объяснимой обратной связью.
+Decorium — браузерная 3D-игра о проектировании интерьеров для конкретных заказчиков. Игрок работает с разными эстетиками, осмысленно смешивает стили в границах authored client brief и получает детерминированную оценку style fit, композиции и эргономики с объяснимой обратной связью.
 
-> Актуальная карта проекта находится в **[Documentation hub](docs/README.md)**. Он отделяет active product/architecture/content guides от исторических MVP и slice reports.
+> **Product direction:** Decorium — мультистилевая игра. Current Scandinavian content — только MVP-derived starter scenario, а не global product style. Актуальная карта проекта находится в **[Documentation hub](docs/README.md)**.
 
 ## Что доступно сейчас
 
@@ -10,10 +10,14 @@ Decorium — браузерная 3D-игра о создании интерье
 |---|---|
 | Кампания и профиль | Три authored levels, local profile schema V3, progress и unlocks между перезагрузками. |
 | Управление | Placement, move, 90° rotate, remove, undo; keyboard и touch intent paths. |
-| Оценка | Style + composition + spatial ergonomics; итоговая агрегация 70% / 30%. |
+| Оценка | Current starter dataset: style + composition + spatial ergonomics; итоговая агрегация 70% / 30%. |
 | Functional layout | Стулья у стола, диван к ТВ и журнальный столик перед диваном оцениваются через explicit semantic rules. |
 | Presentation | Three.js room, data-driven procedural item visuals, settings для reduced motion, UI scale и quality tier. |
 | Delivery | Versioned release manifest, CI release gate и static Vite build. |
+
+## Production direction
+
+Следующий content/scoring foundation — versioned `ClientBrief`: заказ определяет primary/secondary/accent style targets, допустимое смешение, приоритеты, functional scenarios и hard constraints. Этот contract заменит single-style input на client-specific policy, не перекладывая игровую логику в UI. Текущий runtime пока обслуживает только один **Scandinavian starter scenario**; новые styles и brief-driven mixing будут поставляться отдельными TDD-слайсами.
 
 ## Быстрый старт
 
@@ -58,7 +62,7 @@ Environment variables: none
 | Игровой цикл, scope и shipped scenarios | [Product overview](docs/product/overview.md) |
 | Следующие production направления и TDD discipline | [Production roadmap](docs/product/roadmap.md) |
 | Слои, data flow и архитектурные invariants | [Architecture overview](docs/architecture/overview.md) |
-| Catalog V3, levels, scoring, feedback и functional rules | [Content model](docs/systems/content-model.md) |
+| Catalog V3, current starter dataset, ClientBrief target, levels, scoring, feedback и functional rules | [Content model](docs/systems/content-model.md) |
 | Выпуск, проверка и rollback web build | [Release runbook](docs/operations/release-runbook.md) |
 | Полная навигация, ADR и historical evidence | [Documentation hub](docs/README.md) |
 

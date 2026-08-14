@@ -5,15 +5,17 @@
 
 Этот документ — единственный current guide для authored JSON Decorium. Content rules не должны копироваться в Presentation и не должны выводиться из display names, visual meshes или UI category labels.
 
+> **Контентный canon:** стиль — это policy конкретного заказа. Current Scandinavian files являются starter dataset, а не глобальным стилем игры. Production content pipeline должен поддерживать несколько стилей и их controlled mixing через versioned client brief.
+
 ## Runtime content inventory
 
-| Область | Canonical files | Version / validation |
+| Область | Current canonical files | Version / validation |
 |---|---|---|
 | Items | `data/items/catalog.v3.json`, `data/items/item.v3.schema.json` | Catalog schema V3 |
 | Levels | `data/levels/manifest.json`, `data/levels/level-*.json`, `data/schemas/level.schema.json` | Manifest V1 and level schema |
 | Scoring | `data/scoring/scoring-parameters.json` | Versioned scoring parameters loader |
-| Style | `data/styles/scandinavian.json`, `data/constraints/scandinavian-constraints.json` | Authored style and constraint catalogs |
-| Feedback | `data/feedback/scandinavian-feedback.json` | Message id lookup |
+| Current starter style | `data/styles/scandinavian.json`, `data/constraints/scandinavian-constraints.json` | One current MVP-derived dataset; not product-wide canon |
+| Current starter feedback | `data/feedback/scandinavian-feedback.json` | One current feedback catalog; not future client-brief scope |
 | Visuals | `data/visuals/item-visuals.json` | Presentation-only visual profile |
 | Release | `public/release-manifest.json` | Generated from BuildInfo during dev/build |
 
@@ -43,11 +45,46 @@ The catalog currently has **34** items. Each item contains a stable `id`, displa
 | `frontAxis` | `positiveX`, `negativeX`, `positiveZ`, `negativeZ`, `null` | Local front direction before placed-item rotation. |
 | `usableSides` | Cardinal local axes | Sides on which adjacency partners may satisfy the anchor. |
 
-Adding a catalog item requires: V3 schema validity, a complete feature vector, semantic profile, optional visual profile, catalog content test and level references only after the item is valid. Do not infer semantics from `id` or `name`.
+Adding a catalog item requires V3 schema validity, a complete feature vector, semantic profile, optional visual profile, catalog content test and level references only after the item is valid. Do not infer semantics from `id` or `name`.
+
+## Target: ClientBrief v1
+
+`ClientBrief v1` is the planned versioned content contract for every design order. It is not yet loaded by runtime and must be delivered as a separate vertical slice with schema, Domain value object, content loaders, scoring policy, feedback and UI presentation. Its purpose is to make multiple styles, style mixing and client-specific restrictions deterministic, inspectable and replayable.
+
+| Field group | Required policy | Why it exists |
+|---|---|---|
+| Identity | `schemaVersion`, `briefId`, client-facing title and level binding | Stable persisted/content identity. |
+| Style targets | One or more style IDs, roles (`primary`/`secondary`/`accent`) and weights | A room can intentionally combine aesthetics. |
+| Mix policy | Allowed style combinations, balance ranges and conflict rules | Separates deliberate eclecticism from incoherent mixing. |
+| Client priorities | Ordered goals and score weights | Makes the same room evaluate differently for different clients. |
+| Functional scenarios | Dining, media, work, family, accessibility or storage needs | Connects aesthetic scoring to intended use. |
+| Constraints | Mandatory, forbidden, inherited-item, space and budget rules | Encodes non-negotiable customer requirements. |
+| Feedback mapping | Brief-specific message keys and success criteria | Keeps results explainable without UI rule logic. |
+
+A target shape, intentionally **not a runtime schema yet**, is:
+
+```json
+{
+  "schemaVersion": 1,
+  "briefId": "client-urban-family-001",
+  "styleTargets": [
+    { "styleId": "mid-century", "role": "primary", "weight": 0.65 },
+    { "styleId": "japandi", "role": "secondary", "weight": 0.35 }
+  ],
+  "mixPolicy": {
+    "allowedPairs": [["mid-century", "japandi"]],
+    "requiredBalance": { "minActiveStyles": 2, "maxDominantWeight": 0.75 }
+  },
+  "functionalScenarios": ["media-viewing", "family-dining"],
+  "hardConstraints": ["preserve-window-passage", "retain-heirloom-item"]
+}
+```
+
+The eventual evaluator must consume only this authored policy, style catalogs and RoomState. It must not infer client taste from item names, use an LLM at runtime or encode a default aesthetic in Presentation.
 
 ## Levels and functional layout
 
-A level definition declares geometry, available items, required composition roles, optional prerequisites and `ergonomicsRules`. A rule in a level is policy; evaluators are generic Domain code.
+A level definition declares geometry, available items, required composition roles, optional prerequisites and `ergonomicsRules`. A rule in a level is policy; evaluators are generic Domain code. In the future, the level will reference one `ClientBrief`; current levels instead rely on their single starter style dataset.
 
 | Rule kind | Required extra field | Use case |
 |---|---|---|
@@ -73,21 +110,21 @@ All functional rules use semantic selectors, `minPartners`, edge-to-edge `distan
 
 ## Scoring and feedback
 
-Style and ergonomics are separate deterministic inputs aggregated by parameters authored in `scoring-parameters.json`, presently **70% style / 30% ergonomics**. Ergonomics violations include generic clearance, passage zones and functional layouts. The same violation flows to `ErgonomicsScorer` and to the feedback catalog; feedback never changes its score.
+Style fit, client-priority satisfaction and ergonomics must remain separate deterministic inputs. Current parameters aggregate one starter style score and ergonomics as **70% / 30%**. When `ClientBrief v1` arrives, it must replace the single-style input with explicit multi-style/client-constraint channels without changing the invariant that feedback never changes score.
 
-Every new rule must have a matching feedback entry with a stable `id`, category, severity and player-actionable template. `EvaluationView` resolves and renders the authored result; it does not contain fallback rule text.
+Ergonomics violations include generic clearance, passage zones and functional layouts. The same violation flows to `ErgonomicsScorer` and to the feedback catalog. Every new policy requires a matching feedback entry with a stable `id`, category, severity and player-actionable template; `EvaluationView` only resolves and renders it.
 
 ## Visual profiles
 
-`item-visuals.json` only controls Three.js representation. The `tv-001 → television` profile selects a dedicated frame/screen/stand builder, but that geometry is not a source of gameplay semantics. A visual profile may be added or changed without changing scoring unless the separate semantic catalog/level contracts change.
+`item-visuals.json` only controls Three.js representation. The `tv-001 → television` profile selects a dedicated frame/screen/stand builder, but that geometry is not a source of gameplay semantics. A visual profile may be added or changed without changing scoring unless the separate semantic catalog/level/brief contracts change.
 
 ## Authoring checklist
 
-1. Decide whether the change is a catalog item, a level policy, a scoring parameter, feedback or visual-only profile.
+1. Decide whether the change is a catalog item, a client brief, a level policy, a scoring parameter, feedback or visual-only profile.
 2. Update the relevant versioned JSON and schema only if its public contract changes.
 3. Add a red content/schema test and minimal Domain test for a new rule kind.
 4. Register new runtime data in static asset inventory.
-5. Add feedback for every user-visible violation.
-6. Run full tests, build and dependency audit; test the affected level in browser before release.
+5. Add feedback for every user-visible violation and every client constraint.
+6. Run full tests, build and dependency audit; test the affected brief in browser before release.
 
-See [Architecture overview](../architecture/overview.md) for layer ownership and [Product overview](../product/overview.md) for shipped player scenarios.
+See [Architecture overview](../architecture/overview.md) for layer ownership and [Product overview](../product/overview.md) for current versus target player scenarios.

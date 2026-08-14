@@ -25,15 +25,16 @@ PROD-001—PROD-006 создали profile, authored level selection, ergonomics
 
 | Приоритет | Направление | Пользовательский результат | Предварительные границы |
 |---|---|---|---|
-| P1 | Functional-layout expansion | Новые объяснимые interaction scenarios без эвристик по названиям предметов. | Новый typed rule kind только при отдельном authored data и red tests; например bidirectional view relation или wall-dependent fixture policy. |
+| P0 | Multi-style `ClientBrief v1` foundation | Игрок получает заказ с primary/secondary/accent style goals, explicit mixing policy, client priorities и hard constraints. | Versioned schema, Domain value object, loader, deterministic style-fit channels, feedback and brief view; current Scandinavian dataset remains a starter fixture. |
+| P1 | Client-brief content authoring pipeline | Контент-дизайнер добавляет style families, mixing policy и новые briefs с validation до runtime. | Compiled/catalog validation, reproducible fixtures, reviewable schemas; без runtime LLM-оценки. |
+| P1 | Functional-layout expansion | Новые объяснимые interaction scenarios учитывают lifestyle requirements конкретного клиента. | Новый typed rule kind только при отдельном authored data и red tests; например bidirectional view relation или wall-dependent fixture policy. |
 | P1 | Release observability and browser verification | Оператор может уверенно идентифицировать и проверить опубликованный build. | Release manifest, CI gate, browser smoke, performance budget; telemetry только privacy-safe и не влияет на score. |
-| P2 | Content authoring pipeline | Новые уровни и предметы валидируются и reviewable до runtime. | Versioned schemas, catalog/level validation, reproducible content fixtures; без runtime LLM-оценки. |
 | P2 | Performance and accessibility hardening | Игра остаётся удобной на target browser и touch устройствах. | Measured budgets, reduced-motion, quality tiers, input parity. |
 | P3 | Platform packaging | Подготовленный mobile-native release candidate. | Platform adapters и реальные device acceptance tests; не смешивать с текущим web Domain. |
 
 ## Явно не запланировано
 
-Accounts/cloud sync, multiplayer, real-money economy, runtime AI scoring и непрозрачная автоматическая расстановка не имеют active commitment. Они требуют отдельного product decision и versioned architecture contract прежде, чем попадут в roadmap.
+Accounts/cloud sync, multiplayer, real-money economy, runtime AI scoring и непрозрачная автоматическая расстановка не имеют active commitment. Мультистилевой client-brief-driven scoring не относится к этому списку: это утверждённое P0 production направление. Любая другая крупная capability требует отдельного product decision и versioned architecture contract прежде, чем попасть в roadmap.
 
 ## Definition of done для следующего слайса
 

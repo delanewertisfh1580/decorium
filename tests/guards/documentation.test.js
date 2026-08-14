@@ -53,6 +53,16 @@ describe('Documentation requirements', () => {
     }
   });
 
+  it('defines a multi-style, client-brief-driven product vision and labels Scandinavian as current starter content', () => {
+    const productOverview = readFileSync(join(ROOT, 'docs', 'product', 'overview.md'), 'utf8');
+    const contentModel = readFileSync(join(ROOT, 'docs', 'systems', 'content-model.md'), 'utf8');
+
+    expect(productOverview).toContain('мультистил');
+    expect(productOverview).toContain('ClientBrief');
+    expect(productOverview).toContain('Scandinavian starter scenario');
+    expect(contentModel).toContain('ClientBrief v1');
+  });
+
   it('keeps every local Markdown link resolvable after documentation moves', () => {
     const files = [join(ROOT, 'README.md'), ...markdownFiles(join(ROOT, 'docs'))];
     const unresolved = files.flatMap(file => localMarkdownTargets(file)

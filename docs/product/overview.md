@@ -1,27 +1,44 @@
 # Product overview
 
-**Статус:** Active production baseline
+**Статус:** Active production vision and current baseline
 **Обновлено:** 15 августа 2026 г.
 
-Decorium — браузерная Three.js-игра об интерьере в скандинавском стиле. Игрок собирает комнату из authored catalog, размещает, перемещает и поворачивает предметы, затем получает детерминированную оценку и понятную обратную связь.
+Decorium — браузерная Three.js-игра о проектировании интерьеров **для конкретных заказчиков**. Игрок собирает комнату из authored catalog, размещает и поворачивает предметы, а затем получает детерминированную оценку того, насколько решение отвечает стилевому замыслу, смешению эстетик, функциональным потребностям и явным ограничениям client brief.
+
+> **Product canon:** Decorium — мультистилевая игра. Один стиль не является правилом продукта, а «хороший» интерьер определяется конкретным заказчиком и его brief, а не универсальным шаблоном.
 
 ## Игровой цикл
 
 | Шаг | Действие игрока | Результат системы |
 |---|---|---|
-| 1 | Открывает профиль и выбирает доступный уровень кампании | Восстанавливаются settings, completed levels и session context. |
-| 2 | Выбирает предмет и размещает его в 3D-комнате | RoomState создаёт stable instance ID; предмет можно переместить, повернуть, удалить или отменить действие. |
-| 3 | Нажимает «Оценить» | Application оркестрирует style, composition и spatial ergonomics evaluation. |
-| 4 | Читает результат | UI показывает total score, stars, sub-scores и feedback из authored catalog. |
-| 5 | Выполняет условия уровня | Profile records completion, campaign availability пересчитывается и открывает следующий уровень. |
+| 1 | Открывает профиль и выбирает заказ/уровень кампании | Восстанавливаются settings, completed levels и session context. |
+| 2 | Читает brief: предпочтения клиента, допустимое смешение стилей, функциональные потребности и ограничения помещения | Level supplies versioned authored policy, а не UI-side interpretation. |
+| 3 | Выбирает предметы, расставляет и поворачивает их в 3D-комнате | RoomState создаёт stable instance IDs; действия можно переместить, повернуть, удалить или отменить. |
+| 4 | Нажимает «Оценить» | Application оркестрирует style fit, composition и spatial ergonomics evaluation. |
+| 5 | Читает результат и уточняет композицию | UI показывает total score, stars, sub-scores и actionable feedback. |
+| 6 | Выполняет условия заказа | Profile records completion, campaign availability пересчитывается и открывает следующий brief. |
 
-## Shipped gameplay
+## Production vision: styles and client briefs
 
-Текущая кампания содержит три authored levels и один визуальный стиль — Scandinavian. Profile schema V3 хранится локально и включает settings (`reducedMotion`, `uiScale`, `qualityTier`) и прогресс прохождения. Touch и keyboard paths поддерживаются одним intent contract.
+Каждый заказ должен иметь versioned `ClientBrief`, который делает вкусы и ограничения клиента явными authored data. Brief может назначать основной стиль, вторичные поддерживающие стили, допустимые сочетания, относительные веса, обязательные и запрещённые свойства, функциональные сценарии, budget/space constraints и критерии завершённости. Это позволяет уровню поощрять осмысленный эклектичный интерьер, а не наказывать его за несовпадение с единственным стилем.
 
-Style score использует authored visual-feature constraints. Ergonomics score использует spatial violations: minimum clearance, passage zones и functional layout. Итоговая оценка агрегирует style и ergonomics с весами **70% / 30%**; thresholds звёзд и остальные scoring parameters находятся в versioned data, а не в UI.
+| Слой policy | Роль в будущем `ClientBrief` | Пример |
+|---|---|---|
+| Style palette | Основные и вторичные стилевые цели с весами. | Mid-century как primary; Japandi accents как secondary. |
+| Mixing policy | Допустимые пары/семейства стилей, balance и конфликтующие комбинации. | Тёплое дерево связывает две эстетики; несовместимый декоративный акцент получает feedback. |
+| Client priorities | Что важнее именно этому заказчику. | Готовность к приёму гостей важнее минималистичной визуальной плотности. |
+| Functional brief | Сценарии использования комнаты. | Dining for four, media viewing, reading corner, child-safe passage. |
+| Hard constraints | Непереговорные условия помещения, бюджета или клиента. | Сохранить проход, не блокировать окно, использовать existing heirloom. |
 
-| Уровень | Функциональный сценарий | Ключевое правило |
+`ClientBrief` — это target contract следующего content/scoring slice, а не уже реализованный runtime schema. До его реализации новые стили и их mixing rules не должны симулироваться UI heuristics или неversioned code.
+
+## Current production baseline
+
+Сегодня в репозитории существуют три authored levels, один реальный style/constraint dataset и один feedback catalog. **Scandinavian starter scenario** — текущая содержательная база, унаследованная от MVP; это не обещание продукта и не ограничение будущей кампании. Current runtime оценивает этот единственный dataset через existing style constraints, composition и spatial ergonomics.
+
+Profile schema V3 хранится локально и включает settings (`reducedMotion`, `uiScale`, `qualityTier`) и прогресс прохождения. Touch и keyboard paths поддерживаются одним intent contract. Итоговая оценка агрегирует style и ergonomics с весами **70% / 30%**; thresholds звёзд и параметры находятся в versioned data, а не в UI.
+
+| Текущий уровень | Функциональный сценарий | Ключевое правило |
 |---|---|---|
 | `level-001` | Обеденная зона | Обеденному столу нужны два места `dining-seat`; корректная пара стол—стул не получает ложный clearance penalty. |
 | `level-002` | Зона отдыха | Диван должен смотреть на explicit `view-target` TV; журнальный столик располагается перед диваном. |
@@ -31,14 +48,15 @@ Style score использует authored visual-feature constraints. Ergonomics
 
 Decorium является static web-приложением: ему не требуются backend, пользовательский аккаунт, environment variables или внешние API. Контент загружается вместе с приложением, а все игровые решения воспроизводимы из authored data и сохранённого RoomState.
 
-В текущий production baseline не входят cloud sync, multiplayer, платежи, runtime AI-judge, автоматическая расстановка, pathfinding, аудио и native packaging. Эти направления не считаются обещанными capabilities, пока не перенесены в [production roadmap](roadmap.md) отдельным vertical slice.
+Cloud sync, multiplayer, платежи, runtime AI-judge, непрозрачная автоматическая расстановка, pathfinding, аудио и native packaging не входят в current baseline. Мультистилевой `ClientBrief` pipeline, напротив, является **активным production-направлением** и описан в [Production roadmap](roadmap.md).
 
 ## Продуктовые инварианты
 
-1. UI отображает результат, но не вычисляет score, progression или economy.
-2. Игровая оценка детерминированна и объяснима через feedback messages.
-3. Семантика мебели задаётся authored `InteractionProfile`, а не названием или визуальным mesh.
-4. Все persisted и content contracts имеют version/schema version.
+1. UI отображает brief и результат, но не вычисляет style fit, progression или economy.
+2. Игровая оценка детерминированна и объяснима через authored feedback messages.
+3. Семантика мебели задаётся authored `InteractionProfile`, а не названием или visual mesh.
+4. Все persisted, content и client-brief contracts имеют version/schema version.
 5. Функциональная близость не должна ошибочно наказываться universal clearance rule.
+6. Смешение стилей оценивается относительно explicit policy заказчика, а не как отклонение от global default style.
 
 За структурами данных и authoring workflow обращайтесь к [Content model](../systems/content-model.md); за техническими зависимостями — к [Architecture overview](../architecture/overview.md).
