@@ -23,6 +23,23 @@ describe('EvaluationView ergonomics sub-scores', () => {
     expect(container.textContent).toContain('Эргономика');
   });
 
+  it('renders functional dining guidance through the existing feedback surface', () => {
+    const container = document.createElement('div');
+    const view = new EvaluationView(container);
+
+    view.render({
+      score: 0.72,
+      stars: 3,
+      styleScore: 0.9,
+      ergonomicsScore: 0.3,
+      violations: [{ type: 'ergonomics', feature: 'functionalLayout' }],
+      feedback: ['Добавьте места для сидения у обеденного стола.']
+    });
+
+    expect(container.querySelector('.feedback').textContent).toContain('Добавьте места для сидения у обеденного стола.');
+    expect(container.textContent).toContain('1 подсказок для следующей попытки');
+  });
+
   it('does not render an empty sub-score block for legacy evaluation data', () => {
     const container = document.createElement('div');
     const view = new EvaluationView(container);

@@ -79,7 +79,9 @@ export class EvaluateRoomUseCase {
       const styleScoring = this.styleScorer.evaluate(styleChannelViolations);
 
       const hasErgonomicsChannel = Boolean(this.ergonomicsEvaluator);
-      const hasSpatialRules = Boolean(ergonomicsRules.minimumClearance) || (Array.isArray(ergonomicsRules.passageZones) && ergonomicsRules.passageZones.length > 0);
+      const hasSpatialRules = Boolean(ergonomicsRules.minimumClearance)
+        || (Array.isArray(ergonomicsRules.passageZones) && ergonomicsRules.passageZones.length > 0)
+        || (Array.isArray(ergonomicsRules.functionalLayoutRules) && ergonomicsRules.functionalLayoutRules.length > 0);
       const ergonomicsViolations = hasErgonomicsChannel && hasSpatialRules
         ? this.ergonomicsEvaluator.evaluate(roomState, ergonomicsRules)
         : [];

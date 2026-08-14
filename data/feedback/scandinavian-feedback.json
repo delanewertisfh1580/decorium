@@ -100,5 +100,11 @@
     "category": "violation",
     "template": "Освободите входной проход: предмет перекрывает необходимую зону движения.",
     "severity": "high"
+  },
+  {
+    "id": "functional-dining-seat-required",
+    "category": "violation",
+    "template": "Добавьте места для сидения у обеденного стола.",
+    "severity": "high"
   }
 ]

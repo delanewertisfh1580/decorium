@@ -97,4 +97,20 @@ describe('ClearanceEvaluator', () => {
 
     expect(new ClearanceEvaluator().evaluate(room, rule)).toEqual([]);
   });
+
+  it('excludes only confirmed functional pairs from universal clearance penalties', () => {
+    const room = createRoom([
+      [createItem('dining-table'), { x: 1, z: 1 }],
+      [createItem('dining-chair'), { x: 2.3, z: 1 }],
+      [createItem('cabinet'), { x: 3.6, z: 1 }]
+    ]);
+
+    const violations = new ClearanceEvaluator().evaluate(room, rule, {
+      excludedPairs: [['dining-table', 'dining-chair']]
+    });
+
+    expect(violations.map(violation => violation.itemIds)).toEqual([
+      ['cabinet', 'dining-chair']
+    ]);
+  });
 });

@@ -15,6 +15,9 @@ import { ConstraintEvaluator } from './Domain/Constraints/ConstraintEvaluator.js
 import { StyleScorer } from './Domain/Scoring/StyleScorer.js';
 import { StarRatingPolicy } from './Domain/Scoring/StarRatingPolicy.js';
 import SpatialErgonomicsEvaluator from './Domain/Ergonomics/SpatialErgonomicsEvaluator.js';
+import ClearanceEvaluator from './Domain/Ergonomics/ClearanceEvaluator.js';
+import PassageZoneEvaluator from './Domain/Ergonomics/PassageZoneEvaluator.js';
+import FunctionalLayoutEvaluator from './Domain/Ergonomics/FunctionalLayoutEvaluator.js';
 import ErgonomicsScorer from './Domain/Scoring/ErgonomicsScorer.js';
 import EvaluationScoreAggregator from './Domain/Scoring/EvaluationScoreAggregator.js';
 import { initializeScoringParameters, getScoringParameters } from './Domain/Scoring/scoringParameters.js';
@@ -114,7 +117,11 @@ async function bootstrap() {
       new StyleScorer(scoring),
       new StarRatingPolicy(scoring.starRatingThresholds),
       feedbackCatalog,
-      new SpatialErgonomicsEvaluator(),
+      new SpatialErgonomicsEvaluator(
+        new ClearanceEvaluator(),
+        new PassageZoneEvaluator(),
+        new FunctionalLayoutEvaluator()
+      ),
       new ErgonomicsScorer(scoring),
       new EvaluationScoreAggregator({
         styleWeight: scoring.styleWeight,

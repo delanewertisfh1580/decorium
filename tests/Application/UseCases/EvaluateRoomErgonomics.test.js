@@ -84,4 +84,53 @@ describe('EvaluateRoomUseCase ergonomics channel', () => {
       messageKey: 'ergonomics-minimum-clearance'
     }));
   });
+
+  it('activates the ergonomics channel for functional-only rules and serializes functional feedback', async () => {
+    const functionalViolation = {
+      constraintId: 'dining-seating-required',
+      featureName: 'functionalLayout',
+      operator: '>=',
+      threshold: 2,
+      actualValue: 0,
+      severity: 1,
+      messageKey: 'functional-dining-seat-required',
+      itemIds: ['dining-table'],
+      constraint: { weight: 1.2, description: 'Добавьте места для сидения у стола.' }
+    };
+    const rules = { functionalLayoutRules: [{ id: 'dining-seating-required' }] };
+    const ergonomicsEvaluator = {
+      evaluate: (_room, receivedRules) => {
+        expect(receivedRules).toBe(rules);
+        return [functionalViolation];
+      }
+    };
+    const ergonomicsScorer = {
+      evaluate: violations => {
+        expect(violations).toEqual([functionalViolation]);
+        return { penalty: 1.2, score: 0.4, violations };
+      }
+    };
+    const scoreAggregator = { aggregate: () => ({ totalScore: 0.82, styleWeight: 0.7, ergonomicsWeight: 0.3 }) };
+    const useCase = new EvaluateRoomUseCase(
+      { getState: async () => activeRoom() },
+      new ConstraintEvaluator(),
+      new StyleScorer({ maxPenalty: 1 }),
+      new StarRatingPolicy({ 0: 0, 1: 0.2, 2: 0.4, 3: 0.6, 4: 0.8, 5: 0.9 }),
+      null,
+      ergonomicsEvaluator,
+      ergonomicsScorer,
+      scoreAggregator
+    );
+
+    const result = await useCase.execute('room-001', [], {}, rules);
+
+    expect(result.success).toBe(true);
+    expect(result.evaluationData).toMatchObject({ score: 0.82, ergonomicsScore: 0.4 });
+    expect(result.evaluationData.violations).toContainEqual(expect.objectContaining({
+      type: 'ergonomics',
+      feature: 'functionalLayout',
+      itemIds: ['dining-table'],
+      messageKey: 'functional-dining-seat-required'
+    }));
+  });
 });

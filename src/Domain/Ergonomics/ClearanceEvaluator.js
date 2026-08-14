@@ -13,6 +13,10 @@ function intervalGap(minA, maxA, minB, maxB) {
   return 0;
 }
 
+function canonicalPairKey(leftItemId, rightItemId) {
+  return [leftItemId, rightItemId].sort().join(':');
+}
+
 function footprintGap(left, right) {
   const leftDimensions = dimensionsFor(left);
   const rightDimensions = dimensionsFor(right);
@@ -72,7 +76,7 @@ class ClearanceViolation {
 }
 
 export class ClearanceEvaluator {
-  evaluate(roomState, rule) {
+  evaluate(roomState, rule, { excludedPairs = [] } = {}) {
     if (!roomState || typeof roomState.getItems !== 'function') {
       throw new Error('ClearanceEvaluator requires RoomState');
     }
@@ -80,12 +84,16 @@ export class ClearanceEvaluator {
       throw new Error('ClearanceEvaluator requires MinimumClearanceRule');
     }
 
+    const excludedPairKeys = new Set(excludedPairs.map(([leftItemId, rightItemId]) => (
+      canonicalPairKey(leftItemId, rightItemId)
+    )));
     const placedItems = roomState.getItems();
     const violations = [];
     for (let leftIndex = 0; leftIndex < placedItems.length; leftIndex += 1) {
       for (let rightIndex = leftIndex + 1; rightIndex < placedItems.length; rightIndex += 1) {
         const leftItem = placedItems[leftIndex];
         const rightItem = placedItems[rightIndex];
+        if (excludedPairKeys.has(canonicalPairKey(leftItem.id, rightItem.id))) continue;
         const gap = footprintGap(leftItem, rightItem);
         if (gap < rule.minimumDistance) {
           violations.push(new ClearanceViolation(rule, leftItem, rightItem, gap));
