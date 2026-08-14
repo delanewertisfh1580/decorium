@@ -23,7 +23,7 @@ function createController({ evaluationData, recordResult, profile = createProfil
     roomRepository: {}
   });
   controller.level = {
-    id: 'level-001', roomId: 'room-001', targetScore: 3,
+    levelId: 'level-001', roomId: 'room-001', targetScore: 3,
     compositionRules: {}, ergonomicsRules: {}
   };
   controller.roomViewModel = { constraints: [] };

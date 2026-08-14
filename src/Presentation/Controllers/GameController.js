@@ -371,7 +371,7 @@ export class GameController {
     }
     if (this.recordLevelCompletionUseCase && this.playerProfile) {
       const completion = await this.recordLevelCompletionUseCase.execute({
-        levelId: this.level.id,
+        levelId: this.level.levelId,
         stars: result.evaluationData.stars,
         targetScore: this.level.targetScore,
         profile: this.playerProfile
