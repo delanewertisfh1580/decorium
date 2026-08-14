@@ -25,7 +25,7 @@
           },
           "type": {
             "type": "string",
-            "enum": ["chair", "table", "sofa", "bed", "storage", "lighting", "decor"]
+            "enum": ["chair", "table", "sofa", "bed", "storage", "lighting", "decor", "media"]
           },
           "dimensions": {
             "type": "object",

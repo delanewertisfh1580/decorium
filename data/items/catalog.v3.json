@@ -1142,6 +1142,40 @@
         "frontAxis": null,
         "usableSides": []
       }
+    },
+    {
+      "id": "tv-001",
+      "name": "Телевизор Nordic Frame",
+      "type": "media",
+      "dimensions": {
+        "x": 1.6,
+        "z": 0.3
+      },
+      "price": 650,
+      "featureVector": {
+        "woodShare": 0.1,
+        "metalShare": 0.2,
+        "glassShare": 0.1,
+        "plasticShare": 0.6,
+        "textileShare": 0,
+        "lightColorShare": 0.15,
+        "darkColorShare": 0.85,
+        "warmPaletteShare": 0.3,
+        "saturationLevel": 0.2,
+        "formSimplicity": 0.85,
+        "roundnessShare": 0.1,
+        "rectilinearShare": 0.9,
+        "sizeNorm": 0.7,
+        "priceNorm": 0.65,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": ["view-target"],
+        "frontAxis": "negativeZ",
+        "usableSides": []
+      }
     }
   ]
 }

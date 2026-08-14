@@ -26,7 +26,7 @@ describe('Production content contracts', () => {
     expect(levelManifest.schemaVersion).toBe(1);
     expect(levels).toHaveLength(3);
     expect(levels.every(levelDefinition => validateLevel(levelDefinition))).toBe(true);
-    expect(catalog.items).toHaveLength(33);
+    expect(catalog.items).toHaveLength(34);
     expect(catalog.items.every(item => Object.keys(item.featureVector).length === 16)).toBe(true);
   });
 

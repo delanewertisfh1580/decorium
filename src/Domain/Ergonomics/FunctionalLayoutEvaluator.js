@@ -48,6 +48,20 @@ function vectorForLocalAxis(axis, rotationDegrees) {
   return localAxes[axis];
 }
 
+function isFacingPartner(anchor, partner, maxAngleDegrees) {
+  const frontAxis = anchor.item.interactionProfile.frontAxis;
+  if (!frontAxis) return false;
+  const front = vectorForLocalAxis(frontAxis, anchor.rotation);
+  const delta = {
+    x: partner.position.x - anchor.position.x,
+    z: partner.position.z - anchor.position.z
+  };
+  const distance = Math.hypot(delta.x, delta.z);
+  if (distance === 0) return false;
+  const cosine = (front.x * delta.x + front.z * delta.z) / distance;
+  return cosine >= Math.cos(maxAngleDegrees * Math.PI / 180);
+}
+
 function isAtUsableSide(anchor, partner) {
   const usableSides = anchor.item.interactionProfile.usableSides;
   if (usableSides.length === 0) return true;
@@ -134,7 +148,9 @@ export class FunctionalLayoutEvaluator {
           if (consumedPartnerIds.has(partner.id) || matchedPartners.length === rule.minPartners) continue;
           const distance = footprintGap(anchor, partner);
           const isInRange = distance >= rule.distance.min && distance <= rule.distance.max;
-          if (!isInRange || !isAtUsableSide(anchor, partner)) continue;
+          const hasRequiredOrientation = rule.kind !== 'front-adjacency'
+            || isFacingPartner(anchor, partner, rule.maxAngleDegrees);
+          if (!isInRange || !hasRequiredOrientation || !isAtUsableSide(anchor, partner)) continue;
           consumedPartnerIds.add(partner.id);
           matchedPartners.push(partner);
           matchedPairs.push(canonicalPair(anchor.id, partner.id));

@@ -145,7 +145,7 @@
             "properties": {
               "schemaVersion": { "const": 1 },
               "id": { "type": "string", "minLength": 1 },
-              "kind": { "enum": ["adjacency"] },
+              "kind": { "enum": ["adjacency", "front-adjacency"] },
               "anchorSelector": {
                 "type": "object",
                 "required": ["affordance"],
@@ -176,9 +176,16 @@
                 },
                 "additionalProperties": false
               },
+              "maxAngleDegrees": { "type": "number", "exclusiveMinimum": 0, "maximum": 90 },
               "weight": { "type": "number", "exclusiveMinimum": 0 },
               "messageKey": { "type": "string", "minLength": 1 }
             },
+            "allOf": [
+              {
+                "if": { "properties": { "kind": { "const": "front-adjacency" } } },
+                "then": { "required": ["maxAngleDegrees"] }
+              }
+            ],
             "additionalProperties": false
           }
         }

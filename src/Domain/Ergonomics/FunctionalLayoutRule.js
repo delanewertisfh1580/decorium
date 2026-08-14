@@ -1,6 +1,6 @@
 import InteractionProfile from '../Items/InteractionProfile.js';
 
-const SUPPORTED_KINDS = new Set(['adjacency']);
+const SUPPORTED_KINDS = new Set(['adjacency', 'front-adjacency']);
 
 function validateSelector(selector, label) {
   if (!selector || typeof selector !== 'object' || Array.isArray(selector)
@@ -24,6 +24,7 @@ export class FunctionalLayoutRule {
     partnerSelector,
     minPartners,
     distance,
+    maxAngleDegrees = null,
     weight = 1,
     messageKey
   } = {}) {
@@ -36,6 +37,10 @@ export class FunctionalLayoutRule {
     if (!distance || typeof distance.min !== 'number' || typeof distance.max !== 'number'
       || !Number.isFinite(distance.min) || !Number.isFinite(distance.max) || distance.min < 0 || distance.min >= distance.max) {
       throw new Error('FunctionalLayoutRule distance min must be lower than max');
+    }
+    if (kind === 'front-adjacency' && (typeof maxAngleDegrees !== 'number'
+      || !Number.isFinite(maxAngleDegrees) || maxAngleDegrees <= 0 || maxAngleDegrees > 90)) {
+      throw new Error('FunctionalLayoutRule maxAngleDegrees must be greater than 0 and at most 90');
     }
     if (typeof weight !== 'number' || !Number.isFinite(weight) || weight <= 0) {
       throw new Error('FunctionalLayoutRule weight must be a positive number');
@@ -51,6 +56,7 @@ export class FunctionalLayoutRule {
     this._partnerSelector = validateSelector(partnerSelector, 'partnerSelector');
     this._minPartners = minPartners;
     this._distance = Object.freeze({ min: distance.min, max: distance.max });
+    this._maxAngleDegrees = kind === 'front-adjacency' ? maxAngleDegrees : null;
     this._weight = weight;
     this._messageKey = messageKey.trim();
     Object.freeze(this);
@@ -63,6 +69,7 @@ export class FunctionalLayoutRule {
   get partnerSelector() { return this._partnerSelector; }
   get minPartners() { return this._minPartners; }
   get distance() { return this._distance; }
+  get maxAngleDegrees() { return this._maxAngleDegrees; }
   get weight() { return this._weight; }
   get messageKey() { return this._messageKey; }
 }

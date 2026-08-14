@@ -52,6 +52,14 @@ describe('UI-VIS-003 expressive item visuals', () => {
     }
   });
 
+  it('renders the authored view target as a dedicated television rather than generic decor', () => {
+    const visual = ItemVisualFactory.create(item('tv-001', 'media', { x: 1.6, z: 0.3 }));
+
+    expect(visual.userData.visualShape).toBe('television');
+    expect(visual.getObjectByName('tv-screen')).not.toBeNull();
+    expect(visual.getObjectByName('tv-stand')).not.toBeNull();
+  });
+
   it('uses a separate, responsive selection halo and keeps ghost feedback visible', () => {
     const visual = ItemVisualFactory.create(item('chair-001', 'chair'));
     const halo = visual.getObjectByName('selection-halo');

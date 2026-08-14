@@ -15,7 +15,7 @@ const vector = new FeatureVector({
   lightingFunctionShare: 0, storageFunctionShare: 0
 });
 
-function item(id, affordance, { dimensions, usableSides = [] } = {}) {
+function item(id, affordance, { dimensions, frontAxis = null, usableSides = [] } = {}) {
   return new Item({
     id,
     name: id,
@@ -25,6 +25,7 @@ function item(id, affordance, { dimensions, usableSides = [] } = {}) {
     interactionProfile: new InteractionProfile({
       schemaVersion: 1,
       affordances: [affordance],
+      frontAxis,
       usableSides
     })
   });
@@ -32,8 +33,8 @@ function item(id, affordance, { dimensions, usableSides = [] } = {}) {
 
 function room(placements) {
   const state = RoomState.createEmpty(new RoomBounds(10, 10));
-  for (const [placedItem, position] of placements) {
-    expect(state.placeItem(placedItem, position).success).toBe(true);
+  for (const [placedItem, position, rotation = 0] of placements) {
+    expect(state.placeItem(placedItem, position, rotation).success).toBe(true);
   }
   return state;
 }
@@ -81,6 +82,75 @@ describe('FunctionalLayoutEvaluator', () => {
     expect(result.violations[0]).toMatchObject({
       constraintId: 'dining-seating-required', actualValue: 0, threshold: 1,
       itemIds: ['dining-table'], messageKey: 'functional-dining-seat-required'
+    });
+  });
+
+  it('requires a lounge seat front axis to face its view target', () => {
+    const sofa = item('sofa', 'lounge-seat', {
+      dimensions: { x: 2, z: 1 }, frontAxis: 'positiveZ'
+    });
+    const television = item('television', 'view-target', { dimensions: { x: 1.6, z: 0.3 } });
+    const rule = new FunctionalLayoutRule({
+      schemaVersion: 1,
+      id: 'lounge-seat-faces-view-target',
+      kind: 'front-adjacency',
+      anchorSelector: { affordance: 'lounge-seat' },
+      partnerSelector: { affordance: 'view-target' },
+      minPartners: 1,
+      distance: { min: 1, max: 4 },
+      maxAngleDegrees: 30,
+      weight: 1.3,
+      messageKey: 'functional-lounge-faces-view-target'
+    });
+
+    const facingResult = new FunctionalLayoutEvaluator().evaluate(room([
+      [sofa, { x: 4, z: 3 }],
+      [television, { x: 4, z: 5 }]
+    ]), [rule]);
+    const awayResult = new FunctionalLayoutEvaluator().evaluate(room([
+      [sofa, { x: 4, z: 3 }, 180],
+      [television, { x: 4, z: 5 }]
+    ]), [rule]);
+
+    expect(facingResult.violations).toEqual([]);
+    expect(facingResult.matchedPairs).toEqual([['sofa', 'television']]);
+    expect(awayResult.violations).toHaveLength(1);
+    expect(awayResult.violations[0]).toMatchObject({
+      constraintId: 'lounge-seat-faces-view-target', itemIds: ['sofa'], actualValue: 0
+    });
+  });
+
+  it('requires a coffee surface to be in front of the lounge seat', () => {
+    const sofa = item('sofa', 'lounge-seat', {
+      dimensions: { x: 2, z: 1 }, frontAxis: 'positiveZ'
+    });
+    const coffeeTable = item('coffee-table', 'coffee-surface', { dimensions: { x: 1, z: 0.6 } });
+    const rule = new FunctionalLayoutRule({
+      schemaVersion: 1,
+      id: 'coffee-surface-in-front-of-lounge-seat',
+      kind: 'front-adjacency',
+      anchorSelector: { affordance: 'lounge-seat' },
+      partnerSelector: { affordance: 'coffee-surface' },
+      minPartners: 1,
+      distance: { min: 0.1, max: 0.6 },
+      maxAngleDegrees: 30,
+      weight: 0.9,
+      messageKey: 'functional-coffee-surface-in-front-of-lounge-seat'
+    });
+
+    const inFront = new FunctionalLayoutEvaluator().evaluate(room([
+      [sofa, { x: 4, z: 3 }],
+      [coffeeTable, { x: 4, z: 4.2 }]
+    ]), [rule]);
+    const behind = new FunctionalLayoutEvaluator().evaluate(room([
+      [sofa, { x: 4, z: 3 }],
+      [coffeeTable, { x: 4, z: 1.8 }]
+    ]), [rule]);
+
+    expect(inFront.violations).toEqual([]);
+    expect(behind.violations).toHaveLength(1);
+    expect(behind.violations[0]).toMatchObject({
+      constraintId: 'coffee-surface-in-front-of-lounge-seat', itemIds: ['sofa'], actualValue: 0
     });
   });
 

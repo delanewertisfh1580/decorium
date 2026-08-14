@@ -39,6 +39,7 @@
     "shelf-003": { "shape": "bookcase", "material": "woodLight" },
     "cabinet-001": { "shape": "cabinet", "material": "wood" },
     "tvstand-001": { "shape": "cabinet", "material": "dark" },
+    "tv-001": { "shape": "television", "material": "dark", "accent": "screen" },
     "plant-001": { "shape": "plant", "accent": "green" },
     "mirror-001": { "shape": "mirror", "accent": "glass" },
     "rug-001": { "shape": "rug", "accent": "rug" },

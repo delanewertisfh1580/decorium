@@ -25,6 +25,24 @@ describe('FunctionalLayoutRule', () => {
     expect(Object.isFrozen(rule)).toBe(true);
   });
 
+  it('creates a front-adjacency rule with an explicit viewing angle contract', () => {
+    const rule = new FunctionalLayoutRule({
+      schemaVersion: 1,
+      id: 'lounge-seat-faces-view-target',
+      kind: 'front-adjacency',
+      anchorSelector: { affordance: 'lounge-seat' },
+      partnerSelector: { affordance: 'view-target' },
+      minPartners: 1,
+      distance: { min: 1, max: 4 },
+      maxAngleDegrees: 30,
+      weight: 1.3,
+      messageKey: 'functional-lounge-faces-view-target'
+    });
+
+    expect(rule.kind).toBe('front-adjacency');
+    expect(rule.maxAngleDegrees).toBe(30);
+  });
+
   it('rejects unversioned, non-semantic and invalid distance contracts', () => {
     const base = {
       schemaVersion: 1, id: 'dining-seating', kind: 'adjacency',
@@ -39,5 +57,10 @@ describe('FunctionalLayoutRule', () => {
       .toThrow('FunctionalLayoutRule anchorSelector must contain a supported affordance');
     expect(() => new FunctionalLayoutRule({ ...base, distance: { min: 0.4, max: 0.35 } }))
       .toThrow('FunctionalLayoutRule distance min must be lower than max');
+    expect(() => new FunctionalLayoutRule({
+      ...base,
+      kind: 'front-adjacency',
+      maxAngleDegrees: 0
+    })).toThrow('FunctionalLayoutRule maxAngleDegrees must be greater than 0 and at most 90');
   });
 });

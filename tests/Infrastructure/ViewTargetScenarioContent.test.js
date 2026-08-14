@@ -1,0 +1,51 @@
+import { readFileSync } from 'node:fs';
+import Ajv from 'ajv';
+import { describe, expect, it } from 'vitest';
+
+const root = new URL('../..', import.meta.url);
+const readJson = relativePath => JSON.parse(readFileSync(new URL(relativePath, root), 'utf8'));
+
+describe('authored view-target lounge scenario', () => {
+  it('adds an explicit TV view target and directional sofa/coffee rules to level-002', () => {
+    const catalog = readJson('data/items/catalog.v3.json');
+    const level = readJson('data/levels/level-002.json');
+    const schema = readJson('data/schemas/level.schema.json');
+    const tv = catalog.items.find(item => item.id === 'tv-001');
+
+    expect(tv).toMatchObject({
+      id: 'tv-001',
+      type: 'media',
+      dimensions: { x: 1.6, z: 0.3 },
+      interactionProfile: {
+        schemaVersion: 1,
+        affordances: ['view-target'],
+        frontAxis: 'negativeZ',
+        usableSides: []
+      }
+    });
+    expect(level.availableItems).toContain('tv-001');
+    expect(level.ergonomicsRules.functionalLayoutRules).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'lounge-seat-faces-view-target',
+        kind: 'front-adjacency',
+        anchorSelector: { affordance: 'lounge-seat' },
+        partnerSelector: { affordance: 'view-target' },
+        minPartners: 1,
+        distance: { min: 1, max: 4 },
+        maxAngleDegrees: 30,
+        messageKey: 'functional-lounge-faces-view-target'
+      }),
+      expect.objectContaining({
+        id: 'coffee-surface-in-front-of-lounge-seat',
+        kind: 'front-adjacency',
+        anchorSelector: { affordance: 'lounge-seat' },
+        partnerSelector: { affordance: 'coffee-surface' },
+        minPartners: 1,
+        distance: { min: 0.1, max: 0.6 },
+        maxAngleDegrees: 30,
+        messageKey: 'functional-coffee-surface-in-front-of-lounge-seat'
+      })
+    ]));
+    expect(new Ajv().compile(schema)(level)).toBe(true);
+  });
+});

@@ -245,6 +245,18 @@ function buildPlant(group, item) {
   }
 }
 
+function buildTelevision(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  const panelDepth = Math.max(0.08, depth * 0.72);
+  const panelHeight = Math.max(0.72, width * 0.5);
+  addBox(group, width, panelHeight, panelDepth, 0, 1.05, 0, COLORS.black, { roughness: 0.38, metalness: 0.35 }, 'tv-frame');
+  addBox(group, width * 0.9, panelHeight * 0.78, 0.024, 0, 1.05, -panelDepth * 0.53, COLORS.screen, { roughness: 0.2, metalness: 0.12, emissive: COLORS.screen, emissiveIntensity: 0.26 }, 'tv-screen');
+  addBox(group, width * 0.78, 0.025, 0.035, 0, 1.05 + panelHeight * 0.28, -panelDepth * 0.56, COLORS.brass, { metalness: 0.55 }, 'tv-screen-highlight');
+  addBox(group, width * 0.2, 0.42, depth * 0.32, 0, 0.42, 0.03, COLORS.metalDark, { metalness: 0.55 }, 'tv-neck');
+  addBox(group, width * 0.56, 0.08, depth * 0.72, 0, 0.06, 0.03, COLORS.metalDark, { metalness: 0.55 }, 'tv-stand');
+  addCylinder(group, 0.03, 0.05, width * 0.38, panelHeight * 0.2 + 1.05, -panelDepth * 0.58, COLORS.brassLight, { metalness: 0.7 }, 12, 'tv-indicator');
+}
+
 function buildMirror(group, item) {
   const { x: width } = dimensionsOf(item);
   const frame = Math.max(0.06, Math.min(width, 0.32) * 0.18);
@@ -338,6 +350,7 @@ function buildShape(group, item, profile) {
     case 'storage': return buildStorage(group, item, profile.shape);
     case 'bed': return buildBed(group, item);
     case 'plant': return buildPlant(group, item);
+    case 'television': return buildTelevision(group, item);
     case 'mirror': return buildMirror(group, item);
     case 'rug': return buildRug(group, item);
     case 'vase': return buildVase(group, item);
