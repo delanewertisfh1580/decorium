@@ -29,6 +29,7 @@ export class GameController {
     this.evaluateRoomUseCase = evaluateRoomUseCase;
     this.recordLevelCompletionUseCase = recordLevelCompletionUseCase;
     this.playerProfile = playerProfile;
+    this.playerSettings = playerProfile?.settings ?? null;
     this.roomRepository = roomRepository;
     this.roomView = null;
     this.roomViewModel = null;
@@ -41,11 +42,15 @@ export class GameController {
 
   async init(canvas, catalogContainer, toolbarContainer, evaluationContainer) {
     this.roomView = new RoomView(canvas);
+    if (this.playerSettings) this.roomView.setRenderSettings(this.playerSettings);
     this.catalogView = new ItemCatalogView(catalogContainer, itemId => this._onCatalogSelect(itemId));
     this.toolbarView = new ToolbarView(toolbarContainer, {
       onRotate: () => this._dispatchIntent(INPUT_INTENTS.ROTATE),
       onDelete: () => this._dispatchIntent(INPUT_INTENTS.DELETE),
       onUndo: () => this._dispatchIntent(INPUT_INTENTS.UNDO),
+      onRaise: () => this._dispatchIntent(INPUT_INTENTS.RAISE),
+      onLower: () => this._dispatchIntent(INPUT_INTENTS.LOWER),
+      onResetCamera: () => this._dispatchIntent(INPUT_INTENTS.RESET_CAMERA),
       onClear: () => this._onClear(),
       onEvaluate: () => this._dispatchIntent(INPUT_INTENTS.EVALUATE)
     });
@@ -73,6 +78,12 @@ export class GameController {
 
   setPlayerProfile(profile) {
     this.playerProfile = profile;
+    if (profile?.settings) this.setPlayerSettings(profile.settings);
+  }
+
+  setPlayerSettings(settings) {
+    this.playerSettings = { ...settings };
+    this.roomView?.setRenderSettings(this.playerSettings);
   }
 
   async loadLevel(levelId) {
@@ -365,7 +376,7 @@ export class GameController {
         targetScore: this.level.targetScore,
         profile: this.playerProfile
       });
-      if (completion.success) this.playerProfile = completion.data;
+      if (completion.success) this.setPlayerProfile(completion.data);
       else this._showStatus(`Оценка рассчитана, но прогресс не сохранён: ${completion.error}`);
     }
 

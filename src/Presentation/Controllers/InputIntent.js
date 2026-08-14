@@ -1,5 +1,7 @@
 const freeze = value => Object.freeze(value);
 
+export const INPUT_INTENT_VERSION = 2;
+
 export const INPUT_INTENTS = freeze({
   ROTATE: 'rotate',
   DELETE: 'delete',

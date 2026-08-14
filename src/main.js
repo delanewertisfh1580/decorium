@@ -27,10 +27,12 @@ import LoadPlayerProfileUseCase from './Application/UseCases/LoadPlayerProfileUs
 import SavePlayerProfileUseCase from './Application/UseCases/SavePlayerProfileUseCase.js';
 import GetCampaignLevelsUseCase from './Application/UseCases/GetCampaignLevelsUseCase.js';
 import RecordLevelCompletionUseCase from './Application/UseCases/RecordLevelCompletionUseCase.js';
+import UpdatePlayerSettingsUseCase from './Application/UseCases/UpdatePlayerSettingsUseCase.js';
 import ProgressionPolicy from './Domain/Progression/ProgressionPolicy.js';
 import { GameController } from './Presentation/Controllers/GameController.js';
 import { loadPlayerProfileForApp } from './Presentation/bootstrap/loadPlayerProfileForApp.js';
 import { initializeLevelSelectForApp } from './Presentation/bootstrap/initializeLevelSelectForApp.js';
+import { initializePlayerSettingsForApp } from './Presentation/bootstrap/initializePlayerSettingsForApp.js';
 
 async function loadJson(path) {
   const response = await fetch(path);
@@ -68,6 +70,10 @@ async function bootstrap() {
 
     const levelRepository = new JsonLevelRepository('./data/levels', levelSchema);
     const savePlayerProfileUseCase = new SavePlayerProfileUseCase(profileRepository);
+    const updatePlayerSettingsUseCase = new UpdatePlayerSettingsUseCase(
+      savePlayerProfileUseCase,
+      () => new Date().toISOString()
+    );
     const progressionPolicy = new ProgressionPolicy();
     const getCampaignLevelsUseCase = new GetCampaignLevelsUseCase(levelRepository, progressionPolicy);
     const recordLevelCompletionUseCase = new RecordLevelCompletionUseCase(
@@ -123,6 +129,14 @@ async function bootstrap() {
       document.getElementById('toolbar-container'),
       document.getElementById('evaluation-container')
     );
+    const settingsInitialization = await initializePlayerSettingsForApp({
+      updatePlayerSettingsUseCase,
+      gameController: controller,
+      profile: playerProfile,
+      settingsContainer: document.getElementById('settings-container'),
+      appRoot: document.getElementById('app')
+    });
+    playerProfile = settingsInitialization.profile;
     const levelSelection = await initializeLevelSelectForApp({
       getCampaignLevelsUseCase,
       savePlayerProfileUseCase,

@@ -52,7 +52,7 @@ describe('BrowserLocalPlayerProfileRepository', () => {
     expect(restored.profile.toJSON()).toEqual(profile.toJSON());
   });
 
-  it('migrates supported v0 data to v2 and persists the migrated contract', async () => {
+  it('migrates supported v0 data to v3 and persists the migrated contract', async () => {
     const storage = new MemoryStorage({
       [PROFILE_KEY]: JSON.stringify({
         schemaVersion: 0,
@@ -69,16 +69,16 @@ describe('BrowserLocalPlayerProfileRepository', () => {
 
     expect(result.status).toBe('migrated');
     expect(result.profile.toJSON()).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       profileId: 'legacy-profile-001',
-      settings: { reducedMotion: true },
+      settings: { reducedMotion: true, uiScale: 'standard', qualityTier: 'balanced' },
       lastSession: { levelId: 'level-001' },
       progress: { completedLevels: {} }
     });
-    expect(JSON.parse(storage.getItem(PROFILE_KEY)).schemaVersion).toBe(2);
+    expect(JSON.parse(storage.getItem(PROFILE_KEY)).schemaVersion).toBe(3);
   });
 
-  it('migrates persisted v1 data to v2 without losing settings or last session', async () => {
+  it('migrates persisted v1 data to v3 without losing settings or last session', async () => {
     const storage = new MemoryStorage({
       [PROFILE_KEY]: JSON.stringify({
         schemaVersion: 1,
@@ -96,9 +96,9 @@ describe('BrowserLocalPlayerProfileRepository', () => {
 
     expect(result.status).toBe('migrated');
     expect(result.profile.toJSON()).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       profileId: 'profile-v1',
-      settings: { reducedMotion: true },
+      settings: { reducedMotion: true, uiScale: 'standard', qualityTier: 'balanced' },
       lastSession: { levelId: 'level-002' },
       progress: { completedLevels: {} }
     });
@@ -115,12 +115,12 @@ describe('BrowserLocalPlayerProfileRepository', () => {
   it('rejects data that does not satisfy the current profile contract', async () => {
     const storage = new MemoryStorage({
       [PROFILE_KEY]: JSON.stringify({
-        schemaVersion: 2,
+        schemaVersion: 3,
         profileId: '',
         createdAt: timestamp,
         updatedAt: timestamp,
         displayName: null,
-        settings: { reducedMotion: false },
+        settings: { reducedMotion: false, uiScale: 'standard', qualityTier: 'balanced' },
         lastSession: { levelId: null },
         progress: { completedLevels: {} }
       })

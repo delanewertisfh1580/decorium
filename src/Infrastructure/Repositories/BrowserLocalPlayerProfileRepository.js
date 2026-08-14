@@ -23,13 +23,25 @@ function migrateToCurrent(data) {
       }
     : data;
 
-  if (versionOneData.schemaVersion === 1) {
+  const versionTwoData = versionOneData.schemaVersion === 1
+    ? {
+        ...versionOneData,
+        schemaVersion: 2,
+        progress: { completedLevels: {} }
+      }
+    : versionOneData;
+
+  if (versionTwoData.schemaVersion === 2) {
     return {
       migrated: true,
       data: {
-        ...versionOneData,
+        ...versionTwoData,
         schemaVersion: PlayerProfile.schemaVersion,
-        progress: { completedLevels: {} }
+        settings: {
+          reducedMotion: Boolean(versionTwoData.settings?.reducedMotion),
+          uiScale: 'standard',
+          qualityTier: 'balanced'
+        }
       }
     };
   }

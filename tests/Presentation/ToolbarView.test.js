@@ -34,7 +34,9 @@ describe('UI-VIS-002 compact contextual actions', () => {
     toolbar.setSelectionState(true);
     toolbar.setUndoState(true, 'Отменить размещение');
 
-    expect(summary.querySelectorAll('[data-action]').length).toBe(3);
+    expect(summary.querySelectorAll('[data-action]').length).toBe(5);
+    expect(summary.querySelector('[data-action="raise"]').disabled).toBe(false);
+    expect(summary.querySelector('[data-action="lower"]').disabled).toBe(false);
     expect(summary.querySelector('[data-action="rotate"]').disabled).toBe(false);
     expect(summary.querySelector('[data-action="delete"]').disabled).toBe(false);
     expect(summary.querySelector('[data-action="undo"]').title).toBe('Отменить размещение');

@@ -9,6 +9,16 @@ import { ROOM_SURFACE_CONFIG } from '../Scene/roomSurfaceConfig.js';
 const DRAG_THRESHOLD = 5;
 const ANIMATION_MS = 220;
 
+export function rendererSettingsFor(qualityTier) {
+  if (qualityTier === 'performance') return { pixelRatioCap: 1, shadowsEnabled: false };
+  return { pixelRatioCap: 2, shadowsEnabled: true };
+}
+
+export function isPrimaryInteractionPointer(event) {
+  if (event?.pointerType === 'touch') return event.isPrimary !== false;
+  return event?.button === 0;
+}
+
 function easeOutCubic(value) {
   return 1 - ((1 - value) ** 3);
 }
@@ -54,8 +64,8 @@ export class RoomView {
     this.scene.fog = new THREE.Fog(0x0b121b, 14, 32);
     this.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
+    this.playerSettings = { reducedMotion: false, uiScale: 'standard', qualityTier: 'balanced' };
+    this._applyRendererSettings(this.playerSettings);
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -103,6 +113,18 @@ export class RoomView {
     this.onFixtureSelect = () => {};
     this.onFixtureMove = () => {};
     this.onPreview = () => true;
+  }
+
+  _applyRendererSettings(settings) {
+    const rendererSettings = rendererSettingsFor(settings.qualityTier);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, rendererSettings.pixelRatioCap));
+    this.renderer.shadowMap.enabled = rendererSettings.shadowsEnabled;
+    this.renderer.shadowMap.needsUpdate = true;
+  }
+
+  setRenderSettings(settings) {
+    this.playerSettings = { ...settings };
+    this._applyRendererSettings(this.playerSettings);
   }
 
   async init() {
@@ -358,6 +380,11 @@ export class RoomView {
   }
 
   _animate(duration, update, complete = () => {}) {
+    if (this.playerSettings.reducedMotion) {
+      update(1);
+      complete();
+      return;
+    }
     this.animations.add({ start: performance.now(), duration, update, complete });
   }
 
@@ -447,7 +474,7 @@ export class RoomView {
       event.preventDefault();
       return;
     }
-    if (event.button !== 0) return;
+    if (!isPrimaryInteractionPointer(event)) return;
     const point = { x: event.clientX, y: event.clientY };
     const itemHit = this._getItemHit(event);
 

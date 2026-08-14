@@ -1,4 +1,6 @@
-const PROFILE_SCHEMA_VERSION = 2;
+import PlayerSettings from './PlayerSettings.js';
+
+const PROFILE_SCHEMA_VERSION = 3;
 
 function requireNonEmptyString(value, label) {
   if (typeof value !== 'string' || value.trim() === '') {
@@ -24,13 +26,8 @@ function normalizeDisplayName(value) {
 }
 
 function normalizeSettings(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error('PlayerProfile settings must be an object');
-  }
-  if (typeof value.reducedMotion !== 'boolean') {
-    throw new Error('PlayerProfile settings.reducedMotion must be a boolean');
-  }
-  return Object.freeze({ reducedMotion: value.reducedMotion });
+  if (value instanceof PlayerSettings) return value;
+  return PlayerSettings.fromData(value);
 }
 
 function normalizeLastSession(value) {
@@ -78,7 +75,7 @@ export class PlayerProfile {
       createdAt: timestamp,
       updatedAt: timestamp,
       displayName: null,
-      settings: { reducedMotion: false },
+      settings: PlayerSettings.createDefault().toJSON(),
       lastSession: { levelId: null },
       progress: { completedLevels: {} }
     });
@@ -109,16 +106,20 @@ export class PlayerProfile {
   get createdAt() { return this._createdAt; }
   get updatedAt() { return this._updatedAt; }
   get displayName() { return this._displayName; }
-  get settings() { return this._settings; }
+  get settings() { return this._settings.toJSON(); }
   get lastSession() { return this._lastSession; }
   get progress() { return this._progress; }
 
   withReducedMotion(reducedMotion, updatedAt) {
-    if (typeof reducedMotion !== 'boolean') {
-      throw new Error('PlayerProfile reducedMotion must be a boolean');
+    return this.withSettings(this._settings.withChanges({ reducedMotion }), updatedAt);
+  }
+
+  withSettings(settings, updatedAt) {
+    if (!(settings instanceof PlayerSettings)) {
+      throw new Error('PlayerProfile settings must be a PlayerSettings domain object');
     }
     return this._copy({
-      settings: { reducedMotion },
+      settings: settings.toJSON(),
       updatedAt
     });
   }
@@ -157,7 +158,7 @@ export class PlayerProfile {
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       displayName: this.displayName,
-      settings: { ...this.settings },
+      settings: this.settings,
       lastSession: { ...this.lastSession },
       progress: {
         completedLevels: Object.fromEntries(

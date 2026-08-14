@@ -37,6 +37,7 @@ export async function initializeLevelSelectForApp({
   let levelSelectView;
 
   const selectLevel = async levelId => {
+    currentProfile = gameController.playerProfile ?? currentProfile;
     if (!campaign.data.some(level => level.id === levelId && level.isUnlocked !== false)) {
       throw new Error(`UNKNOWN_OR_LOCKED_LEVEL: ${levelId}`);
     }

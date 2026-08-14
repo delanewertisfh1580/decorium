@@ -286,3 +286,46 @@ kbd { padding: 1px 4px; border: 1px solid rgba(82,117,110,.2); border-radius: 4p
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
 }
+
+/* PROD-005: persisted preferences remain available without obscuring the room. */
+#app[data-ui-scale="large"] {
+  --touch-min: 52px;
+  --touch-comfort: 68px;
+}
+.settings-panel {
+  position: absolute;
+  z-index: 3;
+  top: max(102px, calc(env(safe-area-inset-top) + 94px));
+  left: max(14px, env(safe-area-inset-left));
+  width: 174px;
+  padding: 0;
+  border-radius: 12px;
+  overflow: visible;
+  box-shadow: 0 7px 20px rgba(75, 89, 84, 0.06);
+}
+.player-settings { width: 100%; }
+.player-settings-toggle { min-height: 42px; padding: 10px; color: var(--text); cursor: pointer; font-size: 11px; font-weight: 750; list-style: none; user-select: none; }
+.player-settings-toggle::-webkit-details-marker { display: none; }
+.player-settings-toggle::after { content: '⌄'; float: right; color: var(--muted); font-size: 15px; transition: transform var(--motion-press) ease; }
+.player-settings[open] .player-settings-toggle::after { transform: rotate(180deg); }
+.player-settings-form { display: grid; gap: 8px; padding: 0 8px 8px; }
+.player-settings-option { display: grid; gap: 4px; color: var(--muted); font-size: 10px; font-weight: 700; line-height: 1.2; }
+.player-settings-checkbox { grid-template-columns: var(--touch-min) minmax(0, 1fr); align-items: center; min-height: var(--touch-min); padding: 3px 0; }
+.player-settings-checkbox input { width: 20px; height: 20px; margin: auto; accent-color: var(--accent-strong); }
+.player-settings-option select, .player-settings-save { min-height: var(--touch-min); border: 1px solid rgba(82,117,110,.18); border-radius: 9px; background: rgba(255,255,255,.56); color: var(--text); font: inherit; }
+.player-settings-option select { width: 100%; padding: 6px 7px; font-size: 11px; }
+.player-settings-save { padding: 6px 8px; cursor: pointer; font-size: 11px; font-weight: 750; }
+.player-settings-save:hover { border-color: rgba(82,117,110,.45); background: rgba(169,200,189,.25); }
+#app[data-ui-scale="large"] .player-settings-toggle, #app[data-ui-scale="large"] .player-settings-option, #app[data-ui-scale="large"] .player-settings-option select, #app[data-ui-scale="large"] .player-settings-save { font-size: 13px; }
+
+@media (min-width: 721px) {
+  .level-select-panel { top: max(150px, calc(env(safe-area-inset-top) + 142px)); }
+}
+@media (max-width: 720px) {
+  .settings-panel { top: max(96px, calc(env(safe-area-inset-top) + 86px)); left: max(12px, env(safe-area-inset-left)); }
+  .level-select-panel { top: max(140px, calc(env(safe-area-inset-top) + 130px)); }
+}
+@media (max-width: 520px) {
+  .settings-panel { top: max(88px, calc(env(safe-area-inset-top) + 78px)); left: max(10px, env(safe-area-inset-left)); width: 160px; }
+  .level-select-panel { top: max(132px, calc(env(safe-area-inset-top) + 122px)); }
+}

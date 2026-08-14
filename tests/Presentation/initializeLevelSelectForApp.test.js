@@ -75,6 +75,26 @@ describe('initializeLevelSelectForApp', () => {
     expect(result.activeLevelId).toBe('level-001');
   });
 
+  it('persists session selection from the latest controller profile so newer settings are not lost', async () => {
+    const initialProfile = profileWithLastSession(null);
+    const updatedProfile = PlayerProfile.fromData({
+      ...initialProfile.toJSON(),
+      updatedAt: '2026-08-14T10:01:30.000Z',
+      settings: { reducedMotion: true, uiScale: 'large', qualityTier: 'performance' }
+    });
+    const saved = [];
+    await initializeLevelSelectForApp({
+      getCampaignLevelsUseCase: campaignUseCase().useCase,
+      savePlayerProfileUseCase: { execute: async profile => { saved.push(profile); return { success: true, data: profile }; } },
+      gameController: { playerProfile: updatedProfile, loadLevel: async () => {} },
+      profile: initialProfile,
+      levelSelectContainer: document.createElement('aside'),
+      timestampProvider: () => '2026-08-14T10:02:00.000Z'
+    });
+
+    expect(saved[0].settings).toEqual(updatedProfile.settings);
+  });
+
   it('returns an actionable error when campaign availability cannot be loaded', async () => {
     await expect(initializeLevelSelectForApp({
       getCampaignLevelsUseCase: campaignUseCase([], { success: false, error: 'INVALID_LEVEL_CATALOG: missing manifest' }).useCase,

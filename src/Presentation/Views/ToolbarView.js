@@ -1,4 +1,6 @@
 const ACTIONS = [
+  { id: 'raise', icon: '↑', label: 'Поднять', className: 'icon-action' },
+  { id: 'lower', icon: '↓', label: 'Опустить', className: 'icon-action' },
   { id: 'rotate', icon: '↻', label: 'Повернуть', className: 'icon-action' },
   { id: 'delete', icon: '⌫', label: 'Удалить', className: 'icon-action danger-action' },
   { id: 'undo', icon: '↶', label: 'Отменить', className: 'icon-action' }
@@ -6,7 +8,7 @@ const ACTIONS = [
 
 function actionMarkup(action) {
   return `
-    <button class="toolbar-button ${action.className}" data-action="${action.id}" type="button" disabled>
+    <button class="toolbar-button ${action.className}" data-action="${action.id}" type="button" aria-label="${action.label}" disabled>
       <span class="button-icon" aria-hidden="true">${action.icon}</span>
       <span class="button-copy"><span>${action.label}</span></span>
     </button>
@@ -31,6 +33,10 @@ export class ToolbarView {
       <details class="toolbar-more">
         <summary class="toolbar-more-toggle" aria-label="Открыть дополнительные действия и справку">•••</summary>
         <div class="toolbar-menu">
+          <button class="toolbar-button quiet-action" data-action="reset-camera" type="button" aria-label="Вернуть камеру">
+            <span class="button-icon" aria-hidden="true">⌂</span>
+            <span class="button-copy"><span>Вернуть камеру</span></span>
+          </button>
           <button class="toolbar-button quiet-action" data-action="clear" type="button">
             <span class="button-icon" aria-hidden="true">＋</span>
             <span class="button-copy"><span>Новая попытка</span></span>
@@ -53,6 +59,7 @@ export class ToolbarView {
       </details>
     `;
     this.container.querySelector('[data-action="clear"]').onclick = this.callbacks.onClear;
+    this.container.querySelector('[data-action="reset-camera"]').onclick = this.callbacks.onResetCamera;
     this.container.querySelector('[data-action="evaluate"]').onclick = this.callbacks.onEvaluate;
   }
 
@@ -60,13 +67,15 @@ export class ToolbarView {
     this.contextContainer = container;
     if (!container) return;
     container.innerHTML = ACTIONS.map(actionMarkup).join('');
+    container.querySelector('[data-action="raise"]').onclick = this.callbacks.onRaise;
+    container.querySelector('[data-action="lower"]').onclick = this.callbacks.onLower;
     container.querySelector('[data-action="rotate"]').onclick = this.callbacks.onRotate;
     container.querySelector('[data-action="delete"]').onclick = this.callbacks.onDelete;
     container.querySelector('[data-action="undo"]').onclick = this.callbacks.onUndo;
   }
 
   setSelectionState(selected) {
-    for (const action of ['rotate', 'delete']) {
+    for (const action of ['raise', 'lower', 'rotate', 'delete']) {
       const button = this.contextContainer?.querySelector(`[data-action="${action}"]`);
       if (button) {
         button.disabled = !selected;
