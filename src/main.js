@@ -4,6 +4,8 @@ import { HUD_LAYOUT, validateHudLayout } from './Presentation/UI/hudLayout.js';
 import { SchemaLoader } from './Infrastructure/DataLoaders/SchemaLoader.js';
 import { JsonLevelRepository } from './Infrastructure/Repositories/JsonLevelRepository.js';
 import { InMemoryRoomRepository } from './Infrastructure/Repositories/InMemoryRoomRepository.js';
+import BrowserLocalPlayerProfileRepository from './Infrastructure/Repositories/BrowserLocalPlayerProfileRepository.js';
+import BrowserPlayerProfileFactory from './Infrastructure/Factories/BrowserPlayerProfileFactory.js';
 import { JsonItemCatalog } from './Infrastructure/DataLoaders/JsonItemCatalog.js';
 import { JsonConstraintCatalog } from './Infrastructure/DataLoaders/JsonConstraintCatalog.js';
 import { JsonStyleCatalog } from './Infrastructure/DataLoaders/JsonStyleCatalog.js';
@@ -18,7 +20,9 @@ import PlaceItemUseCase from './Application/UseCases/PlaceItemUseCase.js';
 import MoveItemUseCase from './Application/UseCases/MoveItemUseCase.js';
 import RotateItemUseCase from './Application/UseCases/RotateItemUseCase.js';
 import RemoveItemUseCase from './Application/UseCases/RemoveItemUseCase.js';
+import LoadPlayerProfileUseCase from './Application/UseCases/LoadPlayerProfileUseCase.js';
 import { GameController } from './Presentation/Controllers/GameController.js';
+import { loadPlayerProfileForApp } from './Presentation/bootstrap/loadPlayerProfileForApp.js';
 
 async function loadJson(path) {
   const response = await fetch(path);
@@ -34,6 +38,19 @@ async function bootstrap() {
     if (tokenErrors.length > 0) throw new Error(`Invalid presentation tokens: ${tokenErrors.join(', ')}`);
     if (hudErrors.length > 0) throw new Error(`Invalid HUD layout: ${hudErrors.join(', ')}`);
     applyDesignTokens(document.documentElement);
+
+    const profileRepository = new BrowserLocalPlayerProfileRepository(window.localStorage);
+    const profileFactory = new BrowserPlayerProfileFactory({
+      idProvider: () => window.crypto.randomUUID(),
+      timestampProvider: () => new Date().toISOString()
+    });
+    const loadPlayerProfileUseCase = new LoadPlayerProfileUseCase(profileRepository, profileFactory);
+    await loadPlayerProfileForApp({
+      loadPlayerProfileUseCase,
+      profileContainer: document.getElementById('profile-container'),
+      appRoot: document.getElementById('app')
+    });
+
     const [levelSchema, itemSchema, scoringParameters] = await Promise.all([
       SchemaLoader.loadLevelSchema(),
       SchemaLoader.loadItemSchema(),
@@ -91,7 +108,7 @@ async function bootstrap() {
   } catch (error) {
     console.error('Decorium bootstrap error:', error);
     status.className = 'boot-status panel error-card';
-    status.textContent = `Не удалось загрузить MVP: ${error.message}`;
+    status.textContent = `Не удалось загрузить игру: ${error.message}`;
   }
 }
 
