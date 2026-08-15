@@ -8,7 +8,7 @@ function freezeDeep(value) {
 }
 
 export class JsonPresentationEnvironmentRepository extends PresentationEnvironmentRepository {
-  constructor(catalogPath = './data/presentation/environment-profiles.v1.json', schema = null) {
+  constructor(catalogPath = './data/presentation/environment-profiles.v2.json', schema = null) {
     super();
     this.catalogPath = catalogPath;
     this.validate = schema ? new Ajv().compile(schema) : null;

@@ -267,9 +267,67 @@ export class LocationEnvironmentSystem {
       const trunk = cylinder(0.09, 0.12, 1.15, 0x6e5547, { roughness: 0.95 });
       trunk.position.set(x, 0.57, this.depth + 0.75);
       this.root.add(trunk);
-      const crown = sphere(0.45, exterior.foliageColor, { roughness: 0.95 });
+      const crown = sphere(0.45 * this.environmentPlan.identity.exteriorComposition.foliageScale, exterior.foliageColor, { roughness: 0.95 });
       crown.position.set(x, 1.35, this.depth + 0.75);
       this.root.add(crown);
+    }
+    this._buildExteriorComposition(exterior, this.environmentPlan.identity.exteriorComposition, facadeZ);
+  }
+
+  _buildExteriorComposition(exterior, composition, facadeZ) {
+    const root = new THREE.Group();
+    root.userData.kind = 'authored-exterior-composition';
+    root.userData.exteriorComposition = composition.kind;
+    this.root.add(root);
+    const add = mesh => { root.add(mesh); return mesh; };
+    const streetCenter = this.width / 2;
+
+    if (composition.kind === 'residential-porch') {
+      const canopy = add(box(1.62, 0.12, 0.65, composition.accentColor, { roughness: 0.62 }));
+      canopy.position.set(streetCenter, 1.92, facadeZ - 0.38);
+      canopy.rotation.x = -0.12;
+      for (const x of [-0.62, 0.62]) {
+        const post = add(cylinder(0.035, 0.04, 1.36, composition.facadeInsetColor, { roughness: 0.82 }));
+        post.position.set(streetCenter + x, 0.68, facadeZ - 0.34);
+      }
+      const planter = add(box(0.74, 0.26, 0.28, composition.facadeInsetColor, { roughness: 0.88 }));
+      planter.position.set(streetCenter - 1.18, 0.18, facadeZ - 0.32);
+      for (const x of [-.2, 0, .2]) {
+        const bloom = add(sphere(.14, exterior.foliageColor, { roughness: .94 }));
+        bloom.position.set(streetCenter - 1.18 + x, .42, facadeZ - .32);
+      }
+    }
+
+    if (composition.kind === 'urban-cinema-block') {
+      const marquee = add(box(this.width * .64, .18, .22, composition.accentColor, { roughness: .38, metalness: .25, emissive: composition.accentColor, emissiveIntensity: .12 }));
+      marquee.position.set(streetCenter, 2.82, facadeZ - .25);
+      const screen = add(box(this.width * .42, .72, .04, composition.facadeInsetColor, { roughness: .44, emissive: 0x293a5f, emissiveIntensity: .12 }));
+      screen.position.set(streetCenter, 2.18, facadeZ - .17);
+      for (let index = 0; index < 7; index += 1) {
+        const bulb = add(sphere(.035, 0xffcf8a, { emissive: 0xffa95f, emissiveIntensity: .7, castShadow: false }));
+        bulb.position.set(streetCenter - this.width * .27 + index * this.width * .09, 2.82, facadeZ - .39);
+      }
+      for (const x of [-this.width * .36, this.width * .36]) {
+        const banner = add(box(.16, 1.15, .03, composition.accentColor, { roughness: .62 }));
+        banner.position.set(streetCenter + x, 1.85, facadeZ - .19);
+      }
+    }
+
+    if (composition.kind === 'courtyard-workshop') {
+      const arch = add(box(this.width * .54, .16, .26, composition.accentColor, { roughness: .7 }));
+      arch.position.set(streetCenter, 2.7, facadeZ - .31);
+      for (const x of [-this.width * .27, this.width * .27]) {
+        const post = add(box(.13, 2.0, .18, composition.facadeInsetColor, { roughness: .86 }));
+        post.position.set(streetCenter + x, 1.0, facadeZ - .3);
+      }
+      for (const x of [streetCenter - this.width * .18, streetCenter + this.width * .18]) {
+        const bench = add(box(.56, .34, .22, composition.facadeInsetColor, { roughness: .82 }));
+        bench.position.set(x, .23, facadeZ - .36);
+        const pot = add(cylinder(.16, .2, .24, composition.accentColor, { roughness: .9 }, 16));
+        pot.position.set(x, .5, facadeZ - .4);
+        const plant = add(sphere(.22, exterior.foliageColor, { roughness: .95 }));
+        plant.position.set(x, .73, facadeZ - .4);
+      }
     }
   }
 
@@ -333,7 +391,75 @@ export class LocationEnvironmentSystem {
     this.root.add(this.restingCat);
     }
 
+    this._buildIdentityBuiltIn();
     this._buildProfileDecor();
+  }
+
+  _buildIdentityBuiltIn() {
+    const builtIn = this.environmentPlan.identity.builtIn;
+    const root = new THREE.Group();
+    root.userData.kind = 'authored-room-built-in';
+    root.userData.builtInPreset = builtIn.kind;
+    root.userData.semantic = builtIn.semantic;
+    this.root.add(root);
+    const add = mesh => { root.add(mesh); return mesh; };
+    const backZ = this.depth - .24;
+
+    if (builtIn.kind === 'living-library-nook') {
+      const cabinet = add(box(1.46, 1.22, .26, builtIn.woodColor, { roughness: .72 }));
+      cabinet.position.set(this.width * .24, .61, backZ);
+      for (const z of [.28, .67, 1.04]) {
+        const shelf = add(box(1.34, .055, .33, builtIn.accentColor, { roughness: .62 }));
+        shelf.position.set(this.width * .24, z, backZ - .15);
+      }
+      for (let index = 0; index < 6; index += 1) {
+        const book = add(box(.11, .24 + (index % 2) * .08, .14, index % 2 ? builtIn.fabricColor : builtIn.accentColor, { roughness: .86 }));
+        book.position.set(this.width * .24 - .52 + index * .19, 1.2 + (index % 2) * .03, backZ - .18);
+      }
+      const pendant = add(cylinder(.012, .012, .64, 0x28323e, { roughness: .7 }, 8));
+      pendant.position.set(this.width * .52, 2.82, this.depth * .46);
+      const shade = add(new THREE.Mesh(new THREE.ConeGeometry(.33, .26, 20), material(builtIn.accentColor, { emissive: builtIn.accentColor, emissiveIntensity: .12 })));
+      shade.position.set(this.width * .52, 2.45, this.depth * .46);
+      shade.rotation.x = Math.PI;
+    }
+
+    if (builtIn.kind === 'media-wall-screen') {
+      const wallPanel = add(box(2.3, 1.72, .12, builtIn.woodColor, { roughness: .62 }));
+      wallPanel.position.set(this.width * .68, 1.2, backZ);
+      for (let index = 0; index < 6; index += 1) {
+        const slat = add(box(.045, 1.5, .04, builtIn.accentColor, { roughness: .54, metalness: .12 }));
+        slat.position.set(this.width * .68 - .9 + index * .36, 1.26, backZ - .09);
+      }
+      const screenFrame = add(box(1.46, .9, .05, 0x101724, { roughness: .34, metalness: .28 }));
+      screenFrame.position.set(this.width * .68, 1.66, backZ - .13);
+      const screen = add(box(1.31, .74, .022, builtIn.fabricColor, { roughness: .22, emissive: builtIn.fabricColor, emissiveIntensity: .16, castShadow: false }));
+      screen.position.set(this.width * .68, 1.66, backZ - .17);
+      screen.userData.kind = 'decorative-media-screen';
+      screen.userData.semantic = false;
+      const console = add(box(1.88, .34, .28, builtIn.woodColor, { roughness: .68 }));
+      console.position.set(this.width * .68, .26, backZ - .12);
+      for (const x of [-.48, .48]) {
+        const sconce = add(sphere(.075, builtIn.accentColor, { emissive: builtIn.accentColor, emissiveIntensity: .6, castShadow: false }));
+        sconce.position.set(this.width * .68 + x, 2.42, backZ - .14);
+      }
+    }
+
+    if (builtIn.kind === 'studio-gallery-rail') {
+      const rail = add(box(2.25, .055, .08, builtIn.woodColor, { roughness: .54, metalness: .14 }));
+      rail.position.set(this.width * .34, 2.36, backZ);
+      for (let index = 0; index < 3; index += 1) {
+        const cable = add(cylinder(.01, .01, .55 + (index % 2) * .12, builtIn.accentColor, { roughness: .45, metalness: .22 }, 8));
+        cable.position.set(this.width * .34 - .65 + index * .65, 2.05, backZ - .04);
+        const frame = add(box(.42, .52, .038, index === 1 ? builtIn.fabricColor : builtIn.accentColor, { roughness: .76 }));
+        frame.position.set(this.width * .34 - .65 + index * .65, 1.65 - (index % 2) * .1, backZ - .08);
+      }
+      const workbench = add(box(1.55, .68, .34, builtIn.woodColor, { roughness: .74 }));
+      workbench.position.set(this.width * .75, .34, backZ - .1);
+      for (const x of [-.6, .6]) {
+        const leg = add(box(.08, .58, .08, builtIn.accentColor, { roughness: .52, metalness: .18 }));
+        leg.position.set(this.width * .75 + x, .29, backZ - .1);
+      }
+    }
   }
 
   _buildProfileDecor() {

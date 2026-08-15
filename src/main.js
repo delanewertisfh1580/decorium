@@ -90,7 +90,7 @@ async function bootstrap() {
 
     const levelRepository = new JsonLevelRepository('./data/levels', levelSchema);
     const presentationEnvironmentRepository = new JsonPresentationEnvironmentRepository(
-      './data/presentation/environment-profiles.v1.json',
+      './data/presentation/environment-profiles.v2.json',
       presentationEnvironmentSchema
     );
     const savePlayerProfileUseCase = new SavePlayerProfileUseCase(profileRepository);

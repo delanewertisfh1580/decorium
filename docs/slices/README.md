@@ -11,3 +11,4 @@
 | [PROD-013 — Asset-backed PBR lounge pack](PROD-013-lounge-pbr-asset-pack.md) | Completed | Four PBR GLB lounge prefabs, multi-pack delivery, PMREM lighting response and safe runtime fallback. |
 | [PROD-014 — Asset-backed PBR dining/table pack](PROD-014-dining-table-pbr-asset-pack.md) | Completed | Three PBR GLB table prefabs, explicit UV1/texture-variant conformance and safe runtime fallback. |
 | [PROD-015 — Asset-backed PBR storage pack](PROD-015-storage-pbr-asset-pack.md) | Completed | Seven PBR GLB storage prefabs, complete family ownership, bounded delivery and safe runtime fallback. |
+| [PROD-016 — Authored room identity baseline](PROD-016-authored-room-identity-baseline.md) | Completed | Versioned wall, built-in and exterior composition selectors create three distinct room identities without changing game rules. |

@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { resolveEnvironmentProfilePlan } from '../../src/Presentation/Scene/EnvironmentProfilePlan.js';
 
 const warmProfile = Object.freeze({
-  schemaVersion: 1,
+  schemaVersion: 2,
   id: 'warm-starter-living',
   room: Object.freeze({
     floorPreset: 'light-oak',
     wallPreset: 'warm-plaster',
     openingsPreset: 'living-window-and-door',
-    cameraPreset: 'compact-living'
+    cameraPreset: 'compact-living',
+    identity: Object.freeze({ wallTreatmentPreset: 'warm-linen-wainscot', builtInPreset: 'living-library-nook', exteriorCompositionPreset: 'residential-porch' })
   }),
   lightingPreset: 'warm-evening',
   exteriorPreset: 'quiet-residential-street',
@@ -24,11 +25,12 @@ const mediaProfile = Object.freeze({
     floorPreset: 'dark-oak',
     wallPreset: 'charcoal-accent',
     openingsPreset: 'media-narrow-window',
-    cameraPreset: 'intimate-media'
+    cameraPreset: 'intimate-media',
+    identity: Object.freeze({ wallTreatmentPreset: 'midnight-graphic-wallpaper', builtInPreset: 'media-wall-screen', exteriorCompositionPreset: 'urban-cinema-block' })
   }),
   lightingPreset: 'media-dusk',
   exteriorPreset: 'urban-evening',
-  ambientFixtures: Object.freeze(['accent-wall-art', 'low-bookshelf']),
+  ambientFixtures: Object.freeze(['low-bookshelf']),
   sceneLifePreset: 'quiet-media-dusk',
   presentation: Object.freeze({ title: 'Медиа-уголок', subtitle: 'Уютный просмотр' })
 });
@@ -40,7 +42,8 @@ const studioProfile = Object.freeze({
     floorPreset: 'concrete-sand',
     wallPreset: 'gallery-white',
     openingsPreset: 'studio-wide-window',
-    cameraPreset: 'open-studio'
+    cameraPreset: 'open-studio',
+    identity: Object.freeze({ wallTreatmentPreset: 'sunwash-gallery-wall', builtInPreset: 'studio-gallery-rail', exteriorCompositionPreset: 'courtyard-workshop' })
   }),
   lightingPreset: 'bright-daylight',
   exteriorPreset: 'courtyard-daylight',

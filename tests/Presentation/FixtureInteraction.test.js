@@ -8,6 +8,10 @@ describe('UI-ROOM-004 fixture interaction', () => {
     const scene = new THREE.Scene();
     const environmentPlan = {
       exterior: { sidewalkColor: 0x967e70, roadColor: 0x28333c, facadeColor: 0x76675e, foliageColor: 0x587865, routeScale: 1 },
+      identity: {
+        exteriorComposition: { kind: 'residential-porch', facadeInsetColor: 0x8d7668, accentColor: 0xc49c6d, foliageScale: 1.05 },
+        builtIn: { kind: 'living-library-nook', semantic: false, woodColor: 0x80563c, accentColor: 0xd4b075, fabricColor: 0x718799 }
+      },
       fixtures: ['mirror', 'bookshelf'],
       lighting: { background: 0x172131, fog: 0x172131, hemisphereSky: 0xbad7ff, hemisphereGround: 0x202938, hemisphereIntensity: 1.9, key: 0xffe8c7, keyIntensity: 3.2, rim: 0x5799f4, rimIntensity: 15, warm: 0xffb46d, warmIntensity: 7 },
       sceneLife: { moteCount: 14, petEnabled: false, routeScale: 1 }

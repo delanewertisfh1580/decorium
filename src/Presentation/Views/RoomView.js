@@ -208,6 +208,7 @@ export class RoomView {
     const plan = this.environmentPlan;
     this._roomSize = { width, depth };
     this._presentationEnvironmentId = plan.id;
+    disposeObject(this.roomGroup);
     this.roomGroup.clear();
     this.walls = [];
     this.floor = new THREE.Mesh(
@@ -241,6 +242,7 @@ export class RoomView {
       wall.userData.wallSide = side;
       this.walls.push(wall);
     }
+    this._addWallTreatment(width, depth, wallHeight, plan);
     this._addRoomDecor(width, depth, wallHeight, plan);
     this._updateWallVisibility();
     this.sceneLife?.destroy();
@@ -251,6 +253,58 @@ export class RoomView {
       target: new THREE.Vector3(width / 2, plan.camera.targetHeight, depth / 2)
     };
     this.resetCamera();
+  }
+
+  _addWallTreatment(width, depth, wallHeight, plan) {
+    const treatment = plan.identity.wallTreatment;
+    const openings = getRoomOpenings(width, depth, wallHeight, plan.openings);
+    const backZ = depth - 0.052;
+    const createDetail = (size, position, color, options = {}) => {
+      const detail = addRoomBox(this.roomGroup, size, position, color, { castShadow: false, receiveShadow: false, ...options });
+      detail.userData.kind = 'room-wall-treatment';
+      detail.userData.wallTreatment = treatment.kind;
+      return detail;
+    };
+    const addBackLowerBand = (color, height = 0.68) => {
+      const lowerHeight = Math.min(height, openings.window.bottom - 0.1);
+      if (lowerHeight <= 0.08) return;
+      createDetail([width - 0.12, lowerHeight, 0.028], [width / 2, lowerHeight / 2, backZ], color, { roughness: 0.92 });
+    };
+
+    addBackLowerBand(treatment.wainscotColor);
+    const sideRailY = 1.08;
+    createDetail([0.032, 1.85, depth - 0.24], [0.052, sideRailY, depth / 2], treatment.wainscotColor, { roughness: 0.9 });
+    createDetail([0.032, 1.85, depth - 0.24], [width - 0.052, sideRailY, depth / 2], treatment.wainscotColor, { roughness: 0.9 });
+
+    if (treatment.kind === 'warm-linen-wainscot') {
+      for (let index = 0; index < 5; index += 1) {
+        const x = 0.52 + index * ((width - 1.04) / 4);
+        createDetail([0.022, 1.54, 0.024], [x, 1.72, backZ - 0.016], treatment.trimColor, { roughness: 0.62, metalness: 0.05 });
+      }
+      createDetail([width - 0.18, 0.055, 0.045], [width / 2, 1.03, backZ - 0.018], treatment.trimColor, { roughness: 0.55 });
+    }
+
+    if (treatment.kind === 'midnight-graphic-wallpaper') {
+      const motifX = [0.16, 0.36, 0.56, 0.76, 0.88].map(factor => width * factor);
+      motifX.forEach((x, index) => {
+        const motif = createDetail([0.14, 0.48 + (index % 2) * 0.18, 0.022], [x, 2.15 + (index % 2) * 0.12, backZ - 0.018], treatment.patternColor, { roughness: 0.5, emissive: treatment.patternColor, emissiveIntensity: 0.04 });
+        motif.rotation.z = index % 2 ? Math.PI / 4 : -Math.PI / 4;
+      });
+      createDetail([width - 0.16, 0.04, 0.045], [width / 2, 0.92, backZ - 0.02], treatment.trimColor, { roughness: 0.38, metalness: 0.22 });
+    }
+
+    if (treatment.kind === 'sunwash-gallery-wall') {
+      const panelWidth = Math.max(0.42, (width - 0.5) / 5);
+      for (let index = 0; index < 5; index += 1) {
+        const panel = createDetail([panelWidth - 0.05, 1.62, 0.024], [0.25 + panelWidth * (index + 0.5), 2.24, backZ - 0.017], index % 2 ? treatment.textileColor : treatment.patternColor, { roughness: 0.86, transparent: true, opacity: 0.46 });
+        panel.userData.galleryPanel = index;
+      }
+      createDetail([width - 0.14, 0.045, 0.05], [width / 2, 1.42, backZ - 0.02], treatment.trimColor, { roughness: 0.5, metalness: 0.1 });
+      for (const [index, zFactor] of [.24, .51, .78].entries()) {
+        const panel = createDetail([0.026, 1.46, Math.max(.48, depth * .19)], [width - .051, 1.95, depth * zFactor], index % 2 ? treatment.patternColor : treatment.textileColor, { roughness: .72, transparent: true, opacity: .72 });
+        panel.userData.gallerySidePanel = index;
+      }
+    }
   }
 
   _addRoomDecor(width, depth, wallHeight, plan) {
@@ -286,28 +340,6 @@ export class RoomView {
     handle.position.set(0.13, door.height * 0.52, door.centerZ - 0.23);
     this.roomGroup.add(handle);
 
-    const pendant = new THREE.Group();
-    const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.7, 8), makeMaterial(0x27323e));
-    cord.position.y = 2.82;
-    pendant.add(cord);
-    const shade = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.28, 24), makeMaterial(0xd1a267, { emissive: 0xffb75f, emissiveIntensity: 0.18 }));
-    shade.position.y = 2.47;
-    shade.rotation.x = Math.PI;
-    pendant.add(shade);
-    pendant.position.set(width * 0.48, 0, depth * 0.46);
-    this.roomGroup.add(pendant);
-
-    const planter = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.32, 0.42, 18), makeMaterial(0x8f7663));
-    planter.position.set(width - 0.48, 0.21, depth - 0.45);
-    planter.castShadow = true;
-    this.roomGroup.add(planter);
-    for (const [x, y, z, scale] of [[-0.12, 0.7, 0, 0.2], [0.12, 0.88, 0.03, 0.24], [0, 1.08, -0.02, 0.23]]) {
-      const leaf = new THREE.Mesh(new THREE.SphereGeometry(scale, 12, 8), makeMaterial(0x5d8067));
-      leaf.position.set(width - 0.48 + x, y, depth - 0.45 + z);
-      leaf.scale.y = 1.5;
-      leaf.castShadow = true;
-      this.roomGroup.add(leaf);
-    }
   }
 
   _updateWallVisibility() {

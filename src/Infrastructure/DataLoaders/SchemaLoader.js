@@ -14,7 +14,7 @@ export class SchemaLoader {
   }
 
   static async loadPresentationEnvironmentSchema() {
-    return this.load('./data/presentation/environment-profile.v1.schema.json');
+    return this.load('./data/presentation/environment-profile.v2.schema.json');
   }
 }
 
