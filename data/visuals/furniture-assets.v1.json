@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "packId": "seating-foundations-v1",
+  "maxPackBytes": 2500000,
+  "assets": [
+    {
+      "itemId": "chair-001",
+      "assetId": "dining-chair-v1",
+      "format": "glb",
+      "path": "/assets/furniture/seating/dining-chair-v1.glb",
+      "maxBytes": 225000,
+      "triangleBudget": 3200
+    },
+    {
+      "itemId": "chair-002",
+      "assetId": "lounge-armchair-v1",
+      "format": "glb",
+      "path": "/assets/furniture/seating/lounge-armchair-v1.glb",
+      "maxBytes": 175000,
+      "triangleBudget": 4200
+    },
+    {
+      "itemId": "chair-003",
+      "assetId": "office-chair-v1",
+      "format": "glb",
+      "path": "/assets/furniture/seating/office-chair-v1.glb",
+      "maxBytes": 375000,
+      "triangleBudget": 4800
+    },
+    {
+      "itemId": "ottoman-001",
+      "assetId": "ottoman-v1",
+      "format": "glb",
+      "path": "/assets/furniture/seating/ottoman-v1.glb",
+      "maxBytes": 225000,
+      "triangleBudget": 2400
+    },
+    {
+      "itemId": "bench-001",
+      "assetId": "entry-bench-v1",
+      "format": "glb",
+      "path": "/assets/furniture/seating/entry-bench-v1.glb",
+      "maxBytes": 325000,
+      "triangleBudget": 3600
+    },
+    {
+      "itemId": "barstool-001",
+      "assetId": "barstool-v1",
+      "format": "glb",
+      "path": "/assets/furniture/seating/barstool-v1.glb",
+      "maxBytes": 325000,
+      "triangleBudget": 3000
+    },
+    {
+      "itemId": "armchair-001",
+      "assetId": "classic-armchair-v1",
+      "format": "glb",
+      "path": "/assets/furniture/seating/classic-armchair-v1.glb",
+      "maxBytes": 750000,
+      "triangleBudget": 4600
+    }
+  ]
+}

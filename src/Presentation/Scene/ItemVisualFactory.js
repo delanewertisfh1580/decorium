@@ -572,7 +572,7 @@ function updateFeedback(group, state, { ghost = false } = {}) {
     halo.scale.setScalar(safeState === 'invalid' ? 1.04 : 1);
   }
   group.traverse(object => {
-    if (!object.isMesh || object.userData.kind !== 'item-part' || !object.material) return;
+    if (!object.isMesh || !['item-part', 'item-asset-part'].includes(object.userData.kind) || !object.material) return;
     const baseColor = object.userData.baseColor ?? object.material.color.getHex();
     if (ghost) {
       object.material.transparent = true;
@@ -630,6 +630,25 @@ export class ItemVisualFactory {
 
     if (ghost) ItemVisualFactory.setGhost(group, true);
     return group;
+  }
+
+  static attachAsset(group, asset) {
+    if (!group || !asset) return;
+    group.children
+      .filter(child => child.userData.kind === 'item-part')
+      .forEach(child => { child.visible = false; child.userData.fallbackHidden = true; });
+    asset.traverse(object => {
+      if (!object.isMesh) return;
+      object.userData.kind = 'item-asset-part';
+      object.userData.itemId = group.userData.itemId;
+      object.userData.catalogItemId = group.userData.catalogItemId;
+      if (object.material?.color) object.userData.baseColor = object.material.color.getHex();
+    });
+    group.add(asset);
+    group.userData.assetId = asset.userData.assetId ?? null;
+    group.userData.assetState = 'ready';
+    const state = group.userData.feedbackState ?? 'idle';
+    updateFeedback(group, state, { ghost: state === 'valid' || state === 'invalid' || state === 'warning' });
   }
 
   static setSelected(group, selected) {
