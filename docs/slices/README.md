@@ -5,3 +5,4 @@
 | Slice | Статус | Итог |
 |---|---|---|
 | [PROD-010 — Authored level presentation profiles](PROD-010-authored-level-presentation-profiles.md) | Completed | Три authored level profiles с versioned schema, distinct scenes и isolated gameplay boundary. |
+| [PROD-011 — Persistent structured catalog](PROD-011-persistent-structured-catalog.md) | Completed | Category navigation, search и in-session catalog continuity after placement. |

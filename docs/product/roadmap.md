@@ -19,19 +19,19 @@
 
 ## Завершённая база
 
-PROD-001—PROD-006 создали profile, authored level selection, ergonomics, progression, touch/settings и release manifest/CI gate. HOTFIX-001 и HOTFIX-002 исправили completion level ID и refresh campaign unlock. PROD-009a—PROD-009c добавили semantic item metadata, functional dining relationships и directional lounge scenario. PROD-010 добавил versioned authored presentation profiles, визуально различающие три published levels без изменения gameplay scoring. Подробные evidence находятся в [history/slices](../history/slices/), [history/verification](../history/verification/) и [slice report PROD-010](../slices/PROD-010-authored-level-presentation-profiles.md).
+PROD-001—PROD-006 создали profile, authored level selection, ergonomics, progression, touch/settings и release manifest/CI gate. HOTFIX-001 и HOTFIX-002 исправили completion level ID и refresh campaign unlock. PROD-009a—PROD-009c добавили semantic item metadata, functional dining relationships и directional lounge scenario. PROD-010 добавил versioned authored presentation profiles без изменения gameplay scoring; corrective room-archetype work остаётся в active queue. PROD-011 добавил structured catalog navigation, search и in-session continuity after placement. Evidence: [PROD-010](../slices/PROD-010-authored-level-presentation-profiles.md) and [PROD-011](../slices/PROD-011-persistent-structured-catalog.md).
 
 ## Следующие production-направления
 
 | Приоритет | Направление | Пользовательский результат | Предварительные границы |
 |---|---|---|---|
-| P0 | PROD-011 — Persistent structured catalog | Игрок быстро находит предмет через category tabs и search; после placement сохраняются scroll position, active category, search query и selection continuity. | Presentation state and catalog UX contracts only; не менять score, progression, catalog gameplay semantics или presentation profile contract. |
 | P1 | Multi-style `ClientBrief v1` foundation | Игрок получает заказ с primary/secondary/accent style goals, explicit mixing policy, client priorities и hard constraints. | Versioned schema, Domain value object, loader, deterministic style-fit channels, feedback and brief view; current Scandinavian dataset remains a starter fixture. |
 | P1 | Client-brief content authoring pipeline | Контент-дизайнер добавляет style families, mixing policy и новые briefs с validation до runtime. | Compiled/catalog validation, reproducible fixtures, reviewable schemas; без runtime LLM-оценки. |
 | P1 | Functional-layout expansion | Новые объяснимые interaction scenarios учитывают lifestyle requirements конкретного клиента. | Новый typed rule kind только при отдельном authored data и red tests; например bidirectional view relation или wall-dependent fixture policy. |
 | P1 | Release observability and browser verification | Оператор может уверенно идентифицировать и проверить опубликованный build. | Release manifest, CI gate, browser smoke, performance budget; telemetry только privacy-safe и не влияет на score. |
 | P2 | Performance and accessibility hardening | Игра остаётся удобной на target browser и touch устройствах. | Measured budgets, reduced-motion, quality tiers, input parity. |
 | P3 | Platform packaging | Подготовленный mobile-native release candidate. | Platform adapters и реальные device acceptance tests; не смешивать с текущим web Domain. |
+| P4 | PROD-010R — Corrective authored room archetypes and visual identity | Уровни становятся различимыми с первого кадра за счёт действительно разных room topology, architecture, camera, exterior и landmark décor. | Выполняется последним по product decision; не ограничиваться palette swaps и не менять gameplay scoring/progression. |
 
 ## Явно не запланировано
 
