@@ -3,7 +3,7 @@
 **Статус:** Active
 **Обновлено:** 15 августа 2026 г.
 
-Этот документ содержит только **незавершённую** работу, которая может изменить production baseline. Completed slice evidence хранится в [history/slices](../history/slices/), а не дублируется здесь.
+Этот документ содержит только **незавершённую** работу, которая может изменить production baseline. Completed slice evidence хранится в [slice reports](../slices/), а не дублируется здесь.
 
 ## Delivery discipline
 
@@ -19,7 +19,7 @@
 
 ## Завершённая база
 
-PROD-001—PROD-006 создали profile, authored level selection, ergonomics, progression, touch/settings и release manifest/CI gate. HOTFIX-001 и HOTFIX-002 исправили completion level ID и refresh campaign unlock. PROD-009a—PROD-009c добавили semantic item metadata, functional dining relationships и directional lounge scenario. PROD-010 добавил versioned authored presentation profiles без изменения gameplay scoring; corrective room-archetype work остаётся в active queue. PROD-011 добавил structured catalog navigation, search и in-session continuity after placement. PROD-012 добавил explicit low-poly visual families, а PROD-012R заменил priority seating rendering семью authored GLB prefabs с versioned budgets и safe runtime fallback. Evidence: [PROD-010](../slices/PROD-010-authored-level-presentation-profiles.md), [PROD-011](../slices/PROD-011-persistent-structured-catalog.md), [PROD-012](../slices/PROD-012-distinct-furniture-visual-families.md) and [PROD-012R](../slices/PROD-012R-asset-backed-furniture-quality.md).
+PROD-001—PROD-006 создали profile, authored level selection, ergonomics, progression, touch/settings и release manifest/CI gate. HOTFIX-001 и HOTFIX-002 исправили completion level ID и refresh campaign unlock. PROD-009a—PROD-009c добавили semantic item metadata, functional dining relationships и directional lounge scenario. PROD-010 добавил versioned authored presentation profiles без изменения gameplay scoring; corrective room-archetype work остаётся в active queue. PROD-011 добавил structured catalog navigation, search и in-session continuity after placement. PROD-012 добавил explicit low-poly visual families, PROD-012R заменил priority seating rendering семью authored GLB prefabs с versioned budgets и safe runtime fallback, а PROD-013 добавил четыре lounge PBR GLB prefabs with normal/roughness/AO maps, multi-manifest delivery, PMREM lighting response и тот же safe fallback. Evidence: [PROD-010](../slices/PROD-010-authored-level-presentation-profiles.md), [PROD-011](../slices/PROD-011-persistent-structured-catalog.md), [PROD-012](../slices/PROD-012-distinct-furniture-visual-families.md), [PROD-012R](../slices/PROD-012R-asset-backed-furniture-quality.md) and [PROD-013](../slices/PROD-013-lounge-pbr-asset-pack.md).
 
 ## Следующие production-направления
 

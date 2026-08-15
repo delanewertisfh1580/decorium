@@ -31,10 +31,19 @@ function prepareClone(source, asset) {
 }
 
 export class FurnitureAssetRepository {
-  constructor({ manifest, loadAsset = defaultLoadAsset }) {
-    if (!manifest?.schemaVersion || !Array.isArray(manifest.assets)) throw new Error('FurnitureAssetRepository requires a versioned asset manifest');
+  constructor({ manifest = null, manifests = null, loadAsset = defaultLoadAsset }) {
+    const resolvedManifests = manifests ?? (manifest ? [manifest] : []);
+    if (!Array.isArray(resolvedManifests) || resolvedManifests.length === 0 || resolvedManifests.some(candidate => !candidate?.schemaVersion || !Array.isArray(candidate.assets))) {
+      throw new Error('FurnitureAssetRepository requires one or more versioned asset manifests');
+    }
     if (typeof loadAsset !== 'function') throw new Error('FurnitureAssetRepository loadAsset must be a function');
-    this.assetsByItemId = new Map(manifest.assets.map(asset => [asset.itemId, Object.freeze({ ...asset })]));
+    this.assetsByItemId = new Map();
+    for (const sourceManifest of resolvedManifests) {
+      for (const asset of sourceManifest.assets) {
+        if (this.assetsByItemId.has(asset.itemId)) throw new Error(`FurnitureAssetRepository duplicate item asset: ${asset.itemId}`);
+        this.assetsByItemId.set(asset.itemId, Object.freeze({ ...asset }));
+      }
+    }
     this.loadAsset = loadAsset;
     this.sourcesByAssetId = new Map();
   }

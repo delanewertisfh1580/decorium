@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "packId": "lounge-pbr-v1",
+  "bakeWorkflow": "high-to-low-normal-plus-material-passes",
+  "maxPackBytes": 4800000,
+  "assets": [
+    {
+      "itemId": "sofa-001",
+      "assetId": "sectional-hero-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/lounge/sectional-hero-pbr-v1.glb",
+      "maxBytes": 1700000,
+      "triangleBudget": 9500,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    },
+    {
+      "itemId": "sofa-002",
+      "assetId": "straight-sofa-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/lounge/straight-sofa-pbr-v1.glb",
+      "maxBytes": 1300000,
+      "triangleBudget": 7400,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    },
+    {
+      "itemId": "table-002",
+      "assetId": "coffee-table-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/lounge/coffee-table-pbr-v1.glb",
+      "maxBytes": 800000,
+      "triangleBudget": 4800,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    },
+    {
+      "itemId": "coffeetable-001",
+      "assetId": "round-coffee-table-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/lounge/round-coffee-table-pbr-v1.glb",
+      "maxBytes": 800000,
+      "triangleBudget": 4800,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import assetManifest from '../../data/visuals/furniture-assets.v1.json';
+import loungeManifest from '../../data/visuals/lounge-pbr-assets.v1.json';
 import FurnitureAssetRepository from '../../src/Presentation/Scene/FurnitureAssetRepository.js';
 
 function sourcePrefab() {
@@ -36,6 +37,21 @@ describe('PROD-012R FurnitureAssetRepository', () => {
     expect(first.getObjectByName('authored-prefab-mesh').userData.kind).toBe('item-asset-part');
     expect(first.getObjectByName('authored-prefab-mesh').castShadow).toBe(true);
     expect(first.getObjectByName('authored-prefab-mesh').receiveShadow).toBe(true);
+  });
+
+  it('merges independently versioned packs without changing the item-to-asset loading contract', async () => {
+    const repository = new FurnitureAssetRepository({
+      manifests: [assetManifest, loungeManifest],
+      loadAsset: async path => {
+        expect(path).toBe('/assets/furniture/lounge/sectional-hero-pbr-v1.glb');
+        return sourcePrefab();
+      }
+    });
+
+    const sofa = await repository.createForItemId('sofa-001');
+
+    expect(sofa.userData.assetId).toBe('sectional-hero-pbr-v1');
+    expect(sofa.userData.assetPath).toBe('/assets/furniture/lounge/sectional-hero-pbr-v1.glb');
   });
 
   it('returns null for non-seating item IDs so the procedural visual stays an explicit compatibility fallback', async () => {

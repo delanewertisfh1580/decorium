@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import ItemVisualFactory from '../Scene/ItemVisualFactory.js';
 import SceneLifeSystem from '../Scene/SceneLifeSystem.js';
 import { getWallOpacities } from '../Scene/WallVisibility.js';
@@ -72,6 +73,10 @@ export class RoomView {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.08;
+    const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
+    this._pbrEnvironment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04);
+    this.scene.environment = this._pbrEnvironment.texture;
+    pmremGenerator.dispose();
 
     this.controls = new OrbitControls(this.camera, canvas);
     this.controls.enableDamping = true;
@@ -668,6 +673,7 @@ export class RoomView {
     this.canvas.removeEventListener('contextmenu', this._handleContextMenu);
     window.removeEventListener('resize', this._resize);
     this.sceneLife?.destroy();
+    this._pbrEnvironment?.dispose();
     this.controls.dispose();
     this.renderer.dispose();
     this.objectsById.clear();
