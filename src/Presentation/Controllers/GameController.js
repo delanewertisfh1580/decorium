@@ -99,6 +99,7 @@ export class GameController {
     if (!result.success) throw new Error(result.error);
 
     this.level = result.data;
+    this.roomView.setPresentationEnvironment(this.level.presentationEnvironment);
     this.roomViewModel = new RoomViewModel(this.level);
     await this.roomRepository.saveState(this.level.roomId, this.level.roomState);
     this._render();
@@ -144,7 +145,7 @@ export class GameController {
           </div>
           <div class="summary-meta">
             <span><b>${placedCount}</b> предметов</span>
-            <span>Scandi</span>
+            <span>${this.level?.presentationEnvironment?.presentation?.subtitle ?? ''}</span>
           </div>
       <details class="summary-actions">
         <summary>Действия предмета</summary>

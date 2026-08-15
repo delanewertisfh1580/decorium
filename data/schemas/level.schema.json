@@ -7,6 +7,7 @@
     "id",
     "name",
     "styleId",
+    "presentationProfileId",
     "roomDimensions",
     "availableItems",
     "initialPlacement"
@@ -24,6 +25,11 @@
     "styleId": {
       "type": "string",
       "description": "Ссылка на стиль для оценки этого уровня"
+    },
+    "presentationProfileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Ссылка на versioned presentation environment profile"
     },
     "roomDimensions": {
       "type": "object",

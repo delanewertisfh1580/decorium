@@ -3,6 +3,7 @@ import { DESIGN_TOKENS, applyDesignTokens, validateDesignTokens } from './Presen
 import { HUD_LAYOUT, validateHudLayout } from './Presentation/UI/hudLayout.js';
 import { SchemaLoader } from './Infrastructure/DataLoaders/SchemaLoader.js';
 import { JsonLevelRepository } from './Infrastructure/Repositories/JsonLevelRepository.js';
+import JsonPresentationEnvironmentRepository from './Infrastructure/Repositories/JsonPresentationEnvironmentRepository.js';
 import JsonReleaseManifestRepository from './Infrastructure/Repositories/JsonReleaseManifestRepository.js';
 import { InMemoryRoomRepository } from './Infrastructure/Repositories/InMemoryRoomRepository.js';
 import BrowserLocalPlayerProfileRepository from './Infrastructure/Repositories/BrowserLocalPlayerProfileRepository.js';
@@ -74,14 +75,19 @@ async function bootstrap() {
       appRoot: document.getElementById('app')
     });
 
-    const [levelSchema, itemSchema, scoringParameters] = await Promise.all([
+    const [levelSchema, itemSchema, presentationEnvironmentSchema, scoringParameters] = await Promise.all([
       SchemaLoader.loadLevelSchema(),
       SchemaLoader.loadItemSchema(),
+      SchemaLoader.loadPresentationEnvironmentSchema(),
       loadJson('./data/scoring/scoring-parameters.json')
     ]);
     initializeScoringParameters(scoringParameters);
 
     const levelRepository = new JsonLevelRepository('./data/levels', levelSchema);
+    const presentationEnvironmentRepository = new JsonPresentationEnvironmentRepository(
+      './data/presentation/environment-profiles.v1.json',
+      presentationEnvironmentSchema
+    );
     const savePlayerProfileUseCase = new SavePlayerProfileUseCase(profileRepository);
     const updatePlayerSettingsUseCase = new UpdatePlayerSettingsUseCase(
       savePlayerProfileUseCase,
@@ -105,7 +111,7 @@ async function bootstrap() {
     ]);
 
     const roomRepository = new InMemoryRoomRepository();
-    const loadLevelUseCase = new LoadLevelUseCase(levelRepository, itemCatalog, constraintCatalog);
+    const loadLevelUseCase = new LoadLevelUseCase(levelRepository, itemCatalog, constraintCatalog, presentationEnvironmentRepository);
     const placeItemUseCase = new PlaceItemUseCase(roomRepository);
     const moveItemUseCase = new MoveItemUseCase(roomRepository);
     const rotateItemUseCase = new RotateItemUseCase(roomRepository);

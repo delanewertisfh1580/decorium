@@ -12,7 +12,8 @@
 | Область | Current canonical files | Version / validation |
 |---|---|---|
 | Items | `data/items/catalog.v3.json`, `data/items/item.v3.schema.json` | Catalog schema V3 |
-| Levels | `data/levels/manifest.json`, `data/levels/level-*.json`, `data/schemas/level.schema.json` | Manifest V1 and level schema |
+| Levels | `data/levels/manifest.json`, `data/levels/level-*.json`, `data/schemas/level.schema.json` | Manifest V1 and level schema, including required presentation profile reference |
+| Presentation environments | `data/presentation/environment-profiles.v1.json`, `data/presentation/environment-profile.v1.schema.json` | Profile catalog V1 and strict closed-vocabulary schema |
 | Scoring | `data/scoring/scoring-parameters.json` | Versioned scoring parameters loader |
 | Current starter style | `data/styles/scandinavian.json`, `data/constraints/scandinavian-constraints.json` | One current MVP-derived dataset; not product-wide canon |
 | Current starter feedback | `data/feedback/scandinavian-feedback.json` | One current feedback catalog; not future client-brief scope |
@@ -82,9 +83,21 @@ A target shape, intentionally **not a runtime schema yet**, is:
 
 The eventual evaluator must consume only this authored policy, style catalogs and RoomState. It must not infer client taste from item names, use an LLM at runtime or encode a default aesthetic in Presentation.
 
+## Authored presentation environments
+
+Every shipped level must declare `presentationProfileId`. `LoadLevelUseCase` resolves the reference through the validated PresentationEnvironment repository and returns the hydrated profile in `LevelDTO.presentationEnvironment`. The profile catalog is `schemaVersion: 1`; each profile is likewise versioned and selects only closed presets for floor, wall, openings, camera, lighting, exterior and scene-life.
+
+```json
+{
+  "presentationProfileId": "urban-media-corner"
+}
+```
+
+The catalog also declares explicit `ambientFixtures`. In V1 the resting cat is owned only by `warm-starter-living`; television is not an ambient fixture in any profile and remains player-placeable catalog content. Presentation resolver output is immutable and is consumed only by Three.js scene assembly. It must not become a feature vector, scorer input, ergonomics rule, progression condition or economy input.
+
 ## Levels and functional layout
 
-A level definition declares geometry, available items, required composition roles, optional prerequisites and `ergonomicsRules`. A rule in a level is policy; evaluators are generic Domain code. In the future, the level will reference one `ClientBrief`; current levels instead rely on their single starter style dataset.
+A level definition declares geometry, available items, required composition roles, `presentationProfileId`, optional prerequisites and `ergonomicsRules`. A rule in a level is policy; evaluators are generic Domain code. In the future, the level will reference one `ClientBrief`; current levels instead rely on their single starter style dataset.
 
 | Rule kind | Required extra field | Use case |
 |---|---|---|

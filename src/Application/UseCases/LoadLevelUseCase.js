@@ -74,11 +74,12 @@ function createErgonomicsRules(data = {}) {
 }
 
 export class LoadLevelUseCase {
-  constructor(levelRepository, itemCatalog = null, constraintCatalog = null) {
+  constructor(levelRepository, itemCatalog = null, constraintCatalog = null, presentationEnvironmentRepository = null) {
     if (!levelRepository) throw new Error('LoadLevelUseCase: levelRepository is required.');
     this.levelRepository = levelRepository;
     this.itemCatalog = itemCatalog;
     this.constraintCatalog = constraintCatalog;
+    this.presentationEnvironmentRepository = presentationEnvironmentRepository;
   }
 
   async execute(levelId) {
@@ -110,6 +111,17 @@ export class LoadLevelUseCase {
       if (Array.isArray(raw.availableItems) && availableItems.length !== raw.availableItems.length) {
         const missing = raw.availableItems.filter(id => !availableItems.some(item => item.id === id));
         return { success: false, error: `INVALID_LEVEL_DATA: Missing catalog items: ${missing.join(', ')}` };
+      }
+
+      let presentationEnvironment = null;
+      if (raw.presentationProfileId) {
+        if (!this.presentationEnvironmentRepository) {
+          return { success: false, error: `INVALID_LEVEL_DATA: Missing presentation environment repository for ${raw.presentationProfileId}` };
+        }
+        presentationEnvironment = await this.presentationEnvironmentRepository.getById(raw.presentationProfileId);
+        if (!presentationEnvironment) {
+          return { success: false, error: `INVALID_LEVEL_DATA: Unknown presentation profile ${raw.presentationProfileId}` };
+        }
       }
 
       let constraints;
@@ -147,7 +159,8 @@ export class LoadLevelUseCase {
           styleId: raw.styleId ?? 'default',
           targetScore: raw.targetScore ?? 3,
           compositionRules: raw.compositionRules ?? {},
-          ergonomicsRules: createErgonomicsRules(raw.ergonomicsRules)
+          ergonomicsRules: createErgonomicsRules(raw.ergonomicsRules),
+          presentationEnvironment
         })
       };
     } catch (error) {
