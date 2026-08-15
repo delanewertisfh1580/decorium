@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "packId": "room-composition-pbr-v1",
+  "bakeWorkflow": "high-to-low-normal-plus-material-passes",
+  "maxPackBytes": 3750000,
+  "performanceBudget": {
+    "maxStaticDrawCalls": 40,
+    "maxMaterials": 12,
+    "maxTrianglesPerRoom": 48000
+  },
+  "assets": [
+    {
+      "assetId": "warm-living-composition-pbr-v1",
+      "environmentProfileId": "warm-starter-living",
+      "path": "/assets/environment/rooms/warm-living-composition-pbr-v1.glb",
+      "format": "glb",
+      "role": "static-room-composition",
+      "delivery": "lazy-active-profile",
+      "fallback": "procedural-identity",
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": {
+        "baseColor": true,
+        "normal": true,
+        "roughness": true,
+        "ambientOcclusion": true
+      },
+      "maxBytes": 1250000,
+      "maxTriangles": 48000,
+      "maxMaterials": 12
+    },
+    {
+      "assetId": "urban-media-composition-pbr-v1",
+      "environmentProfileId": "urban-media-corner",
+      "path": "/assets/environment/rooms/urban-media-composition-pbr-v1.glb",
+      "format": "glb",
+      "role": "static-room-composition",
+      "delivery": "lazy-active-profile",
+      "fallback": "procedural-identity",
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": {
+        "baseColor": true,
+        "normal": true,
+        "roughness": true,
+        "ambientOcclusion": true
+      },
+      "maxBytes": 1250000,
+      "maxTriangles": 48000,
+      "maxMaterials": 12
+    },
+    {
+      "assetId": "bright-studio-composition-pbr-v1",
+      "environmentProfileId": "bright-studio",
+      "path": "/assets/environment/rooms/bright-studio-composition-pbr-v1.glb",
+      "format": "glb",
+      "role": "static-room-composition",
+      "delivery": "lazy-active-profile",
+      "fallback": "procedural-identity",
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": {
+        "baseColor": true,
+        "normal": true,
+        "roughness": true,
+        "ambientOcclusion": true
+      },
+      "maxBytes": 1250000,
+      "maxTriangles": 48000,
+      "maxMaterials": 12
+    }
+  ]
+}

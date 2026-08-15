@@ -9,8 +9,9 @@ describe('authored presentation environment scene ownership', () => {
   it('passes a resolved environment plan from RoomView into scene life instead of using a single global scene', () => {
     expect(roomViewSource).toContain('setPresentationEnvironment(environment)');
     expect(roomViewSource).toContain('resolveEnvironmentProfilePlan(environment)');
-    expect(roomViewSource).toContain('new SceneLifeSystem(this.scene, this.roomGroup, { width, depth, environmentPlan: this.environmentPlan })');
-    expect(sceneLifeSource).toContain('constructor(scene, roomGroup, { width, depth, environmentPlan })');
+    expect(roomViewSource).toContain('new SceneLifeSystem(this.scene, this.roomGroup, {');
+    expect(roomViewSource).toContain('environmentPlan: this.environmentPlan');
+    expect(sceneLifeSource).toContain('constructor(scene, roomGroup, { width, depth, environmentPlan, roomCompositionAssetRepository = null })');
     expect(locationEnvironmentSource).toContain('constructor(scene, { width, depth, environmentPlan');
   });
 

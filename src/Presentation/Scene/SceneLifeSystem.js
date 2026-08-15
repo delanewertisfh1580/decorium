@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import LocationEnvironmentSystem from './LocationEnvironmentSystem.js';
 
 export class SceneLifeSystem {
-  constructor(scene, roomGroup, { width, depth, environmentPlan }) {
+  constructor(scene, roomGroup, { width, depth, environmentPlan, roomCompositionAssetRepository = null }) {
     if (!environmentPlan) throw new Error('SceneLifeSystem requires an environmentPlan.');
     this.scene = scene;
     this.roomGroup = roomGroup;
@@ -12,7 +12,12 @@ export class SceneLifeSystem {
     this.root = new THREE.Group();
     this.root.userData.kind = 'scene-life';
     this.motes = [];
-    this.locationEnvironment = new LocationEnvironmentSystem(scene, { width, depth, environmentPlan });
+    this.locationEnvironment = new LocationEnvironmentSystem(scene, {
+      width,
+      depth,
+      environmentPlan,
+      roomCompositionAssetRepository
+    });
     this._buildMotes();
     this.scene.add(this.root);
   }

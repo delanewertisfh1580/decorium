@@ -192,16 +192,25 @@ function routeZ(lane, depth) {
 }
 
 export class LocationEnvironmentSystem {
-  constructor(scene, { width, depth, environmentPlan, config = LOCATION_LIFE_CONFIG }) {
+  constructor(scene, { width, depth, environmentPlan, config = LOCATION_LIFE_CONFIG, roomCompositionAssetRepository = null, onCompositionAssetReady = null, onCompositionAssetFallback = null }) {
     if (!environmentPlan) throw new Error('LocationEnvironmentSystem requires an environmentPlan.');
     this.scene = scene;
     this.width = width;
     this.depth = depth;
     this.environmentPlan = environmentPlan;
     this.config = config;
+    this.roomCompositionAssetRepository = roomCompositionAssetRepository;
+    this.onCompositionAssetReady = onCompositionAssetReady;
+    this.onCompositionAssetFallback = onCompositionAssetFallback;
     this.fixtureLayout = getFixtureLayout(width, depth);
     this.root = new THREE.Group();
     this.root.userData.kind = 'location-environment';
+    this.root.userData.compositionAssetState = 'fallback';
+    this.compositionFallbackRoot = new THREE.Group();
+    this.compositionFallbackRoot.userData.kind = 'room-composition-procedural-fallback';
+    this.compositionAssetRoot = null;
+    this.destroyed = false;
+    this.root.add(this.compositionFallbackRoot);
     this.routeEntities = [];
     this.interactiveFixtures = new Map();
     this.restingCat = null;
@@ -209,6 +218,7 @@ export class LocationEnvironmentSystem {
     this._buildInteriorDetails();
     this._buildRoutes();
     this.scene.add(this.root);
+    this._loadRoomCompositionAsset();
   }
 
   _buildEnvironment() {
@@ -278,7 +288,7 @@ export class LocationEnvironmentSystem {
     const root = new THREE.Group();
     root.userData.kind = 'authored-exterior-composition';
     root.userData.exteriorComposition = composition.kind;
-    this.root.add(root);
+    this.compositionFallbackRoot.add(root);
     const add = mesh => { root.add(mesh); return mesh; };
     const streetCenter = this.width / 2;
 
@@ -401,7 +411,7 @@ export class LocationEnvironmentSystem {
     root.userData.kind = 'authored-room-built-in';
     root.userData.builtInPreset = builtIn.kind;
     root.userData.semantic = builtIn.semantic;
-    this.root.add(root);
+    this.compositionFallbackRoot.add(root);
     const add = mesh => { root.add(mesh); return mesh; };
     const backZ = this.depth - .24;
 
@@ -466,32 +476,55 @@ export class LocationEnvironmentSystem {
     if (this._hasFixture('accent-wall-art')) {
       const frame = box(1.25, 0.82, 0.05, 0x302c35, { roughness: 0.7 });
       frame.position.set(this.width * 0.75, 1.85, this.depth - 0.12);
-      this.root.add(frame);
+      this.compositionFallbackRoot.add(frame);
       const panel = box(1.02, 0.6, 0.02, 0x9c6a74, { emissive: 0x3c1728, emissiveIntensity: 0.12, castShadow: false });
       panel.position.set(this.width * 0.75, 1.85, this.depth - 0.16);
-      this.root.add(panel);
+      this.compositionFallbackRoot.add(panel);
     }
     if (this._hasFixture('low-bookshelf')) {
       const shelf = box(1.45, 0.62, 0.28, 0x4b3f3d, { roughness: 0.8 });
       shelf.position.set(this.width * 0.2, 0.31, this.depth - 0.26);
-      this.root.add(shelf);
+      this.compositionFallbackRoot.add(shelf);
     }
     if (this._hasFixture('studio-planter')) {
       const pot = cylinder(0.28, 0.34, 0.5, 0xc7ad86, { roughness: 0.9 }, 20);
       pot.position.set(this.width - 0.56, 0.25, this.depth - 0.48);
-      this.root.add(pot);
+      this.compositionFallbackRoot.add(pot);
       for (const [x, y] of [[-0.16, 0.82], [0.1, 1.08], [0.16, 0.76]]) {
         const leaf = sphere(0.22, this.environmentPlan.exterior.foliageColor, { roughness: 0.94 });
         leaf.scale.set(0.75, 1.55, 0.42);
         leaf.position.set(this.width - 0.56 + x, y, this.depth - 0.48);
-        this.root.add(leaf);
+        this.compositionFallbackRoot.add(leaf);
       }
     }
     if (this._hasFixture('gallery-shelf')) {
       const shelf = box(1.7, 0.09, 0.25, 0x8f8273, { roughness: 0.86 });
       shelf.position.set(this.width * 0.28, 1.48, this.depth - 0.12);
-      this.root.add(shelf);
+      this.compositionFallbackRoot.add(shelf);
     }
+  }
+
+  _loadRoomCompositionAsset() {
+    if (!this.roomCompositionAssetRepository?.hasEnvironmentProfile(this.environmentPlan.id)) return;
+    this.root.userData.compositionAssetState = 'loading';
+    this.roomCompositionAssetRepository.createForEnvironmentProfile(this.environmentPlan.id)
+      .then(asset => {
+        if (!asset || this.destroyed) return;
+        // Blender exports forward Y as negative glTF Z. Mirror depth only to align the room-local authored composition.
+        asset.scale.z = -1;
+        asset.userData.kind = 'room-composition-asset';
+        this.compositionAssetRoot = asset;
+        this.root.add(asset);
+        this.compositionFallbackRoot.visible = false;
+        this.root.userData.compositionAssetState = 'ready';
+        this.onCompositionAssetReady?.(asset);
+      })
+      .catch(() => {
+        if (this.destroyed) return;
+        this.root.userData.compositionAssetState = 'fallback';
+        this.compositionFallbackRoot.visible = true;
+        this.onCompositionAssetFallback?.();
+      });
   }
 
   getInteractableObjects() {
@@ -565,6 +598,7 @@ export class LocationEnvironmentSystem {
   }
 
   destroy() {
+    this.destroyed = true;
     this.root.traverse(child => {
       child.geometry?.dispose();
       if (Array.isArray(child.material)) child.material.forEach(value => value.dispose());

@@ -20,7 +20,8 @@ export class GameController {
     recordLevelCompletionUseCase,
     playerProfile = null,
     roomRepository,
-    furnitureAssetRepository = null
+    furnitureAssetRepository = null,
+    roomCompositionAssetRepository = null
   }) {
     this.loadLevelUseCase = loadLevelUseCase;
     this.placeItemUseCase = placeItemUseCase;
@@ -33,6 +34,7 @@ export class GameController {
     this.playerSettings = playerProfile?.settings ?? null;
     this.roomRepository = roomRepository;
     this.furnitureAssetRepository = furnitureAssetRepository;
+    this.roomCompositionAssetRepository = roomCompositionAssetRepository;
     this.roomView = null;
     this.roomViewModel = null;
     this.evaluationViewModel = new EvaluationViewModel();
@@ -44,7 +46,10 @@ export class GameController {
   }
 
   async init(canvas, catalogContainer, toolbarContainer, evaluationContainer) {
-    this.roomView = new RoomView(canvas, { furnitureAssetRepository: this.furnitureAssetRepository });
+    this.roomView = new RoomView(canvas, {
+      furnitureAssetRepository: this.furnitureAssetRepository,
+      roomCompositionAssetRepository: this.roomCompositionAssetRepository
+    });
     if (this.playerSettings) this.roomView.setRenderSettings(this.playerSettings);
     this.catalogView = new ItemCatalogView(catalogContainer, itemId => this._onCatalogSelect(itemId));
     this.toolbarView = new ToolbarView(toolbarContainer, {

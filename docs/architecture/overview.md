@@ -41,6 +41,12 @@ Level presentationProfileId → validated PresentationEnvironmentRepository → 
 
 Presentation profile resolution is deterministic but presentation-only. It selects room surfaces, openings, camera, lighting, exterior and explicit ambient fixture ownership; it cannot alter score, functional layout, progression or economy. `SceneLifeSystem` and `LocationEnvironmentSystem` receive the resolved plan explicitly, so no global cat or television assumption survives level switching.
 
+```text
+Versioned room-composition PBR manifest → RoomCompositionAssetRepository → GameController → RoomView → SceneLifeSystem → LocationEnvironmentSystem
+```
+
+The repository lazy-loads only the active profile's static GLB, caches its source and provides material-isolated clones. `LocationEnvironmentSystem` first builds `compositionFallbackRoot`; it hides that procedural identity composition only after successful asset attachment and retains it for a load/decode failure. Async callbacks are ignored after lifecycle teardown. This is strictly a Presentation path: GLB assets, cache state and fallback visibility never become an evaluator, progression or persisted-room input.
+
 ### Interaction and evaluation
 
 ```text
@@ -75,6 +81,7 @@ Player settings and completed level progress are persisted in profile schema V3.
 | Item catalog V3 | 34 authored items, feature vectors and semantic interaction profiles. | `data/items`, JSON schema, catalog loader |
 | Level definition | Bounds, available items, presentation profile reference, composition/spatial rules and prerequisites. | `data/levels`, level schema |
 | `PresentationEnvironmentProfile v1` | Closed-preset visual scene policy and ambient fixture ownership. | `data/presentation`, JSON schema, Infrastructure repository and Presentation resolver |
+| `RoomCompositionPbrAssetManifest v1` | Static GLB-to-environment-profile mapping, PBR conformance and lazy/fallback/performance contract. | `data/visuals`, Presentation asset repository and scene lifecycle |
 | `InteractionProfile v1` | Affordances, local front axis and usable sides. | Domain item semantics |
 | `FunctionalLayoutRule v1` | Adjacency or directional `front-adjacency` functional relationships. | Domain ergonomics |
 | `ClientBrief v1` *(target)* | Multi-style targets, mixing policy, client priorities and hard constraints. | Future Domain + content boundary; not yet runtime-loaded |

@@ -35,7 +35,7 @@
 
 ### Delivery evidence
 
-[Slice reports](slices/) фиксируют завершённые вертикальные поставки: scope, contracts, acceptance evidence и non-goals. Последний отчёт — [PROD-010: authored level presentation profiles](slices/PROD-010-authored-level-presentation-profiles.md). Эти отчёты являются evidence delivery, но текущие product и technical правила по-прежнему поддерживаются в разделах выше.
+[Slice reports](slices/) фиксируют завершённые вертикальные поставки: scope, contracts, acceptance evidence и non-goals. Последний отчёт — [PROD-017: asset-backed PBR room composition pack](slices/PROD-017-room-composition-pbr-asset-pack.md). Эти отчёты являются evidence delivery, но текущие product и technical правила по-прежнему поддерживаются в разделах выше.
 
 ### ADR
 

@@ -59,9 +59,10 @@ function addRoomBox(group, size, position, color, options = {}) {
 }
 
 export class RoomView {
-  constructor(canvas, { furnitureAssetRepository = null } = {}) {
+  constructor(canvas, { furnitureAssetRepository = null, roomCompositionAssetRepository = null } = {}) {
     this.canvas = canvas;
     this.furnitureAssetRepository = furnitureAssetRepository;
+    this.roomCompositionAssetRepository = roomCompositionAssetRepository;
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0b121b);
     this.scene.fog = new THREE.Fog(0x0b121b, 14, 32);
@@ -246,7 +247,12 @@ export class RoomView {
     this._addRoomDecor(width, depth, wallHeight, plan);
     this._updateWallVisibility();
     this.sceneLife?.destroy();
-    this.sceneLife = new SceneLifeSystem(this.scene, this.roomGroup, { width, depth, environmentPlan: this.environmentPlan });
+    this.sceneLife = new SceneLifeSystem(this.scene, this.roomGroup, {
+      width,
+      depth,
+      environmentPlan: this.environmentPlan,
+      roomCompositionAssetRepository: this.roomCompositionAssetRepository
+    });
 
     this._cameraHome = {
       position: new THREE.Vector3(width * plan.camera.xFactor, Math.max(plan.camera.minHeight, depth * plan.camera.heightFactor), depth * plan.camera.zFactor),
