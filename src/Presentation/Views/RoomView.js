@@ -58,8 +58,9 @@ function addRoomBox(group, size, position, color, options = {}) {
 }
 
 export class RoomView {
-  constructor(canvas) {
+  constructor(canvas, { furnitureAssetRepository = null } = {}) {
     this.canvas = canvas;
+    this.furnitureAssetRepository = furnitureAssetRepository;
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0b121b);
     this.scene.fog = new THREE.Fog(0x0b121b, 14, 32);
@@ -333,6 +334,7 @@ export class RoomView {
         object.scale.setScalar(0.01);
         this.objectsById.set(placed.id, object);
         this.furnitureGroup.add(object);
+        this._upgradeVisualWithAsset(object, placed.item);
         this._animateScale(object, 1);
       } else {
         this._setObjectInstanceId(object, placed.id);
@@ -345,6 +347,19 @@ export class RoomView {
     for (const [itemId, object] of this.objectsById) {
       if (!activeIds.has(itemId)) this._animateRemoval(itemId, object);
     }
+  }
+
+  _upgradeVisualWithAsset(object, item) {
+    if (!this.furnitureAssetRepository?.hasItem(item.id)) return;
+    object.userData.assetState = 'loading';
+    this.furnitureAssetRepository.createForItemId(item.id)
+      .then(asset => {
+        if (!asset || object.userData.removing || !object.parent) return;
+        ItemVisualFactory.attachAsset(object, asset);
+      })
+      .catch(() => {
+        if (!object.userData.removing) object.userData.assetState = 'fallback';
+      });
   }
 
   _setObjectInstanceId(object, instanceId) {
