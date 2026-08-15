@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "packId": "dining-table-pbr-v1",
+  "bakeWorkflow": "high-to-low-normal-plus-material-passes",
+  "maxPackBytes": 3600000,
+  "assets": [
+    {
+      "itemId": "table-001",
+      "assetId": "dining-table-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/dining/dining-table-pbr-v1.glb",
+      "maxBytes": 1400000,
+      "triangleBudget": 6200,
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    },
+    {
+      "itemId": "desk-001",
+      "assetId": "writing-desk-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/dining/writing-desk-pbr-v1.glb",
+      "maxBytes": 1400000,
+      "triangleBudget": 6800,
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    },
+    {
+      "itemId": "table-003",
+      "assetId": "computer-desk-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/dining/computer-desk-pbr-v1.glb",
+      "maxBytes": 1400000,
+      "triangleBudget": 7200,
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    }
+  ]
+}

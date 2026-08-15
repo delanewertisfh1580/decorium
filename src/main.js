@@ -39,6 +39,7 @@ import { GameController } from './Presentation/Controllers/GameController.js';
 import FurnitureAssetRepository from './Presentation/Scene/FurnitureAssetRepository.js';
 import furnitureAssetManifest from '../data/visuals/furniture-assets.v1.json';
 import loungePbrAssetManifest from '../data/visuals/lounge-pbr-assets.v1.json';
+import diningTablePbrAssetManifest from '../data/visuals/dining-table-pbr-assets.v1.json';
 import { loadPlayerProfileForApp } from './Presentation/bootstrap/loadPlayerProfileForApp.js';
 import { initializeLevelSelectForApp } from './Presentation/bootstrap/initializeLevelSelectForApp.js';
 import { initializePlayerSettingsForApp } from './Presentation/bootstrap/initializePlayerSettingsForApp.js';
@@ -114,7 +115,7 @@ async function bootstrap() {
     ]);
 
     const roomRepository = new InMemoryRoomRepository();
-    const furnitureAssetRepository = new FurnitureAssetRepository({ manifests: [furnitureAssetManifest, loungePbrAssetManifest] });
+    const furnitureAssetRepository = new FurnitureAssetRepository({ manifests: [furnitureAssetManifest, loungePbrAssetManifest, diningTablePbrAssetManifest] });
     const loadLevelUseCase = new LoadLevelUseCase(levelRepository, itemCatalog, constraintCatalog, presentationEnvironmentRepository);
     const placeItemUseCase = new PlaceItemUseCase(roomRepository);
     const moveItemUseCase = new MoveItemUseCase(roomRepository);

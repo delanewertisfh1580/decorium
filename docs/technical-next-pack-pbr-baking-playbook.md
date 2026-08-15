@@ -84,17 +84,17 @@ In Blender, assign `baseColor` as **Color/sRGB**. Assign `normal` and `orm` as *
 
 Export a review GLB with PNG textures first. Validate visual correctness in Decorium before compression. Then create the shipping variant using KTX2/Basis Universal for maps that pass image-difference and device tests; retain the review PNG GLB only as a CI/reference artifact, not a shipped fallback unless platform support requires it.
 
-The asset repository already loads GLB asynchronously and retains procedural geometry when loading fails. The next implementation slice should add a `textureVariant`/`requiresUv1` field to the asset manifest, configure `KTX2Loader` before `GLTFLoader`, and preserve a PNG GLB fallback for clients without compatible texture transcoding.
+The asset repository already loads GLB asynchronously and retains procedural geometry when loading fails. PROD-014 added the versioned `textureSet`, `textureVariant` and `requiresUv1` manifest fields together with deterministic GLB/UV inspection. A future compression slice may configure `KTX2Loader` before `GLTFLoader`, but it must preserve an explicit PNG GLB fallback for clients without compatible texture transcoding.
 
-## Runtime changes required in Decorium
+## Current runtime baseline in Decorium
 
-The current `FurnitureAssetRepository` will automatically preserve standard GLB materials. The next PBR slice must add these presentation-only changes:
+`FurnitureAssetRepository` preserves standard GLB materials, caches source scenes, returns material-isolated clones and retains immediate procedural geometry when loading fails. `RoomView` owns the PMREM room environment introduced by PROD-013, so `MeshStandardMaterial` assets receive a stable environment response. [3]
 
-1. Configure `KTX2Loader` and attach it to the shared `GLTFLoader` before pack loading.
-2. Add a neutral authored HDR/PMREM environment, because Three.js recommends an environment map for best `MeshStandardMaterial` results. [3]
-3. Add asset-manifest metadata: `textureSet`, `requiresUv1`, `textureVariant`, texture bytes and per-material count.
-4. Add a loader-time assertion that meshes needing AO expose UV1 and that PBR maps are assigned with linear/non-color handling.
-5. Retain procedural fallback for failures; no texture condition may affect room placement, score or progression.
+1. Versioned PBR manifests declare `textureSet`, `textureVariant`, `requiresUv1`, per-asset byte ceilings and pack ceilings.
+2. Contract tests inspect declared PBR bindings plus `TEXCOORD_0`, `TEXCOORD_1` and AO `texCoord: 1` for `requiresUv1` assets.
+3. The composition root supplies independent manifests to the Presentation-only multi-manifest repository; no game rule sees render metadata.
+4. Procedural fallback remains mandatory: no missing mesh, texture or renderer capability may block placement, score or progression.
+5. KTX2/Basis delivery is deferred to a dedicated compression slice, where it must be feature-detected and preserve PNG compatibility fallback.
 
 ## Release gates
 
@@ -110,7 +110,7 @@ The current `FurnitureAssetRepository` will automatically preserve standard GLB 
 
 ## Recommended next implementation slice
 
-Start with a **sofa and coffee-table PBR pack**, because those assets remain on screen the longest and benefit most from upholstery, wood/metal and contact-AO detail. First build one `hero-sofa` as the calibration asset, compare it to the approved reference under all three authored room lights, then replicate the toolchain to sectional sofa, straight sofa and coffee table. Do not texture the entire catalog before that calibration proves both quality and memory budget.
+The lounge calibration pack is complete in PROD-013 and all remaining table-type catalog assets are complete in PROD-014. Continue with a **storage PBR pack**: wall shelf, bookcase, chest, tall rack, sideboard, TV stand and nightstand. Begin with one hero storage asset that combines open cavities, shelf contact AO and wood/metal separation, then replicate the validated toolchain across the remaining storage silhouettes. Keep each pack independently versioned, bounded and visual-accepted; do not texture the entire catalog in one unreviewed batch.
 
 ## References
 
