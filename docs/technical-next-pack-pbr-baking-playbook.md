@@ -110,7 +110,7 @@ The asset repository already loads GLB asynchronously and retains procedural geo
 
 ## Recommended next implementation slice
 
-The lounge calibration pack is complete in PROD-013 and all remaining table-type catalog assets are complete in PROD-014. Continue with a **storage PBR pack**: wall shelf, bookcase, chest, tall rack, sideboard, TV stand and nightstand. Begin with one hero storage asset that combines open cavities, shelf contact AO and wood/metal separation, then replicate the validated toolchain across the remaining storage silhouettes. Keep each pack independently versioned, bounded and visual-accepted; do not texture the entire catalog in one unreviewed batch.
+The lounge calibration pack is complete in PROD-013, remaining table-type catalog assets are complete in PROD-014, and the complete storage family is complete in PROD-015. Continue with a **lighting PBR pack**: table lamp, floor lamp and ceiling fixture. Calibrate one hero fixture first for glass/metal/textile separation, then replicate the validated toolchain across the remaining lighting silhouettes. Emissive detail may signal a luminous object but must not change the room’s authoritative illumination policy. Keep each pack independently versioned, bounded and visual-accepted; do not texture the entire catalog in one unreviewed batch.
 
 ## References
 

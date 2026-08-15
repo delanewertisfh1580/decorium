@@ -40,6 +40,7 @@ import FurnitureAssetRepository from './Presentation/Scene/FurnitureAssetReposit
 import furnitureAssetManifest from '../data/visuals/furniture-assets.v1.json';
 import loungePbrAssetManifest from '../data/visuals/lounge-pbr-assets.v1.json';
 import diningTablePbrAssetManifest from '../data/visuals/dining-table-pbr-assets.v1.json';
+import storagePbrAssetManifest from '../data/visuals/storage-pbr-assets.v1.json';
 import { loadPlayerProfileForApp } from './Presentation/bootstrap/loadPlayerProfileForApp.js';
 import { initializeLevelSelectForApp } from './Presentation/bootstrap/initializeLevelSelectForApp.js';
 import { initializePlayerSettingsForApp } from './Presentation/bootstrap/initializePlayerSettingsForApp.js';
@@ -115,7 +116,7 @@ async function bootstrap() {
     ]);
 
     const roomRepository = new InMemoryRoomRepository();
-    const furnitureAssetRepository = new FurnitureAssetRepository({ manifests: [furnitureAssetManifest, loungePbrAssetManifest, diningTablePbrAssetManifest] });
+    const furnitureAssetRepository = new FurnitureAssetRepository({ manifests: [furnitureAssetManifest, loungePbrAssetManifest, diningTablePbrAssetManifest, storagePbrAssetManifest] });
     const loadLevelUseCase = new LoadLevelUseCase(levelRepository, itemCatalog, constraintCatalog, presentationEnvironmentRepository);
     const placeItemUseCase = new PlaceItemUseCase(roomRepository);
     const moveItemUseCase = new MoveItemUseCase(roomRepository);

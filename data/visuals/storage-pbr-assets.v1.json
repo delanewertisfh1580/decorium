@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "packId": "storage-pbr-v1",
+  "bakeWorkflow": "high-to-low-normal-plus-material-passes",
+  "maxPackBytes": 6600000,
+  "assets": [
+    {
+      "itemId": "shelf-001",
+      "assetId": "wall-shelf-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/storage/wall-shelf-pbr-v1.glb",
+      "maxBytes": 1250000,
+      "triangleBudget": 7200,
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    },
+    {
+      "itemId": "shelf-002",
+      "assetId": "bookcase-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/storage/bookcase-pbr-v1.glb",
+      "maxBytes": 1250000,
+      "triangleBudget": 8200,
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    },
+    {
+      "itemId": "cabinet-001",
+      "assetId": "drawer-chest-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/storage/drawer-chest-pbr-v1.glb",
+      "maxBytes": 1250000,
+      "triangleBudget": 9800,
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    },
+    {
+      "itemId": "shelf-003",
+      "assetId": "tall-rack-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/storage/tall-rack-pbr-v1.glb",
+      "maxBytes": 1250000,
+      "triangleBudget": 7600,
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    },
+    {
+      "itemId": "sideboard-001",
+      "assetId": "sideboard-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/storage/sideboard-pbr-v1.glb",
+      "maxBytes": 1250000,
+      "triangleBudget": 9000,
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    },
+    {
+      "itemId": "tvstand-001",
+      "assetId": "tv-stand-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/storage/tv-stand-pbr-v1.glb",
+      "maxBytes": 1250000,
+      "triangleBudget": 8600,
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    },
+    {
+      "itemId": "nightstand-001",
+      "assetId": "nightstand-pbr-v1",
+      "format": "glb",
+      "path": "/assets/furniture/storage/nightstand-pbr-v1.glb",
+      "maxBytes": 1250000,
+      "triangleBudget": 6200,
+      "textureSet": "basecolor-normal-orm",
+      "textureVariant": "png-embedded",
+      "requiresUv1": true,
+      "pbr": { "baseColor": true, "normal": true, "roughness": true, "ambientOcclusion": true }
+    }
+  ]
+}

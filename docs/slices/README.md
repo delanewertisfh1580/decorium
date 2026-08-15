@@ -10,3 +10,4 @@
 | [PROD-012R — Asset-backed furniture quality](PROD-012R-asset-backed-furniture-quality.md) | Completed | Seven authored GLB seating prefabs, versioned budgets and safe runtime upgrade/fallback. |
 | [PROD-013 — Asset-backed PBR lounge pack](PROD-013-lounge-pbr-asset-pack.md) | Completed | Four PBR GLB lounge prefabs, multi-pack delivery, PMREM lighting response and safe runtime fallback. |
 | [PROD-014 — Asset-backed PBR dining/table pack](PROD-014-dining-table-pbr-asset-pack.md) | Completed | Three PBR GLB table prefabs, explicit UV1/texture-variant conformance and safe runtime fallback. |
+| [PROD-015 — Asset-backed PBR storage pack](PROD-015-storage-pbr-asset-pack.md) | Completed | Seven PBR GLB storage prefabs, complete family ownership, bounded delivery and safe runtime fallback. |
