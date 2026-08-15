@@ -1,7 +1,9 @@
 # PROD-013 — Asset-backed PBR lounge pack
 
-**Статус:** Completed  
-**Дата:** 15 августа 2026 г.  
+**Статус:** Completed
+
+**Дата:** 15 августа 2026 г.
+
 **Связанное решение:** [ADR-020](../adr/adr-020-pbr-texture-baking-pipeline.md)
 
 ## Цель

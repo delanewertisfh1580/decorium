@@ -1,7 +1,9 @@
 # ADR-020 — PBR texture baking pipeline for furniture assets
 
-**Статус:** Accepted  
-**Дата:** 15 августа 2026 г.  
+**Статус:** Accepted
+
+**Дата:** 15 августа 2026 г.
+
 **Продолжает:** [ADR-019 — Asset-backed furniture presentation](adr-019-asset-backed-furniture-presentation.md)
 
 ## Контекст
