@@ -168,10 +168,18 @@ button:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 
   border-radius: 14px;
   box-shadow: 0 8px 28px rgba(75, 89, 84, 0.08);
 }
-.library.is-open { width: min(454px, calc(100vw - 360px)); max-height: 190px; overflow: hidden; }
-.catalog-content { padding: 0 10px 10px; }
-.catalog-grid { display: flex; gap: 7px; max-height: 125px; overflow-x: auto; overscroll-behavior-x: contain; padding: 1px 2px 3px; scrollbar-width: thin; scrollbar-color: rgba(82,117,110,.25) transparent; }
-.item-card { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; flex: 0 0 136px; gap: 7px; width: 136px; min-height: 58px; padding: 7px; border: 1px solid rgba(82,117,110,.12); border-radius: 11px; background: rgba(255,255,255,.42); color: var(--text); text-align: left; cursor: pointer; transition: transform var(--motion-press) ease, background var(--motion-press) ease, border-color var(--motion-press) ease, box-shadow var(--motion-press) ease; }
+.library.is-open { width: min(454px, calc(100vw - 28px)); max-height: min(360px, calc(100vh - 130px)); overflow: hidden; }
+.catalog-content { display: grid; gap: 8px; padding: 0 10px 10px; }
+.catalog-search-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 7px; }
+.catalog-search-label { color: var(--muted); font-size: 10px; font-weight: 750; }
+.catalog-search { min-width: 0; min-height: 32px; padding: 6px 8px; border: 1px solid rgba(82,117,110,.16); border-radius: 8px; outline: none; background: rgba(255,255,255,.56); color: var(--text); font: inherit; font-size: 11px; }
+.catalog-search:focus { border-color: rgba(82,117,110,.62); box-shadow: 0 0 0 3px rgba(111,143,135,.12); }
+.catalog-tabs { display: flex; gap: 5px; overflow-x: auto; padding: 1px 0 3px; scrollbar-width: thin; scrollbar-color: rgba(82,117,110,.25) transparent; }
+.catalog-tab { flex: 0 0 auto; min-height: 30px; padding: 5px 8px; border: 1px solid rgba(82,117,110,.14); border-radius: 999px; background: rgba(255,255,255,.38); color: var(--muted); cursor: pointer; font: inherit; font-size: 10px; font-weight: 750; white-space: nowrap; }
+.catalog-tab:hover, .catalog-tab.is-active { border-color: rgba(82,117,110,.46); background: rgba(169,200,189,.25); color: var(--text); }
+.catalog-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; max-height: 208px; overflow-y: auto; overscroll-behavior-y: contain; padding: 1px 2px 3px; scrollbar-width: thin; scrollbar-color: rgba(82,117,110,.25) transparent; }
+.catalog-empty-state { margin: 0; padding: 16px 4px; color: var(--muted); font-size: 11px; line-height: 1.35; text-align: center; }
+.item-card { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 7px; width: 100%; min-height: 58px; padding: 7px; border: 1px solid rgba(82,117,110,.12); border-radius: 11px; background: rgba(255,255,255,.42); color: var(--text); text-align: left; cursor: pointer; transition: transform var(--motion-press) ease, background var(--motion-press) ease, border-color var(--motion-press) ease, box-shadow var(--motion-press) ease; }
 .item-card:hover, .item-card.selected { border-color: rgba(82,117,110,.52); background: rgba(169,200,189,.24); box-shadow: 0 4px 12px rgba(82,117,110,.1); transform: translateY(-1px); }
 .item-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: color-mix(in srgb, var(--item-color) 24%, transparent); color: var(--item-color); font-size: 16px; }
 .item-copy { min-width: 0; }
@@ -326,6 +334,8 @@ kbd { padding: 1px 4px; border: 1px solid rgba(82,117,110,.2); border-radius: 4p
   .level-select-panel { top: max(140px, calc(env(safe-area-inset-top) + 130px)); }
 }
 @media (max-width: 520px) {
+  .library.is-open { max-height: min(340px, calc(100vh - 116px)); }
+  .catalog-grid { grid-template-columns: 1fr; max-height: 194px; }
   .settings-panel { top: max(88px, calc(env(safe-area-inset-top) + 78px)); left: max(10px, env(safe-area-inset-left)); width: 160px; }
   .level-select-panel { top: max(132px, calc(env(safe-area-inset-top) + 122px)); }
 }
