@@ -6,12 +6,16 @@ const root = new URL('../..', import.meta.url);
 const readJson = relativePath => JSON.parse(readFileSync(new URL(relativePath, root), 'utf8'));
 
 describe('authored functional layout rules', () => {
-  it('declares a schema-valid dining seating relationship for level-001', () => {
+  it('declares a schema-valid dining seating relationship in level-001 client policy', () => {
     const level = readJson('data/levels/level-001.json');
-    const schema = readJson('data/schemas/level.schema.json');
-    const validate = new Ajv().compile(schema);
+    const levelSchema = readJson('data/schemas/level.schema.json');
+    const briefSchema = readJson('data/briefs/client-brief.v1.schema.json');
+    const catalog = readJson('data/briefs/client-briefs.v1.json');
+    const brief = catalog.briefs.find(candidate => candidate.id === level.clientBriefId);
+    const validateLevel = new Ajv().compile(levelSchema);
+    const validateBrief = new Ajv().compile(briefSchema);
 
-    expect(level.ergonomicsRules.functionalLayoutRules).toEqual([{
+    expect(brief.evaluationPolicy.ergonomicsRules.functionalLayoutRules).toEqual([{
       schemaVersion: 1,
       id: 'dining-seating-required',
       kind: 'adjacency',
@@ -22,6 +26,8 @@ describe('authored functional layout rules', () => {
       weight: 1.2,
       messageKey: 'functional-dining-seat-required'
     }]);
-    expect(validate(level)).toBe(true);
+    expect(validateLevel(level)).toBe(true);
+    expect(validateBrief(catalog)).toBe(true);
+    expect(brief.levelId).toBe(level.id);
   });
 });

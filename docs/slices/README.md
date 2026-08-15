@@ -13,3 +13,4 @@
 | [PROD-015 — Asset-backed PBR storage pack](PROD-015-storage-pbr-asset-pack.md) | Completed | Seven PBR GLB storage prefabs, complete family ownership, bounded delivery and safe runtime fallback. |
 | [PROD-016 — Authored room identity baseline](PROD-016-authored-room-identity-baseline.md) | Completed | Versioned wall, built-in and exterior composition selectors create three distinct room identities without changing game rules. |
 | [PROD-017 — Asset-backed PBR room composition pack](PROD-017-room-composition-pbr-asset-pack.md) | Completed | Three static Blender/GLB room compositions with PBR texture conformance, lazy loading, procedural fallback and measured budgets. |
+| [PROD-018 — ClientBrief source foundation](PROD-018-client-brief-source-foundation.md) | Completed | Versioned client-owned requirements now source current evaluation policy, with multi-style and spatial-preference inputs prepared for separate scoring slices. |

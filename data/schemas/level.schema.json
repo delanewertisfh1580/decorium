@@ -1,12 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "LevelDefinition",
-  "description": "Определение уровня: комната, стиль, доступные предметы и начальное состояние",
+  "description": "Топология уровня, доступный каталог и ссылка на versioned ClientBrief",
   "type": "object",
   "required": [
     "id",
     "name",
-    "styleId",
+    "clientBriefId",
     "presentationProfileId",
     "roomDimensions",
     "availableItems",
@@ -15,61 +15,41 @@
   "properties": {
     "id": {
       "type": "string",
-      "description": "Уникальный идентификатор уровня",
       "pattern": "^[a-z0-9-]+$"
     },
-    "name": {
+    "name": { "type": "string" },
+    "clientBriefId": {
       "type": "string",
-      "description": "Название уровня"
-    },
-    "styleId": {
-      "type": "string",
-      "description": "Ссылка на стиль для оценки этого уровня"
+      "pattern": "^brief-[a-z0-9-]+$",
+      "description": "Обязательная ссылка на client-owned deterministic evaluation policy"
     },
     "presentationProfileId": {
       "type": "string",
-      "pattern": "^[a-z0-9-]+$",
-      "description": "Ссылка на versioned presentation environment profile"
+      "pattern": "^[a-z0-9-]+$"
     },
     "roomDimensions": {
       "type": "object",
-      "description": "Размеры комнаты в метрах",
       "required": ["width", "height", "depth"],
       "properties": {
-        "width": {
-          "type": "number",
-          "exclusiveMinimum": 0
-        },
-        "height": {
-          "type": "number",
-          "exclusiveMinimum": 0
-        },
-        "depth": {
-          "type": "number",
-          "exclusiveMinimum": 0
-        }
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "depth": { "type": "number", "exclusiveMinimum": 0 }
       },
       "additionalProperties": false
     },
     "availableItems": {
       "type": "array",
-      "description": "Список ID предметов, доступных для размещения на этом уровне",
-      "items": {
-        "type": "string"
-      },
+      "items": { "type": "string" },
       "minItems": 5,
       "uniqueItems": true
     },
     "initialPlacement": {
       "type": "array",
-      "description": "Начальное размещение предметов (может быть пустым)",
       "items": {
         "type": "object",
         "required": ["itemId", "position", "rotation"],
         "properties": {
-          "itemId": {
-            "type": "string"
-          },
+          "itemId": { "type": "string" },
           "position": {
             "type": "object",
             "required": ["x", "y", "z"],
@@ -93,129 +73,6 @@
         },
         "additionalProperties": false
       }
-    },
-    "targetScore": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 5,
-      "description": "Целевое количество звезд для прохождения уровня"
-    },
-    "ergonomicsRules": {
-      "type": "object",
-      "description": "Детерминированные правила эргономической оценки уровня",
-      "properties": {
-        "minimumClearance": {
-          "type": "object",
-          "required": ["minimumDistance"],
-          "properties": {
-            "id": { "type": "string", "minLength": 1 },
-            "minimumDistance": { "type": "number", "exclusiveMinimum": 0 },
-            "weight": { "type": "number", "exclusiveMinimum": 0 },
-            "messageKey": { "type": "string", "minLength": 1 }
-          },
-          "additionalProperties": false
-        },
-        "passageZones": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["id", "label", "x", "z", "width", "depth"],
-            "properties": {
-              "id": { "type": "string", "minLength": 1 },
-              "label": { "type": "string", "minLength": 1 },
-              "x": { "type": "number" },
-              "z": { "type": "number" },
-              "width": { "type": "number", "exclusiveMinimum": 0 },
-              "depth": { "type": "number", "exclusiveMinimum": 0 },
-              "weight": { "type": "number", "exclusiveMinimum": 0 },
-              "messageKey": { "type": "string", "minLength": 1 }
-            },
-            "additionalProperties": false
-          }
-        },
-        "functionalLayoutRules": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": [
-              "schemaVersion",
-              "id",
-              "kind",
-              "anchorSelector",
-              "partnerSelector",
-              "minPartners",
-              "distance",
-              "weight",
-              "messageKey"
-            ],
-            "properties": {
-              "schemaVersion": { "const": 1 },
-              "id": { "type": "string", "minLength": 1 },
-              "kind": { "enum": ["adjacency", "front-adjacency"] },
-              "anchorSelector": {
-                "type": "object",
-                "required": ["affordance"],
-                "properties": {
-                  "affordance": {
-                    "enum": ["dining-seat", "dining-surface", "lounge-seat", "coffee-surface", "view-target"]
-                  }
-                },
-                "additionalProperties": false
-              },
-              "partnerSelector": {
-                "type": "object",
-                "required": ["affordance"],
-                "properties": {
-                  "affordance": {
-                    "enum": ["dining-seat", "dining-surface", "lounge-seat", "coffee-surface", "view-target"]
-                  }
-                },
-                "additionalProperties": false
-              },
-              "minPartners": { "type": "integer", "minimum": 1 },
-              "distance": {
-                "type": "object",
-                "required": ["min", "max"],
-                "properties": {
-                  "min": { "type": "number", "minimum": 0 },
-                  "max": { "type": "number", "exclusiveMinimum": 0 }
-                },
-                "additionalProperties": false
-              },
-              "maxAngleDegrees": { "type": "number", "exclusiveMinimum": 0, "maximum": 90 },
-              "weight": { "type": "number", "exclusiveMinimum": 0 },
-              "messageKey": { "type": "string", "minLength": 1 }
-            },
-            "allOf": [
-              {
-                "if": { "properties": { "kind": { "const": "front-adjacency" } } },
-                "then": { "required": ["maxAngleDegrees"] }
-              }
-            ],
-            "additionalProperties": false
-          }
-        }
-      },
-      "additionalProperties": false
-    },
-    "compositionRules": {
-      "type": "object",
-      "description": "Минимальная завершённость дизайнерской композиции",
-      "properties": {
-        "minItems": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "requiredRoles": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": ["seating", "surface", "lighting", "storage", "decor"]
-          },
-          "uniqueItems": true
-        }
-      },
-      "additionalProperties": false
     }
   },
   "additionalProperties": false

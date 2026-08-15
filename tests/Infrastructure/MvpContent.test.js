@@ -9,6 +9,9 @@ const level = readJson('data/levels/level-001.json');
 const levelManifest = readJson('data/levels/manifest.json');
 const levels = levelManifest.levels.map(summary => readJson(`data/levels/${summary.id}.json`));
 const levelSchema = readJson('data/schemas/level.schema.json');
+const clientBriefSchema = readJson('data/briefs/client-brief.v1.schema.json');
+const clientBriefCatalog = readJson('data/briefs/client-briefs.v1.json');
+const clientBriefsById = new Map(clientBriefCatalog.briefs.map(brief => [brief.id, brief]));
 const constraints = readJson('data/constraints/scandinavian-constraints.json');
 const feedback = readJson('data/feedback/scandinavian-feedback.json');
 const visualProfiles = readJson('data/visuals/item-visuals.json');
@@ -21,20 +24,23 @@ describe('Production content contracts', () => {
     const ajv = new Ajv();
     const validateItems = ajv.compile(itemSchema);
     const validateLevel = ajv.compile(levelSchema);
+    const validateBriefs = ajv.compile(clientBriefSchema);
 
     expect(validateItems(catalog)).toBe(true);
     expect(levelManifest.schemaVersion).toBe(1);
     expect(levels).toHaveLength(3);
     expect(levels.every(levelDefinition => validateLevel(levelDefinition))).toBe(true);
+    expect(validateBriefs(clientBriefCatalog)).toBe(true);
     expect(catalog.items).toHaveLength(34);
     expect(catalog.items.every(item => Object.keys(item.featureVector).length === 16)).toBe(true);
   });
 
-  it('references only catalog items and declares ergonomics rules from every authored level', () => {
+  it('references only catalog items and resolves complete client-owned ergonomics policy for every authored level', () => {
     expect(level.availableItems).toHaveLength(16);
     expect(levels.every(levelDefinition => levelDefinition.availableItems.every(itemId => itemIds.has(itemId)))).toBe(true);
-    expect(levels.every(levelDefinition => levelDefinition.ergonomicsRules?.minimumClearance?.minimumDistance > 0)).toBe(true);
-    expect(levels.every(levelDefinition => levelDefinition.ergonomicsRules?.passageZones?.length > 0)).toBe(true);
+    expect(levels.every(levelDefinition => clientBriefsById.get(levelDefinition.clientBriefId)?.levelId === levelDefinition.id)).toBe(true);
+    expect(levels.every(levelDefinition => clientBriefsById.get(levelDefinition.clientBriefId)?.evaluationPolicy.ergonomicsRules.minimumClearance.minimumDistance > 0)).toBe(true);
+    expect(levels.every(levelDefinition => clientBriefsById.get(levelDefinition.clientBriefId)?.evaluationPolicy.ergonomicsRules.passageZones.length > 0)).toBe(true);
   });
 
   it('defines a deterministic prerequisite chain for the authored campaign', () => {

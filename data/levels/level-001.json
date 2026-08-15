@@ -1,12 +1,12 @@
 {
   "id": "level-001",
   "name": "Гостиная: Первые шаги",
-  "styleId": "scandinavian",
+  "clientBriefId": "brief-warm-host-001",
   "presentationProfileId": "warm-starter-living",
   "roomDimensions": {
-    "width": 8.0,
-    "height": 3.0,
-    "depth": 6.0
+    "width": 8,
+    "height": 3,
+    "depth": 6
   },
   "availableItems": [
     "sofa-001",
@@ -26,40 +26,5 @@
     "rug-001",
     "coffeetable-001"
   ],
-  "initialPlacement": [],
-  "targetScore": 3,
-  "ergonomicsRules": {
-    "minimumClearance": {
-      "minimumDistance": 0.9,
-      "weight": 1.0
-    },
-    "passageZones": [
-      {
-        "id": "entry-passage",
-        "label": "Входной проход",
-        "x": 0,
-        "z": 2.2,
-        "width": 1.0,
-        "depth": 1.6,
-        "weight": 1.4
-      }
-    ],
-    "functionalLayoutRules": [
-      {
-        "schemaVersion": 1,
-        "id": "dining-seating-required",
-        "kind": "adjacency",
-        "anchorSelector": { "affordance": "dining-surface" },
-        "partnerSelector": { "affordance": "dining-seat" },
-        "minPartners": 2,
-        "distance": { "min": 0.05, "max": 0.35 },
-        "weight": 1.2,
-        "messageKey": "functional-dining-seat-required"
-      }
-    ]
-  },
-  "compositionRules": {
-    "minItems": 4,
-    "requiredRoles": ["seating", "surface", "lighting"]
-  }
+  "initialPlacement": []
 }

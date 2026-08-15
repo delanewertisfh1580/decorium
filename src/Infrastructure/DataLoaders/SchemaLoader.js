@@ -9,6 +9,10 @@ export class SchemaLoader {
     return this.load('./data/schemas/level.schema.json');
   }
 
+  static async loadClientBriefSchema() {
+    return this.load('./data/briefs/client-brief.v1.schema.json');
+  }
+
   static async loadItemSchema() {
     return this.load('./data/items/item.v3.schema.json');
   }

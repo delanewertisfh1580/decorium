@@ -1,12 +1,12 @@
 {
   "id": "level-003",
   "name": "Светлая студия",
-  "styleId": "scandinavian",
+  "clientBriefId": "brief-open-studio-003",
   "presentationProfileId": "bright-studio",
   "roomDimensions": {
-    "width": 9.0,
-    "height": 3.0,
-    "depth": 7.0
+    "width": 9,
+    "height": 3,
+    "depth": 7
   },
   "availableItems": [
     "sofa-001",
@@ -21,27 +21,5 @@
     "rug-001",
     "coffeetable-001"
   ],
-  "initialPlacement": [],
-  "targetScore": 4,
-  "ergonomicsRules": {
-    "minimumClearance": {
-      "minimumDistance": 0.9,
-      "weight": 1.2
-    },
-    "passageZones": [
-      {
-        "id": "entry-passage",
-        "label": "Входной проход",
-        "x": 0,
-        "z": 2.5,
-        "width": 1.0,
-        "depth": 2.0,
-        "weight": 1.5
-      }
-    ]
-  },
-  "compositionRules": {
-    "minItems": 5,
-    "requiredRoles": ["seating", "surface", "lighting", "storage"]
-  }
+  "initialPlacement": []
 }

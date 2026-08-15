@@ -134,6 +134,17 @@ export class GameController {
     if (existingSpoiler) this._dashboardOpen = existingSpoiler.open;
     const placedCount = this.roomViewModel.placedItems.length;
     const result = this.evaluationViewModel.isVisible ? this.evaluationViewModel : null;
+    const clientBrief = this.level?.clientBrief ?? null;
+    const clientContext = clientBrief ? `
+      <section class="client-brief-context" aria-label="Бриф клиента">
+        <span class="eyebrow">Клиент · ${clientBrief.client.displayName}</span>
+        <strong>${clientBrief.title}</strong>
+        <p>${clientBrief.summary}</p>
+        <ul class="client-priorities">${clientBrief.clientPriorities.map(priority => (
+          `<li data-client-priority="${priority.id}">${priority.label}</li>`
+        )).join('')}</ul>
+      </section>
+    ` : '';
     dashboard.innerHTML = `
       <details class="dashboard-spoiler" data-dashboard-spoiler${this._dashboardOpen ? ' open' : ''}>
         <summary class="dashboard-toggle" aria-label="Открыть сводку оценки">
@@ -143,6 +154,7 @@ export class GameController {
         </summary>
         <div class="dashboard-content">
           <span class="eyebrow">${this.roomViewModel.name}</span>
+          ${clientContext}
           <div class="summary-main">
             <div class="summary-score">
               <span class="score-label">Оценка</span>
@@ -152,7 +164,6 @@ export class GameController {
           </div>
           <div class="summary-meta">
             <span><b>${placedCount}</b> предметов</span>
-            <span>${this.level?.presentationEnvironment?.presentation?.subtitle ?? ''}</span>
           </div>
       <details class="summary-actions">
         <summary>Действия предмета</summary>

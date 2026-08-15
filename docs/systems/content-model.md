@@ -12,7 +12,8 @@
 | Область | Current canonical files | Version / validation |
 |---|---|---|
 | Items | `data/items/catalog.v3.json`, `data/items/item.v3.schema.json` | Catalog schema V3 |
-| Levels | `data/levels/manifest.json`, `data/levels/level-*.json`, `data/schemas/level.schema.json` | Manifest V1 and level schema, including required presentation profile reference |
+| Levels | `data/levels/manifest.json`, `data/levels/level-*.json`, `data/schemas/level.schema.json` | Manifest V1 and topology-only level schema, including required ClientBrief and presentation references |
+| Client briefs | `data/briefs/client-briefs.v1.json`, `data/briefs/client-brief.v1.schema.json` | ClientBrief catalog V1: client identity, style targets, priorities, spatial preferences and evaluation policy |
 | Presentation environments | `data/presentation/environment-profiles.v1.json`, `data/presentation/environment-profile.v1.schema.json` | Profile catalog V1 and strict closed-vocabulary schema |
 | Scoring | `data/scoring/scoring-parameters.json` | Versioned scoring parameters loader |
 | Current starter style | `data/styles/scandinavian.json`, `data/constraints/scandinavian-constraints.json` | One current MVP-derived dataset; not product-wide canon |
@@ -48,40 +49,19 @@ The catalog currently has **34** items. Each item contains a stable `id`, displa
 
 Adding a catalog item requires V3 schema validity, a complete feature vector, semantic profile, optional visual profile, catalog content test and level references only after the item is valid. Do not infer semantics from `id` or `name`.
 
-## Target: ClientBrief v1
+## ClientBrief v1
 
-`ClientBrief v1` is the planned versioned content contract for every design order. It is not yet loaded by runtime and must be delivered as a separate vertical slice with schema, Domain value object, content loaders, scoring policy, feedback and UI presentation. Its purpose is to make multiple styles, style mixing and client-specific restrictions deterministic, inspectable and replayable.
+`ClientBrief v1` is the runtime-loaded, versioned contract for every shipped design order. It is validated in Infrastructure, normalized by the Domain value object and hydrated into `LevelDTO` before any current evaluation input is assembled. Its purpose is to make client requirements reviewable, deterministic and replayable.
 
-| Field group | Required policy | Why it exists |
+| Field group | Shipped V1 policy | Activation state |
 |---|---|---|
-| Identity | `schemaVersion`, `briefId`, client-facing title and level binding | Stable persisted/content identity. |
-| Style targets | One or more style IDs, roles (`primary`/`secondary`/`accent`) and weights | A room can intentionally combine aesthetics. |
-| Mix policy | Allowed style combinations, balance ranges and conflict rules | Separates deliberate eclecticism from incoherent mixing. |
-| Client priorities | Ordered goals and score weights | Makes the same room evaluate differently for different clients. |
-| Functional scenarios | Dining, media, work, family, accessibility or storage needs | Connects aesthetic scoring to intended use. |
-| Constraints | Mandatory, forbidden, inherited-item, space and budget rules | Encodes non-negotiable customer requirements. |
-| Feedback mapping | Brief-specific message keys and success criteria | Keeps results explainable without UI rule logic. |
+| Identity | `schemaVersion`, stable brief ID, level binding, client ID and display name. | Active loading and player presentation. |
+| Style targets | One primary and optional secondary/accent IDs with normalized weights. | Primary target feeds the current starter-style channel; weighted mixing follows in its own evaluator slice. |
+| Client priorities | Stable labels and positive weights. | Visible in the player brief; scoring activation follows in a dedicated priority channel. |
+| Spatial preferences | Density, clearance multiplier and empty-space target/mode/weight. | Authored and replayable; spatial-truth evaluator activation follows in its own slice. |
+| Evaluation policy | Completion target, composition and ergonomics rule sets. | Active source of current evaluator inputs. |
 
-A target shape, intentionally **not a runtime schema yet**, is:
-
-```json
-{
-  "schemaVersion": 1,
-  "briefId": "client-urban-family-001",
-  "styleTargets": [
-    { "styleId": "mid-century", "role": "primary", "weight": 0.65 },
-    { "styleId": "japandi", "role": "secondary", "weight": 0.35 }
-  ],
-  "mixPolicy": {
-    "allowedPairs": [["mid-century", "japandi"]],
-    "requiredBalance": { "minActiveStyles": 2, "maxDominantWeight": 0.75 }
-  },
-  "functionalScenarios": ["media-viewing", "family-dining"],
-  "hardConstraints": ["preserve-window-passage", "retain-heirloom-item"]
-}
-```
-
-The eventual evaluator must consume only this authored policy, style catalogs and RoomState. It must not infer client taste from item names, use an LLM at runtime or encode a default aesthetic in Presentation.
+Future V1 extensions may add explicit mix compatibility, functional scenario cardinality, hard constraints and feedback mapping only through schema evolution, red contracts and deterministic evaluators. The evaluator must consume only authored brief policy, style catalogs and RoomState. It must not infer client taste from item names, use an LLM at runtime or encode a default aesthetic in Presentation.
 
 ## Authored presentation environments
 
@@ -97,7 +77,7 @@ The catalog also declares explicit `ambientFixtures`. In V1 the resting cat is o
 
 ## Levels and functional layout
 
-A level definition declares geometry, available items, required composition roles, `presentationProfileId`, optional prerequisites and `ergonomicsRules`. A rule in a level is policy; evaluators are generic Domain code. In the future, the level will reference one `ClientBrief`; current levels instead rely on their single starter style dataset.
+A level definition declares geometry, available items, initial placement and `presentationProfileId`; it must reference exactly one `clientBriefId`. ClientBrief owns style targets, completion, composition and ergonomics policy. Evaluators are generic Domain code: they consume hydrated policy and must never recover an evaluation rule from level topology or UI state.
 
 | Rule kind | Required extra field | Use case |
 |---|---|---|
@@ -123,7 +103,7 @@ All functional rules use semantic selectors, `minPartners`, edge-to-edge `distan
 
 ## Scoring and feedback
 
-Style fit, client-priority satisfaction and ergonomics must remain separate deterministic inputs. Current parameters aggregate one starter style score and ergonomics as **70% / 30%**. When `ClientBrief v1` arrives, it must replace the single-style input with explicit multi-style/client-constraint channels without changing the invariant that feedback never changes score.
+Style fit, client-priority satisfaction and ergonomics remain separate deterministic inputs. Current parameters aggregate the ClientBrief primary-style starter score and ergonomics as **70% / 30%**. ClientBrief V1 has already replaced level-side policy ownership; later slices will activate weighted secondary/accent targets, client priorities, density, clearance multiplier and empty-space preference as explicit channels without changing the invariant that feedback never changes score.
 
 Ergonomics violations include generic clearance, passage zones and functional layouts. The same violation flows to `ErgonomicsScorer` and to the feedback catalog. Every new policy requires a matching feedback entry with a stable `id`, category, severity and player-actionable template; `EvaluationView` only resolves and renders it.
 

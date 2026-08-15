@@ -4,6 +4,7 @@ import { HUD_LAYOUT, validateHudLayout } from './Presentation/UI/hudLayout.js';
 import { SchemaLoader } from './Infrastructure/DataLoaders/SchemaLoader.js';
 import { JsonLevelRepository } from './Infrastructure/Repositories/JsonLevelRepository.js';
 import JsonPresentationEnvironmentRepository from './Infrastructure/Repositories/JsonPresentationEnvironmentRepository.js';
+import JsonClientBriefRepository from './Infrastructure/Repositories/JsonClientBriefRepository.js';
 import JsonReleaseManifestRepository from './Infrastructure/Repositories/JsonReleaseManifestRepository.js';
 import { InMemoryRoomRepository } from './Infrastructure/Repositories/InMemoryRoomRepository.js';
 import BrowserLocalPlayerProfileRepository from './Infrastructure/Repositories/BrowserLocalPlayerProfileRepository.js';
@@ -82,10 +83,11 @@ async function bootstrap() {
       appRoot: document.getElementById('app')
     });
 
-    const [levelSchema, itemSchema, presentationEnvironmentSchema, scoringParameters] = await Promise.all([
+    const [levelSchema, itemSchema, presentationEnvironmentSchema, clientBriefSchema, scoringParameters] = await Promise.all([
       SchemaLoader.loadLevelSchema(),
       SchemaLoader.loadItemSchema(),
       SchemaLoader.loadPresentationEnvironmentSchema(),
+      SchemaLoader.loadClientBriefSchema(),
       loadJson('./data/scoring/scoring-parameters.json')
     ]);
     initializeScoringParameters(scoringParameters);
@@ -94,6 +96,10 @@ async function bootstrap() {
     const presentationEnvironmentRepository = new JsonPresentationEnvironmentRepository(
       './data/presentation/environment-profiles.v2.json',
       presentationEnvironmentSchema
+    );
+    const clientBriefRepository = new JsonClientBriefRepository(
+      './data/briefs/client-briefs.v1.json',
+      clientBriefSchema
     );
     const savePlayerProfileUseCase = new SavePlayerProfileUseCase(profileRepository);
     const updatePlayerSettingsUseCase = new UpdatePlayerSettingsUseCase(
@@ -120,7 +126,13 @@ async function bootstrap() {
     const roomRepository = new InMemoryRoomRepository();
     const furnitureAssetRepository = new FurnitureAssetRepository({ manifests: [furnitureAssetManifest, loungePbrAssetManifest, diningTablePbrAssetManifest, storagePbrAssetManifest] });
     const roomCompositionAssetRepository = new RoomCompositionAssetRepository({ manifest: roomCompositionPbrAssetManifest });
-    const loadLevelUseCase = new LoadLevelUseCase(levelRepository, itemCatalog, constraintCatalog, presentationEnvironmentRepository);
+    const loadLevelUseCase = new LoadLevelUseCase(
+      levelRepository,
+      itemCatalog,
+      constraintCatalog,
+      presentationEnvironmentRepository,
+      clientBriefRepository
+    );
     const placeItemUseCase = new PlaceItemUseCase(roomRepository);
     const moveItemUseCase = new MoveItemUseCase(roomRepository);
     const rotateItemUseCase = new RotateItemUseCase(roomRepository);

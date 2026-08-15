@@ -10,6 +10,8 @@ const readJson = file => JSON.parse(readFileSync(join(root, file), 'utf8'));
 describe('static production data assets', () => {
   it('lists every JSON file requested by the runtime loaders', () => {
     const expected = [
+      'data/briefs/client-brief.v1.schema.json',
+      'data/briefs/client-briefs.v1.json',
       'data/constraints/scandinavian-constraints.json',
       'data/feedback/scandinavian-feedback.json',
       'data/items/catalog.v3.json',

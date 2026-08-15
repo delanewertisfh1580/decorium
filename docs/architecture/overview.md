@@ -17,11 +17,11 @@ Presentation → Application → Domain ← Infrastructure
 
 | Слой | Ответственность | Примеры |
 |---|---|---|
-| `src/Domain` | Детерминированные entities, value objects и правила игры. | `RoomState`, `Item`, `InteractionProfile`, `FunctionalLayoutRule`, scorers, progression policy. |
+| `src/Domain` | Детерминированные entities, value objects и правила игры. | `RoomState`, `Item`, `InteractionProfile`, `FunctionalLayoutRule`, `ClientBrief`, scorers, progression policy. |
 | `src/Application` | Use cases, orchestration и DTO boundary. | Load/evaluate room, profile settings, campaign levels, completion recording. |
 | `src/Infrastructure` | JSON fetch/validation, static asset inventory, browser-local profile persistence, repositories. | `SchemaLoader`, JSON catalogs, AJV validators, local profile adapter. |
 | `src/Presentation` | Three.js scene, controller, view models и DOM views. | `GameController`, `RoomView`, `EvaluationView`, item visual factory. |
-| `data` | Versioned authored content and schemas. | Catalog V3, levels, starter style dataset, feedback, scoring parameters and visual profiles. |
+| `data` | Versioned authored content and schemas. | Catalog V3, topology-only levels, ClientBrief V1, starter style dataset, feedback, scoring parameters and visual profiles. |
 
 ## Runtime flows
 
@@ -50,19 +50,13 @@ The repository lazy-loads only the active profile's static GLB, caches its sourc
 ### Interaction and evaluation
 
 ```text
+Level clientBriefId → validated ClientBrief repository → ClientBrief Domain value
+  → LoadLevelUseCase → current primary style / completion / composition / ergonomics inputs
 Player intent → GameController → Application use case → RoomState
 Evaluate → constraint/style/composition/spatial evaluators → score aggregation → authored feedback → EvaluationView
 ```
 
-Evaluation is deterministic. Presentation receives serialized feedback and score data; it never reimplements rule logic. Current runtime receives one starter style dataset; it does not yet load multi-style client briefs.
-
-### Target: client-brief evaluation
-
-```text
-ClientBrief JSON + style catalogs + level → Infrastructure validation → ClientBrief Domain value → evaluation inputs → deterministic style-fit and constraint channels → feedback UI
-```
-
-`ClientBrief v1` is the planned boundary for multi-style product policy. It will provide primary/secondary/accent style targets, controlled mixing, client priorities, functional scenarios and hard constraints. Domain owns validation and deterministic interpretation; Infrastructure only loads versioned data; Presentation displays the brief and result without choosing styles or resolving conflicts.
+Evaluation is deterministic. Presentation receives the hydrated brief plus serialized feedback and score data; it never reimplements rule logic. Current runtime uses the brief’s **primary** target with the one shipped starter style dataset and derives completion/composition/ergonomics policy from the brief. Secondary/accent weighting, spatial preference and client-priority channels are explicitly persisted inputs awaiting dedicated deterministic evaluator slices.
 
 ### Profile and campaign
 
@@ -79,12 +73,12 @@ Player settings and completed level progress are persisted in profile schema V3.
 |---|---|---|
 | `PlayerProfile v3` | Local profile, settings and completed levels. | Domain + Infrastructure persistence boundary |
 | Item catalog V3 | 34 authored items, feature vectors and semantic interaction profiles. | `data/items`, JSON schema, catalog loader |
-| Level definition | Bounds, available items, presentation profile reference, composition/spatial rules and prerequisites. | `data/levels`, level schema |
+| Level definition | Bounds, available items, initial placement, ClientBrief and presentation references, prerequisites. | `data/levels`, topology-only level schema |
 | `PresentationEnvironmentProfile v1` | Closed-preset visual scene policy and ambient fixture ownership. | `data/presentation`, JSON schema, Infrastructure repository and Presentation resolver |
 | `RoomCompositionPbrAssetManifest v1` | Static GLB-to-environment-profile mapping, PBR conformance and lazy/fallback/performance contract. | `data/visuals`, Presentation asset repository and scene lifecycle |
 | `InteractionProfile v1` | Affordances, local front axis and usable sides. | Domain item semantics |
 | `FunctionalLayoutRule v1` | Adjacency or directional `front-adjacency` functional relationships. | Domain ergonomics |
-| `ClientBrief v1` *(target)* | Multi-style targets, mixing policy, client priorities and hard constraints. | Future Domain + content boundary; not yet runtime-loaded |
+| `ClientBrief v1` | Bound client identity, weighted style targets, priorities, spatial preferences and current evaluation policy. | `data/briefs`, schema, validated repository, Domain value and LoadLevel hydration |
 | BuildInfo / release manifest | Build identity for release verification. | Release pipeline |
 
 ## Non-negotiable invariants

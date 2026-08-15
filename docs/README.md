@@ -27,7 +27,7 @@
 
 ### Контент и геймплей
 
-[Content model](systems/content-model.md) описывает versioned JSON contracts: item catalog V3, authored levels, scoring, semantic interaction profiles и functional-layout rules. Он является единственным current reference для content authors.
+[Content model](systems/content-model.md) описывает versioned JSON contracts: item catalog V3, topology-only authored levels, ClientBrief V1, scoring, semantic interaction profiles и functional-layout rules. Он является единственным current reference для content authors.
 
 ### Операции
 
@@ -35,7 +35,7 @@
 
 ### Delivery evidence
 
-[Slice reports](slices/) фиксируют завершённые вертикальные поставки: scope, contracts, acceptance evidence и non-goals. Последний отчёт — [PROD-017: asset-backed PBR room composition pack](slices/PROD-017-room-composition-pbr-asset-pack.md). Эти отчёты являются evidence delivery, но текущие product и technical правила по-прежнему поддерживаются в разделах выше.
+[Slice reports](slices/) фиксируют завершённые вертикальные поставки: scope, contracts, acceptance evidence и non-goals. Последний отчёт — [PROD-018: ClientBrief source foundation](slices/PROD-018-client-brief-source-foundation.md). Эти отчёты являются evidence delivery, но текущие product и technical правила по-прежнему поддерживаются в разделах выше.
 
 ### ADR
 

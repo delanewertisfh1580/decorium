@@ -59,7 +59,7 @@ describe('Documentation requirements', () => {
 
     expect(productOverview).toContain('мультистил');
     expect(productOverview).toContain('ClientBrief');
-    expect(productOverview).toContain('Scandinavian starter scenario');
+    expect(productOverview).toContain('Scandinavian starter dataset');
     expect(contentModel).toContain('ClientBrief v1');
   });
 

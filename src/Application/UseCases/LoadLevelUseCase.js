@@ -7,6 +7,7 @@ import { LinearConstraint } from '../../Domain/Constraints/LinearConstraint.js';
 import MinimumClearanceRule from '../../Domain/Ergonomics/MinimumClearanceRule.js';
 import PassageZone from '../../Domain/Ergonomics/PassageZone.js';
 import FunctionalLayoutRule from '../../Domain/Ergonomics/FunctionalLayoutRule.js';
+import ClientBrief from '../../Domain/Briefs/ClientBrief.js';
 
 const FEATURE_ALIASES = {
   wood_share: 'woodShare',
@@ -74,12 +75,13 @@ function createErgonomicsRules(data = {}) {
 }
 
 export class LoadLevelUseCase {
-  constructor(levelRepository, itemCatalog = null, constraintCatalog = null, presentationEnvironmentRepository = null) {
+  constructor(levelRepository, itemCatalog = null, constraintCatalog = null, presentationEnvironmentRepository = null, clientBriefRepository = null) {
     if (!levelRepository) throw new Error('LoadLevelUseCase: levelRepository is required.');
     this.levelRepository = levelRepository;
     this.itemCatalog = itemCatalog;
     this.constraintCatalog = constraintCatalog;
     this.presentationEnvironmentRepository = presentationEnvironmentRepository;
+    this.clientBriefRepository = clientBriefRepository;
   }
 
   async execute(levelId) {
@@ -96,6 +98,24 @@ export class LoadLevelUseCase {
       }
       const roomId = raw.roomId ?? raw.id;
       if (!roomId) return { success: false, error: 'INVALID_LEVEL_DATA: Missing roomId.' };
+
+      let clientBrief = null;
+      if (raw.clientBriefId) {
+        if (!this.clientBriefRepository) {
+          return { success: false, error: `INVALID_LEVEL_DATA: Missing client brief repository for ${raw.clientBriefId}` };
+        }
+        const rawBrief = await this.clientBriefRepository.getById(raw.clientBriefId);
+        if (!rawBrief) {
+          return { success: false, error: `INVALID_LEVEL_DATA: Unknown client brief ${raw.clientBriefId}` };
+        }
+        clientBrief = new ClientBrief(rawBrief);
+        if (clientBrief.levelId !== (raw.id ?? levelId)) {
+          return {
+            success: false,
+            error: `INVALID_LEVEL_DATA: Client brief ${clientBrief.id} belongs to ${clientBrief.levelId}, not ${raw.id ?? levelId}`
+          };
+        }
+      }
 
       const dimensions = raw.roomDimensions ?? { width: 5, depth: 5 };
       const bounds = new RoomBounds(dimensions.width, dimensions.depth);
@@ -124,9 +144,10 @@ export class LoadLevelUseCase {
         }
       }
 
+      const styleId = clientBrief?.primaryStyleTarget.styleId ?? raw.styleId ?? 'default';
       let constraints;
-      if (this.constraintCatalog && raw.styleId) {
-        constraints = await this.constraintCatalog.getConstraintsByStyleId(raw.styleId);
+      if (this.constraintCatalog && styleId !== 'default') {
+        constraints = await this.constraintCatalog.getConstraintsByStyleId(styleId);
       } else {
         constraints = (raw.constraints ?? []).map(createConstraint);
       }
@@ -156,11 +177,12 @@ export class LoadLevelUseCase {
           roomState,
           availableItems,
           constraints,
-          styleId: raw.styleId ?? 'default',
-          targetScore: raw.targetScore ?? 3,
-          compositionRules: raw.compositionRules ?? {},
-          ergonomicsRules: createErgonomicsRules(raw.ergonomicsRules),
-          presentationEnvironment
+          styleId,
+          targetScore: clientBrief?.evaluationPolicy.completion.minimumStars ?? raw.targetScore ?? 3,
+          compositionRules: clientBrief?.evaluationPolicy.compositionRules ?? raw.compositionRules ?? {},
+          ergonomicsRules: createErgonomicsRules(clientBrief?.evaluationPolicy.ergonomicsRules ?? raw.ergonomicsRules),
+          presentationEnvironment,
+          clientBrief
         })
       };
     } catch (error) {

@@ -12,7 +12,7 @@ Decorium — браузерная Three.js-игра о проектирован�
 | Шаг | Действие игрока | Результат системы |
 |---|---|---|
 | 1 | Открывает профиль и выбирает заказ/уровень кампании | Восстанавливаются settings, completed levels и session context. |
-| 2 | Читает brief: предпочтения клиента, допустимое смешение стилей, функциональные потребности и ограничения помещения | Level supplies versioned authored policy, а не UI-side interpretation. |
+| 2 | Читает brief: предпочтения клиента, допустимое смешение стилей, функциональные потребности и ограничения помещения | Hydrated versioned `ClientBrief` supplies authored policy; UI displays it without interpretation. |
 | 3 | Выбирает предметы, расставляет и поворачивает их в 3D-комнате | RoomState создаёт stable instance IDs; действия можно переместить, повернуть, удалить или отменить. |
 | 4 | Нажимает «Оценить» | Application оркестрирует style fit, composition и spatial ergonomics evaluation. |
 | 5 | Читает результат и уточняет композицию | UI показывает total score, stars, sub-scores и actionable feedback. |
@@ -30,13 +30,13 @@ Decorium — браузерная Three.js-игра о проектирован�
 | Functional brief | Сценарии использования комнаты. | Dining for four, media viewing, reading corner, child-safe passage. |
 | Hard constraints | Непереговорные условия помещения, бюджета или клиента. | Сохранить проход, не блокировать окно, использовать existing heirloom. |
 
-`ClientBrief` — это target contract следующего content/scoring slice, а не уже реализованный runtime schema. До его реализации новые стили и их mixing rules не должны симулироваться UI heuristics или неversioned code.
+`ClientBrief v1` is now a runtime-loaded, versioned source contract. Its primary target currently feeds the existing starter-style channel, while weighted secondary/accent targets, mixing policy, priorities and spatial preferences remain declared data until their dedicated deterministic evaluator slices activate them. Presentation must not simulate those pending channels with UI heuristics.
 
 ## Current production baseline
 
-Сегодня в репозитории существуют три authored levels, один реальный style/constraint dataset и один feedback catalog. **Scandinavian starter scenario** — текущая содержательная база, унаследованная от MVP; это не обещание продукта и не ограничение будущей кампании. Current runtime оценивает этот единственный dataset через existing style constraints, composition и spatial ergonomics.
+Сегодня в репозитории существуют три authored levels и три versioned `ClientBrief v1` records. Каждый level теперь содержит только topology/inventory/presentation reference; hydrated brief является единственным source of truth для client identity, completion target, composition, ergonomics, style targets, priorities и spatial preferences. **Scandinavian starter dataset** всё ещё является единственным активным style/constraint dataset: current evaluator временно использует primary target brief, тогда как weighted secondary/accent targets, density, clearance multiplier и empty-space preference уже сохранены как deterministic authored inputs и будут активированы отдельными mechanics slices.
 
-Profile schema V3 хранится локально и включает settings (`reducedMotion`, `uiScale`, `qualityTier`) и прогресс прохождения. Touch и keyboard paths поддерживаются одним intent contract. Каталог группирует available items по UI-категориям, поддерживает поиск и сохраняет browsing context в пределах текущей игровой сессии после placement; эта навигация не меняет authored availability или gameplay rules. Priority furniture variants use data-driven visual families, so form distinguishes dining, lounge, office and other furniture roles independently from authored semantic profiles. The priority seating pack now renders from versioned authored GLB prefabs with an immediate procedural fallback; asset loading remains a Presentation concern. Итоговая оценка агрегирует style и ergonomics с весами **70% / 30%**; thresholds звёзд и параметры находятся в versioned data, а не в UI.
+Profile schema V3 хранится локально и включает settings (`reducedMotion`, `uiScale`, `qualityTier`) и прогресс прохождения. Touch и keyboard paths поддерживаются одним intent contract. Каталог группирует available items по UI-категориям, поддерживает поиск и сохраняет browsing context в пределах текущей игровой сессии после placement; эта навигация не меняет authored availability или gameplay rules. Priority furniture variants use data-driven visual families, so form distinguishes dining, lounge, office and other furniture roles independently from authored semantic profiles. The priority seating pack now renders from versioned authored GLB prefabs with an immediate procedural fallback; asset loading remains a Presentation concern. Итоговая оценка пока агрегирует current primary-style score и ergonomics с весами **70% / 30%**; thresholds звёзд и параметры находятся в versioned data, а не в UI. ClientBrief now owns the inputs that will replace this temporary global policy channel by channel.
 
 | Текущий уровень | Функциональный сценарий | Ключевое правило |
 |---|---|---|

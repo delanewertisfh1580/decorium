@@ -134,6 +134,11 @@ button:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 
 .dashboard-toggle-chevron, .library-toggle-chevron { margin-left: auto; color: var(--muted); font-size: 16px; transition: transform var(--motion-press) ease; }
 .dashboard-spoiler[open] .dashboard-toggle-chevron, .library-spoiler[open] .library-toggle-chevron { transform: rotate(180deg); }
 .dashboard-content { padding: 0 12px 12px; }
+.client-brief-context { display: grid; gap: 5px; margin-top: 8px; padding: 9px; border: 1px solid rgba(111, 143, 135, .16); border-radius: 10px; background: rgba(251, 248, 241, .68); }
+.client-brief-context strong { font-size: 13px; line-height: 1.2; }
+.client-brief-context p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.client-priorities { display: flex; flex-wrap: wrap; gap: 4px; margin: 1px 0 0; padding: 0; list-style: none; }
+.client-priorities li { padding: 3px 6px; border-radius: 999px; background: rgba(111, 143, 135, .13); color: var(--accent-strong); font-size: 10px; font-weight: 700; line-height: 1.15; }
 .eyebrow { display: block; color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .12em; line-height: 1.2; text-transform: uppercase; }
 .dashboard .eyebrow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .summary-main { display: flex; align-items: end; justify-content: space-between; gap: 10px; margin-top: 6px; }

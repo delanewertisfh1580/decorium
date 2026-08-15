@@ -1,12 +1,12 @@
 {
   "id": "level-002",
   "name": "Уютный уголок",
-  "styleId": "scandinavian",
+  "clientBriefId": "brief-intimate-media-002",
   "presentationProfileId": "urban-media-corner",
   "roomDimensions": {
-    "width": 6.0,
-    "height": 3.0,
-    "depth": 5.0
+    "width": 6,
+    "height": 3,
+    "depth": 5
   },
   "availableItems": [
     "sofa-002",
@@ -21,53 +21,5 @@
     "shelf-001",
     "mirror-001"
   ],
-  "initialPlacement": [],
-  "targetScore": 3,
-  "ergonomicsRules": {
-    "minimumClearance": {
-      "minimumDistance": 0.8,
-      "weight": 1.0
-    },
-    "passageZones": [
-      {
-        "id": "entry-passage",
-        "label": "Входной проход",
-        "x": 0,
-        "z": 1.6,
-        "width": 1.0,
-        "depth": 1.8,
-        "weight": 1.4
-      }
-    ],
-    "functionalLayoutRules": [
-      {
-        "schemaVersion": 1,
-        "id": "lounge-seat-faces-view-target",
-        "kind": "front-adjacency",
-        "anchorSelector": { "affordance": "lounge-seat" },
-        "partnerSelector": { "affordance": "view-target" },
-        "minPartners": 1,
-        "distance": { "min": 1, "max": 4 },
-        "maxAngleDegrees": 30,
-        "weight": 1.3,
-        "messageKey": "functional-lounge-faces-view-target"
-      },
-      {
-        "schemaVersion": 1,
-        "id": "coffee-surface-in-front-of-lounge-seat",
-        "kind": "front-adjacency",
-        "anchorSelector": { "affordance": "lounge-seat" },
-        "partnerSelector": { "affordance": "coffee-surface" },
-        "minPartners": 1,
-        "distance": { "min": 0.1, "max": 0.6 },
-        "maxAngleDegrees": 30,
-        "weight": 0.9,
-        "messageKey": "functional-coffee-surface-in-front-of-lounge-seat"
-      }
-    ]
-  },
-  "compositionRules": {
-    "minItems": 4,
-    "requiredRoles": ["seating", "surface", "lighting"]
-  }
+  "initialPlacement": []
 }

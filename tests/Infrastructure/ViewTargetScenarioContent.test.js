@@ -10,6 +10,8 @@ describe('authored view-target lounge scenario', () => {
     const catalog = readJson('data/items/catalog.v3.json');
     const level = readJson('data/levels/level-002.json');
     const schema = readJson('data/schemas/level.schema.json');
+    const briefCatalog = readJson('data/briefs/client-briefs.v1.json');
+    const brief = briefCatalog.briefs.find(candidate => candidate.id === level.clientBriefId);
     const tv = catalog.items.find(item => item.id === 'tv-001');
 
     expect(tv).toMatchObject({
@@ -24,7 +26,7 @@ describe('authored view-target lounge scenario', () => {
       }
     });
     expect(level.availableItems).toContain('tv-001');
-    expect(level.ergonomicsRules.functionalLayoutRules).toEqual(expect.arrayContaining([
+    expect(brief.evaluationPolicy.ergonomicsRules.functionalLayoutRules).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'lounge-seat-faces-view-target',
         kind: 'front-adjacency',
@@ -46,6 +48,7 @@ describe('authored view-target lounge scenario', () => {
         messageKey: 'functional-coffee-surface-in-front-of-lounge-seat'
       })
     ]));
+    expect(brief.levelId).toBe('level-002');
     expect(new Ajv().compile(schema)(level)).toBe(true);
   });
 });
