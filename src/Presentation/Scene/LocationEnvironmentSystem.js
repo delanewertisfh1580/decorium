@@ -192,10 +192,12 @@ function routeZ(lane, depth) {
 }
 
 export class LocationEnvironmentSystem {
-  constructor(scene, { width, depth, config = LOCATION_LIFE_CONFIG }) {
+  constructor(scene, { width, depth, environmentPlan, config = LOCATION_LIFE_CONFIG }) {
+    if (!environmentPlan) throw new Error('LocationEnvironmentSystem requires an environmentPlan.');
     this.scene = scene;
     this.width = width;
     this.depth = depth;
+    this.environmentPlan = environmentPlan;
     this.config = config;
     this.fixtureLayout = getFixtureLayout(width, depth);
     this.root = new THREE.Group();
@@ -210,12 +212,13 @@ export class LocationEnvironmentSystem {
   }
 
   _buildEnvironment() {
+    const exterior = this.environmentPlan.exterior;
     const streetWidth = this.width + 8;
     const streetCenter = this.width / 2;
-    const sidewalk = plane(streetWidth, 1.4, 0x967e70, { y: -0.018, roughness: 0.96 });
+    const sidewalk = plane(streetWidth, 1.4, exterior.sidewalkColor, { y: -0.018, roughness: 0.96 });
     sidewalk.position.set(streetCenter, -0.018, this.depth + 1.02);
     this.root.add(sidewalk);
-    const road = plane(streetWidth, 2.45, 0x28333c, { y: -0.025, roughness: 0.96 });
+    const road = plane(streetWidth, 2.45, exterior.roadColor, { y: -0.025, roughness: 0.96 });
     road.position.set(streetCenter, -0.025, this.depth + 2.78);
     this.root.add(road);
 
@@ -229,7 +232,7 @@ export class LocationEnvironmentSystem {
     }
 
     const facadeZ = this.depth + 4.25;
-    const facade = box(this.width + 2.2, 3.4, 0.2, 0x76675e, { roughness: 0.9 });
+    const facade = box(this.width + 2.2, 3.4, 0.2, exterior.facadeColor, { roughness: 0.9 });
     facade.position.set(streetCenter, 1.7, facadeZ);
     this.root.add(facade);
     const trim = box(this.width + 2.35, 0.14, 0.27, 0xc4a983, { roughness: 0.65 });
@@ -264,13 +267,18 @@ export class LocationEnvironmentSystem {
       const trunk = cylinder(0.09, 0.12, 1.15, 0x6e5547, { roughness: 0.95 });
       trunk.position.set(x, 0.57, this.depth + 0.75);
       this.root.add(trunk);
-      const crown = sphere(0.45, 0x587865, { roughness: 0.95 });
+      const crown = sphere(0.45, exterior.foliageColor, { roughness: 0.95 });
       crown.position.set(x, 1.35, this.depth + 0.75);
       this.root.add(crown);
     }
   }
 
+  _hasFixture(fixtureId) {
+    return this.environmentPlan.fixtures.includes(fixtureId);
+  }
+
   _buildInteriorDetails() {
+    if (this._hasFixture('mirror')) {
     const mirror = new THREE.Group();
     mirror.userData.fixtureId = 'ambient-mirror';
     mirror.userData.kind = 'ambient-fixture';
@@ -284,7 +292,9 @@ export class LocationEnvironmentSystem {
     mirror.position.set(this.fixtureLayout.mirror.centerX, 0, this.fixtureLayout.mirror.z);
     this.root.add(mirror);
     this.interactiveFixtures.set(mirror.userData.fixtureId, mirror);
+    }
 
+    if (this._hasFixture('bookshelf')) {
     const bookshelf = new THREE.Group();
     bookshelf.userData.fixtureId = 'ambient-bookshelf';
     bookshelf.userData.kind = 'ambient-fixture';
@@ -304,7 +314,9 @@ export class LocationEnvironmentSystem {
     bookshelf.position.set(this.fixtureLayout.bookshelf.centerX, 0, this.fixtureLayout.bookshelf.z);
     this.root.add(bookshelf);
     this.interactiveFixtures.set(bookshelf.userData.fixtureId, bookshelf);
+    }
 
+    if (this._hasFixture('resting-cat')) {
     const bedBase = cylinder(0.42, 0.42, 0.11, 0x836c62, { roughness: 0.9 }, 24);
     bedBase.position.set(this.width * 0.14, 0.07, this.depth * 0.24);
     this.root.add(bedBase);
@@ -319,6 +331,41 @@ export class LocationEnvironmentSystem {
     this.restingCat = createRestingCat();
     this.restingCat.position.set(this.width * 0.14, 0.16, this.depth * 0.24);
     this.root.add(this.restingCat);
+    }
+
+    this._buildProfileDecor();
+  }
+
+  _buildProfileDecor() {
+    if (this._hasFixture('accent-wall-art')) {
+      const frame = box(1.25, 0.82, 0.05, 0x302c35, { roughness: 0.7 });
+      frame.position.set(this.width * 0.75, 1.85, this.depth - 0.12);
+      this.root.add(frame);
+      const panel = box(1.02, 0.6, 0.02, 0x9c6a74, { emissive: 0x3c1728, emissiveIntensity: 0.12, castShadow: false });
+      panel.position.set(this.width * 0.75, 1.85, this.depth - 0.16);
+      this.root.add(panel);
+    }
+    if (this._hasFixture('low-bookshelf')) {
+      const shelf = box(1.45, 0.62, 0.28, 0x4b3f3d, { roughness: 0.8 });
+      shelf.position.set(this.width * 0.2, 0.31, this.depth - 0.26);
+      this.root.add(shelf);
+    }
+    if (this._hasFixture('studio-planter')) {
+      const pot = cylinder(0.28, 0.34, 0.5, 0xc7ad86, { roughness: 0.9 }, 20);
+      pot.position.set(this.width - 0.56, 0.25, this.depth - 0.48);
+      this.root.add(pot);
+      for (const [x, y] of [[-0.16, 0.82], [0.1, 1.08], [0.16, 0.76]]) {
+        const leaf = sphere(0.22, this.environmentPlan.exterior.foliageColor, { roughness: 0.94 });
+        leaf.scale.set(0.75, 1.55, 0.42);
+        leaf.position.set(this.width - 0.56 + x, y, this.depth - 0.48);
+        this.root.add(leaf);
+      }
+    }
+    if (this._hasFixture('gallery-shelf')) {
+      const shelf = box(1.7, 0.09, 0.25, 0x8f8273, { roughness: 0.86 });
+      shelf.position.set(this.width * 0.28, 1.48, this.depth - 0.12);
+      this.root.add(shelf);
+    }
   }
 
   getInteractableObjects() {
@@ -335,7 +382,8 @@ export class LocationEnvironmentSystem {
   }
 
   _buildRoutes() {
-    for (const route of this.config.routes) {
+    const routeCount = Math.max(1, Math.ceil(this.config.routes.length * this.environmentPlan.exterior.routeScale));
+    for (const route of this.config.routes.slice(0, routeCount)) {
       let entity;
       if (route.kind === 'pedestrian') entity = createPedestrian(route.variant);
       if (route.kind === 'car') entity = createCar(route.variant);

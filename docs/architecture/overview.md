@@ -33,6 +33,14 @@ Static JSON + schemas → Infrastructure loaders → Domain values → LoadLevel
 
 Static asset inventory ensures Vite publishes runtime JSON next to the built HTML. Content is validated at the infrastructure boundary before use cases receive it.
 
+### Authored presentation environment
+
+```text
+Level presentationProfileId → validated PresentationEnvironmentRepository → LoadLevelUseCase → LevelDTO.presentationEnvironment → pure EnvironmentProfilePlan → RoomView / SceneLifeSystem
+```
+
+Presentation profile resolution is deterministic but presentation-only. It selects room surfaces, openings, camera, lighting, exterior and explicit ambient fixture ownership; it cannot alter score, functional layout, progression or economy. `SceneLifeSystem` and `LocationEnvironmentSystem` receive the resolved plan explicitly, so no global cat or television assumption survives level switching.
+
 ### Interaction and evaluation
 
 ```text
@@ -65,7 +73,8 @@ Player settings and completed level progress are persisted in profile schema V3.
 |---|---|---|
 | `PlayerProfile v3` | Local profile, settings and completed levels. | Domain + Infrastructure persistence boundary |
 | Item catalog V3 | 34 authored items, feature vectors and semantic interaction profiles. | `data/items`, JSON schema, catalog loader |
-| Level definition | Bounds, available items, composition/spatial rules and prerequisites. | `data/levels`, level schema |
+| Level definition | Bounds, available items, presentation profile reference, composition/spatial rules and prerequisites. | `data/levels`, level schema |
+| `PresentationEnvironmentProfile v1` | Closed-preset visual scene policy and ambient fixture ownership. | `data/presentation`, JSON schema, Infrastructure repository and Presentation resolver |
 | `InteractionProfile v1` | Affordances, local front axis and usable sides. | Domain item semantics |
 | `FunctionalLayoutRule v1` | Adjacency or directional `front-adjacency` functional relationships. | Domain ergonomics |
 | `ClientBrief v1` *(target)* | Multi-style targets, mixing policy, client priorities and hard constraints. | Future Domain + content boundary; not yet runtime-loaded |
@@ -80,6 +89,7 @@ Player settings and completed level progress are persisted in profile schema V3.
 5. Deterministic outcomes are reproducible from saved state and authored inputs.
 6. Functional matches are evaluated before generic clearance exclusions, so valid pairs are not double-penalized.
 7. Style mixing is interpreted only from explicit client-brief policy; no global default aesthetic is hidden in UI or evaluator heuristics.
+8. Presentation environment is not a gameplay evaluator input; visual ownership is explicit in versioned authored content.
 
 ## Verification
 

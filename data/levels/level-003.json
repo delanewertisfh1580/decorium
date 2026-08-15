@@ -2,6 +2,7 @@
   "id": "level-003",
   "name": "Светлая студия",
   "styleId": "scandinavian",
+  "presentationProfileId": "bright-studio",
   "roomDimensions": {
     "width": 9.0,
     "height": 3.0,

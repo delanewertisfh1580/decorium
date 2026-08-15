@@ -33,6 +33,10 @@
 
 [Release runbook](operations/release-runbook.md) определяет выпуск, проверку и rollback статической web-сборки. Процедура использует release manifest и не требует персональных данных игрока.
 
+### Delivery evidence
+
+[Slice reports](slices/) фиксируют завершённые вертикальные поставки: scope, contracts, acceptance evidence и non-goals. Последний отчёт — [PROD-010: authored level presentation profiles](slices/PROD-010-authored-level-presentation-profiles.md). Эти отчёты являются evidence delivery, но текущие product и technical правила по-прежнему поддерживаются в разделах выше.
+
 ### ADR
 
 [ADR index](adr/README.md) хранит короткие неизменяемые записи ключевых решений. ADR не переписываются ради текущей картины: при изменении решения добавляется новый ADR, а актуальная операционная картина поддерживается в разделах выше.
@@ -49,6 +53,6 @@
 | Новый или изменённый Domain/content contract | `systems/content-model.md`; schema; при архитектурном решении — новый ADR |
 | Изменение слоёв, dependency direction или composition root | `architecture/overview.md` и, при необходимости, ADR |
 | Изменение release процесса | `operations/release-runbook.md` |
-| Завершённый крупный vertical slice | Historical slice report в `history/slices/`, а не новый top-level active guide |
+| Завершённый крупный vertical slice | Отчёт в `slices/`; актуальные product/architecture guides обновляются только по затронутым contracts |
 
 Ссылки в current документах должны быть относительными, а исторические материалы должны явно маркироваться как historical. Перед merge документационные guards, `npm test` и проверка ссылок являются обязательными.

@@ -6,7 +6,13 @@ import ItemVisualFactory from '../../src/Presentation/Scene/ItemVisualFactory.js
 describe('UI-ROOM-004 fixture interaction', () => {
   it('exposes ambient mirror and bookshelf as movable presentation fixtures', () => {
     const scene = new THREE.Scene();
-    const environment = new LocationEnvironmentSystem(scene, { width: 8, depth: 6 });
+    const environmentPlan = {
+      exterior: { sidewalkColor: 0x967e70, roadColor: 0x28333c, facadeColor: 0x76675e, foliageColor: 0x587865, routeScale: 1 },
+      fixtures: ['mirror', 'bookshelf'],
+      lighting: { background: 0x172131, fog: 0x172131, hemisphereSky: 0xbad7ff, hemisphereGround: 0x202938, hemisphereIntensity: 1.9, key: 0xffe8c7, keyIntensity: 3.2, rim: 0x5799f4, rimIntensity: 15, warm: 0xffb46d, warmIntensity: 7 },
+      sceneLife: { moteCount: 14, petEnabled: false, routeScale: 1 }
+    };
+    const environment = new LocationEnvironmentSystem(scene, { width: 8, depth: 6, environmentPlan });
     const fixtures = environment.getInteractableObjects();
 
     expect(fixtures.map(fixture => fixture.userData.fixtureId)).toEqual([

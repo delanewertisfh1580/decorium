@@ -3,6 +3,8 @@ export const STATIC_DATA_FILES = Object.freeze([
   'data/feedback/scandinavian-feedback.json',
   'data/items/catalog.v3.json',
   'data/items/item.v3.schema.json',
+  'data/presentation/environment-profile.v1.schema.json',
+  'data/presentation/environment-profiles.v1.json',
   'data/levels/manifest.json',
   'data/levels/level-001.json',
   'data/levels/level-002.json',

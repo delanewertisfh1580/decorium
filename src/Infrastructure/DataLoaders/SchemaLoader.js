@@ -12,6 +12,10 @@ export class SchemaLoader {
   static async loadItemSchema() {
     return this.load('./data/items/item.v3.schema.json');
   }
+
+  static async loadPresentationEnvironmentSchema() {
+    return this.load('./data/presentation/environment-profile.v1.schema.json');
+  }
 }
 
 export default SchemaLoader;

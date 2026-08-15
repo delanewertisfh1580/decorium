@@ -5,6 +5,7 @@ import SceneLifeSystem from '../Scene/SceneLifeSystem.js';
 import { getWallOpacities } from '../Scene/WallVisibility.js';
 import { getRoomOpenings } from '../Scene/RoomArchitecture.js';
 import { ROOM_SURFACE_CONFIG } from '../Scene/roomSurfaceConfig.js';
+import { resolveEnvironmentProfilePlan } from '../Scene/EnvironmentProfilePlan.js';
 
 const DRAG_THRESHOLD = 5;
 const ANIMATION_MS = 220;
@@ -103,6 +104,9 @@ export class RoomView {
     this._roomSize = { width: 8, depth: 6 };
     this._cameraHome = null;
     this.sceneLife = null;
+    this.environmentPlan = null;
+    this._presentationEnvironmentId = null;
+    this.lights = {};
 
     this.onSelect = () => {};
     this.onPlace = () => {};
@@ -125,6 +129,11 @@ export class RoomView {
   setRenderSettings(settings) {
     this.playerSettings = { ...settings };
     this._applyRendererSettings(this.playerSettings);
+  }
+
+  setPresentationEnvironment(environment) {
+    this.environmentPlan = resolveEnvironmentProfilePlan(environment);
+    this._applyEnvironmentLighting();
   }
 
   async init() {
@@ -168,26 +177,47 @@ export class RoomView {
     const warm = new THREE.PointLight(0xffb46d, 7, 12);
     warm.position.set(6, 2.5, 5);
     this.scene.add(warm);
+    this.lights = { ambient, key, rim, warm };
+    this._applyEnvironmentLighting();
+  }
+
+  _applyEnvironmentLighting() {
+    if (!this.environmentPlan || !this.lights.ambient) return;
+    const lighting = this.environmentPlan.lighting;
+    this.scene.background.setHex(lighting.background);
+    this.scene.fog.color.setHex(lighting.fog);
+    this.lights.ambient.color.setHex(lighting.hemisphereSky);
+    this.lights.ambient.groundColor.setHex(lighting.hemisphereGround);
+    this.lights.ambient.intensity = lighting.hemisphereIntensity;
+    this.lights.key.color.setHex(lighting.key);
+    this.lights.key.intensity = lighting.keyIntensity;
+    this.lights.rim.color.setHex(lighting.rim);
+    this.lights.rim.intensity = lighting.rimIntensity;
+    this.lights.warm.color.setHex(lighting.warm);
+    this.lights.warm.intensity = lighting.warmIntensity;
   }
 
   _buildRoom(width, depth) {
+    if (!this.environmentPlan) throw new Error('RoomView requires a presentation environment before rendering.');
+    const plan = this.environmentPlan;
     this._roomSize = { width, depth };
+    this._presentationEnvironmentId = plan.id;
     this.roomGroup.clear();
     this.walls = [];
     this.floor = new THREE.Mesh(
       new THREE.PlaneGeometry(width, depth),
-      makeMaterial(ROOM_SURFACE_CONFIG.color, { roughness: ROOM_SURFACE_CONFIG.roughness })
+      makeMaterial(plan.surfaces.floor.color, { roughness: plan.surfaces.floor.roughness ?? ROOM_SURFACE_CONFIG.roughness })
     );
     this.floor.rotation.x = -Math.PI / 2;
     this.floor.position.set(width / 2, 0, depth / 2);
     this.floor.userData.kind = 'floor';
-    this.floor.userData.surfaceStyle = ROOM_SURFACE_CONFIG.style;
+    this.floor.userData.surfaceStyle = plan.surfaces.floor.style;
     this.floor.receiveShadow = true;
     this.roomGroup.add(this.floor);
 
-    const wallMaterial = { color: 0x1c2a37, roughness: 0.96 };
+    const wallMaterial = { color: plan.surfaces.wall.color, roughness: plan.surfaces.wall.roughness };
     const wallHeight = 3.2;
-    const openings = getRoomOpenings(width, depth, wallHeight);
+    const openings = getRoomOpenings(width, depth, wallHeight, plan.openings);
     const windowOpening = openings.window;
     const windowLeft = windowOpening.centerX - windowOpening.width / 2;
     const windowRight = windowOpening.centerX + windowOpening.width / 2;
@@ -205,21 +235,21 @@ export class RoomView {
       wall.userData.wallSide = side;
       this.walls.push(wall);
     }
-    this._addRoomDecor(width, depth, wallHeight);
+    this._addRoomDecor(width, depth, wallHeight, plan);
     this._updateWallVisibility();
     this.sceneLife?.destroy();
-    this.sceneLife = new SceneLifeSystem(this.scene, this.roomGroup, { width, depth });
+    this.sceneLife = new SceneLifeSystem(this.scene, this.roomGroup, { width, depth, environmentPlan: this.environmentPlan });
 
     this._cameraHome = {
-      position: new THREE.Vector3(width * 1.16, Math.max(5.4, depth * 1.1), depth * 1.34),
-      target: new THREE.Vector3(width / 2, 0.8, depth / 2)
+      position: new THREE.Vector3(width * plan.camera.xFactor, Math.max(plan.camera.minHeight, depth * plan.camera.heightFactor), depth * plan.camera.zFactor),
+      target: new THREE.Vector3(width / 2, plan.camera.targetHeight, depth / 2)
     };
     this.resetCamera();
   }
 
-  _addRoomDecor(width, depth, wallHeight) {
+  _addRoomDecor(width, depth, wallHeight, plan) {
     // The window is a real opening in the back wall, not an opaque panel laid over it.
-    const openings = getRoomOpenings(width, depth, wallHeight);
+    const openings = getRoomOpenings(width, depth, wallHeight, plan.openings);
     const windowOpening = openings.window;
     const glass = addRoomBox(this.roomGroup, [windowOpening.width, windowOpening.height, 0.025], [windowOpening.centerX, windowOpening.bottom + windowOpening.height / 2, depth - 0.055], 0x8fc8d1, {
       roughness: 0.12,
@@ -287,7 +317,7 @@ export class RoomView {
 
   render(roomState, selectedItemId = null) {
     if (!roomState) return;
-    if (this._roomSize.width !== roomState.width || this._roomSize.depth !== roomState.depth || !this.floor) {
+    if (this._roomSize.width !== roomState.width || this._roomSize.depth !== roomState.depth || this._presentationEnvironmentId !== this.environmentPlan?.id || !this.floor) {
       this._buildRoom(roomState.width, roomState.depth);
     }
 
