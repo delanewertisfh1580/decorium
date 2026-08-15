@@ -137,6 +137,159 @@ function buildChair(group, item) {
   addLegs(group, width * 0.72, depth * 0.66, seat, COLORS.woodDark, 0.035);
 }
 
+function buildDiningChair(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  const seatY = Math.min(0.5, heightOf(item, 0.58));
+  addBox(group, width * 0.84, 0.12, depth * 0.8, 0, seatY, 0.02, COLORS.fabricLight, { roughness: 0.9 }, 'dining-seat-frame');
+  addBox(group, width * 0.94, 0.055, depth * 0.88, 0, seatY - 0.09, 0.02, COLORS.woodLight, {}, 'dining-seat-rail');
+  addLegs(group, width * 0.82, depth * 0.78, seatY - 0.03, COLORS.wood, 0.03);
+  addBox(group, 0.06, seatY * 1.9, 0.06, -width * 0.37, seatY + seatY * 0.82, -depth * 0.34, COLORS.woodLight, {}, 'dining-back-post');
+  addBox(group, 0.06, seatY * 1.9, 0.06, width * 0.37, seatY + seatY * 0.82, -depth * 0.34, COLORS.woodLight, {}, 'dining-back-post');
+  addBox(group, width * 0.82, 0.06, 0.06, 0, seatY + seatY * 1.67, -depth * 0.34, COLORS.woodLight, {}, 'dining-back-rail');
+  for (const x of [-width * 0.22, 0, width * 0.22]) addBox(group, 0.035, seatY * 1.08, 0.045, x, seatY + seatY * 1.08, -depth * 0.34, COLORS.wood, {}, 'dining-slat');
+}
+
+function buildLoungeArmchair(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  const seatY = 0.38;
+  addBox(group, width * 0.86, 0.23, depth * 0.76, 0, seatY, depth * 0.05, COLORS.fabric, { roughness: 0.9 }, 'lounge-seat');
+  addBox(group, width * 0.78, 0.17, depth * 0.62, 0, seatY + 0.17, depth * 0.03, COLORS.fabricLight, { roughness: 0.94 }, 'lounge-seat-cushion');
+  const back = addBox(group, width * 0.78, 0.66, depth * 0.18, 0, 0.78, -depth * 0.29, COLORS.fabricLight, { roughness: 0.92 }, 'lounge-back-cushion');
+  back.rotation.x = -0.1;
+  for (const x of [-width * 0.42, width * 0.42]) {
+    const arm = addBox(group, width * 0.16, 0.48, depth * 0.78, x, 0.53, 0, COLORS.fabric, { roughness: 0.9 }, 'lounge-arm');
+    arm.rotation.z = x < 0 ? -0.04 : 0.04;
+  }
+  addLegs(group, width * 0.72, depth * 0.66, 0.16, COLORS.woodDark, 0.045);
+}
+
+function buildOfficeChair(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  const seatY = 0.62;
+  addBox(group, width * 0.82, 0.14, depth * 0.78, 0, seatY, 0.02, COLORS.dark, { roughness: 0.62 }, 'office-seat');
+  const back = addBox(group, width * 0.74, 0.8, 0.12, 0, 1.14, -depth * 0.31, COLORS.dark, { roughness: 0.64 }, 'office-ergonomic-back');
+  back.rotation.x = -0.08;
+  addCylinder(group, 0.055, seatY - 0.1, 0, (seatY - 0.1) / 2, 0, COLORS.metalDark, { metalness: 0.65 }, 12, 'office-gas-lift');
+  addCylinder(group, Math.min(width, depth) * 0.29, 0.08, 0, 0.04, 0, COLORS.metalDark, { metalness: 0.58 }, 20, 'office-base');
+  for (let index = 0; index < 5; index += 1) {
+    const angle = (Math.PI * 2 * index) / 5;
+    const spoke = addBox(group, Math.min(width, depth) * 0.56, 0.05, 0.07, 0, 0.11, 0, COLORS.metalDark, { metalness: 0.62 }, 'office-spoke');
+    spoke.rotation.y = angle;
+    const radius = Math.min(width, depth) * 0.29;
+    const wheel = addCylinder(group, 0.07, 0.055, Math.cos(angle) * radius, 0.08, Math.sin(angle) * radius, COLORS.black, { roughness: 0.7 }, 12, 'office-wheel');
+    wheel.rotation.z = Math.PI / 2;
+  }
+  for (const x of [-width * 0.44, width * 0.44]) {
+    addBox(group, 0.05, 0.25, 0.05, x, 0.75, -depth * 0.02, COLORS.metalDark, { metalness: 0.5 }, 'office-arm-support');
+    addBox(group, width * 0.16, 0.06, depth * 0.2, x, 0.88, 0, COLORS.dark, { roughness: 0.7 }, 'office-armrest');
+  }
+}
+
+function buildOttoman(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  const radius = Math.min(width, depth) * 0.44;
+  addCylinder(group, radius, 0.34, 0, 0.24, 0, COLORS.fabricWarm, { roughness: 0.88 }, 20, 'ottoman-body');
+  addTorus(group, radius * 0.9, 0.02, 0, 0.42, 0, COLORS.fabricLight, [0, 0, 0], { roughness: 0.92 }, 'ottoman-seam');
+  addCylinder(group, radius * 0.72, 0.055, 0, 0.44, 0, COLORS.fabricWarm, { roughness: 0.92 }, 20, 'ottoman-top');
+  for (const [x, z] of [[-radius * 0.55, -radius * 0.55], [radius * 0.55, -radius * 0.55], [-radius * 0.55, radius * 0.55], [radius * 0.55, radius * 0.55]]) addCylinder(group, 0.04, 0.11, x, 0.055, z, COLORS.woodDark, {}, 10, 'ottoman-foot');
+}
+
+function buildEntryBench(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  addBox(group, width * 0.9, 0.15, depth * 0.72, 0, 0.5, 0, COLORS.fabricWarm, { roughness: 0.9 }, 'bench-seat');
+  for (const x of [-width * 0.42, width * 0.42]) {
+    addBox(group, 0.07, 0.72, depth * 0.82, x, 0.36, 0, COLORS.woodLight, {}, 'bench-side-frame');
+    addBox(group, 0.12, 0.06, depth * 0.88, x, 0.66, 0, COLORS.wood, {}, 'bench-top-rail');
+  }
+  addBox(group, width * 0.78, 0.05, depth * 0.66, 0, 0.18, 0, COLORS.woodLight, {}, 'bench-lower-shelf');
+  for (const x of [-width * 0.28, 0, width * 0.28]) addBox(group, 0.04, 0.025, depth * 0.6, x, 0.23, 0, COLORS.wood, {}, 'bench-lower-slat');
+}
+
+function buildBarStool(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  const radius = Math.min(width, depth) * 0.3;
+  addCylinder(group, radius, 0.12, 0, 0.92, 0, COLORS.fabric, { roughness: 0.86 }, 20, 'stool-seat');
+  addCylinder(group, 0.045, 0.84, 0, 0.46, 0, COLORS.metalDark, { metalness: 0.65 }, 12, 'stool-column');
+  addTorus(group, radius * 0.92, 0.025, 0, 0.45, 0, COLORS.brass, [0, 0, 0], { metalness: 0.6 }, 'stool-footrest');
+  addCylinder(group, radius * 0.82, 0.07, 0, 0.035, 0, COLORS.metalDark, { metalness: 0.52 }, 20, 'stool-base');
+  addTorus(group, radius * 0.8, 0.02, 0, 0.98, 0, COLORS.fabricLight, [0, 0, 0], { roughness: 0.92 }, 'stool-seat-piping');
+}
+
+function buildClassicArmchair(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  addBox(group, width * 0.78, 0.24, depth * 0.72, 0, 0.48, 0.04, COLORS.green, { roughness: 0.85 }, 'classic-seat');
+  addBox(group, width * 0.75, 0.78, depth * 0.18, 0, 0.98, -depth * 0.29, COLORS.green, { roughness: 0.85 }, 'classic-tufted-back');
+  for (const x of [-width * 0.21, 0, width * 0.21]) for (const y of [0.88, 1.1]) addSphere(group, 0.032, x, y, -depth * 0.39, COLORS.brass, { metalness: 0.52 }, [1, 1, 0.45], 'classic-tuft');
+  for (const x of [-width * 0.43, width * 0.43]) {
+    addSphere(group, width * 0.13, x, 0.72, 0, COLORS.green, { roughness: 0.86 }, [0.8, 1.1, 1.15], 'classic-rolled-arm');
+    addBox(group, width * 0.15, 0.46, depth * 0.72, x, 0.48, 0, COLORS.green, { roughness: 0.86 }, 'classic-arm-base');
+    addCylinder(group, 0.055, 0.25, x, 0.125, -depth * 0.26, COLORS.woodDark, {}, 10, 'classic-carved-foot');
+  }
+  addLegs(group, width * 0.72, depth * 0.62, 0.18, COLORS.woodDark, 0.045);
+}
+
+function buildSectionalSofa(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  const seatY = 0.42;
+  addBox(group, width * 0.62, 0.26, depth * 0.7, -width * 0.18, seatY, depth * 0.08, COLORS.fabric, {}, 'sectional-main-seat');
+  addBox(group, width * 0.42, 0.26, depth * 0.98, width * 0.28, seatY, depth * 0.17, COLORS.fabric, {}, 'sectional-chaise');
+  addBox(group, width * 0.96, 0.53, depth * 0.15, 0, 0.78, -depth * 0.31, COLORS.fabricWarm, {}, 'sectional-back');
+  for (const [x, z, w, d] of [[-width * 0.28, depth * 0.08, width * 0.28, depth * 0.5], [width * 0.05, depth * 0.08, width * 0.28, depth * 0.5], [width * 0.3, depth * 0.2, width * 0.28, depth * 0.68]]) addBox(group, w, 0.14, d, x, seatY + 0.18, z, COLORS.fabricLight, { roughness: 0.92 }, 'sectional-cushion');
+  addBox(group, width * 0.12, 0.56, depth * 0.74, -width * 0.45, 0.56, 0, COLORS.fabric, {}, 'sectional-arm');
+  addLegs(group, width * 0.8, depth * 0.76, 0.16, COLORS.woodDark, 0.04);
+}
+
+function buildStraightSofa(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  const seatY = 0.44;
+  addBox(group, width * 0.9, 0.28, depth * 0.7, 0, seatY, depth * 0.05, COLORS.fabricWarm, {}, 'straight-sofa-base');
+  addBox(group, width * 0.96, 0.56, depth * 0.16, 0, 0.82, -depth * 0.3, COLORS.fabric, {}, 'straight-sofa-back');
+  for (const x of [-width * 0.28, 0, width * 0.28]) addBox(group, width * 0.25, 0.15, depth * 0.52, x, seatY + 0.2, depth * 0.08, COLORS.fabricLight, { roughness: 0.92 }, 'straight-sofa-cushion');
+  for (const x of [-width * 0.45, width * 0.45]) addBox(group, width * 0.11, 0.58, depth * 0.76, x, 0.55, 0, COLORS.fabricWarm, {}, 'straight-sofa-arm');
+  addLegs(group, width * 0.8, depth * 0.62, 0.16, COLORS.woodDark, 0.035);
+}
+
+function buildComputerDesk(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  addBox(group, width, 0.11, depth, 0, 0.74, 0, COLORS.woodLight, {}, 'computer-desk-top');
+  for (const x of [-width * 0.42, width * 0.42]) addBox(group, 0.06, 0.68, depth * 0.88, x, 0.36, 0, COLORS.metalDark, { metalness: 0.55 }, 'computer-desk-side-frame');
+  addBox(group, width * 0.56, 0.09, depth * 0.28, 0, 0.96, -depth * 0.22, COLORS.wood, {}, 'monitor-shelf');
+  addBox(group, width * 0.7, 0.04, 0.06, 0, 0.61, depth * 0.31, COLORS.metalDark, { metalness: 0.6 }, 'cable-channel');
+  for (const x of [-width * 0.22, width * 0.22]) addCylinder(group, 0.03, 0.03, x, 0.8, depth * 0.18, COLORS.black, { metalness: 0.35 }, 12, 'cable-grommet');
+}
+
+function buildSideboard(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  const height = 0.78;
+  addBox(group, width, height, depth, 0, height / 2 + 0.13, 0, COLORS.woodDark, {}, 'sideboard-body');
+  for (const x of [-width * 0.25, width * 0.25]) {
+    addBox(group, width * 0.42, height * 0.7, 0.04, x, height * 0.5 + 0.13, -depth * 0.52, COLORS.wood, { roughness: 0.78 }, 'sideboard-door');
+    addCylinder(group, 0.025, 0.05, x + (x < 0 ? width * 0.1 : -width * 0.1), height * 0.5 + 0.13, -depth * 0.57, COLORS.brass, { metalness: 0.7 }, 10, 'sideboard-pull');
+  }
+  for (const x of [-width * 0.4, width * 0.4]) addCylinder(group, 0.045, 0.26, x, 0.13, depth * 0.31, COLORS.woodDark, {}, 10, 'sideboard-foot');
+  addBox(group, width * 0.94, 0.06, depth * 0.94, 0, height + 0.16, 0, COLORS.woodLight, {}, 'sideboard-top');
+}
+
+function buildMediaConsole(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  const height = 0.48;
+  addBox(group, width, height, depth, 0, height / 2 + 0.1, 0, COLORS.dark, { roughness: 0.58 }, 'media-console-body');
+  addBox(group, width * 0.44, height * 0.42, depth * 0.08, 0, height * 0.54 + 0.1, -depth * 0.54, COLORS.black, { roughness: 0.85 }, 'media-bay');
+  for (const x of [-width * 0.08, width * 0.08]) addCylinder(group, 0.025, 0.025, x, height * 0.54 + 0.1, -depth * 0.59, COLORS.black, {}, 10, 'cable-slot');
+  for (const x of [-width * 0.4, width * 0.4]) addCylinder(group, 0.035, 0.2, x, 0.1, depth * 0.28, COLORS.metalDark, { metalness: 0.5 }, 10, 'media-console-foot');
+  addBox(group, width * 0.94, 0.05, depth * 0.94, 0, height + 0.13, 0, COLORS.woodDark, {}, 'media-console-top');
+}
+
+function buildNightstand(group, item) {
+  const { x: width, z: depth } = dimensionsOf(item);
+  const height = 0.58;
+  addBox(group, width, height, depth, 0, height / 2 + 0.12, 0, COLORS.woodLight, {}, 'nightstand-body');
+  addBox(group, width * 0.78, height * 0.38, 0.04, 0, height * 0.58 + 0.12, -depth * 0.54, COLORS.wood, { roughness: 0.8 }, 'nightstand-drawer');
+  addCylinder(group, 0.026, 0.05, 0, height * 0.58 + 0.12, -depth * 0.59, COLORS.brass, { metalness: 0.7 }, 10, 'nightstand-pull');
+  addBox(group, width * 0.82, 0.04, depth * 0.82, 0, height * 0.27 + 0.12, depth * 0.03, COLORS.woodDark, {}, 'nightstand-shelf');
+  addLegs(group, width * 0.78, depth * 0.72, 0.2, COLORS.woodDark, 0.035);
+}
+
 function buildDiningTable(group, item) {
   const { x: width, z: depth } = dimensionsOf(item);
   const topHeight = 0.76;
@@ -335,19 +488,32 @@ function applyProfile(group, profile) {
 function buildShape(group, item, profile) {
   switch (profile.shape) {
     case 'sofa': return buildSofa(group, item);
+    case 'sectionalSofa': return buildSectionalSofa(group, item);
+    case 'straightSofa': return buildStraightSofa(group, item);
     case 'chair': return buildChair(group, item);
+    case 'diningChair': return buildDiningChair(group, item);
+    case 'loungeArmchair': return buildLoungeArmchair(group, item);
+    case 'officeChair': return buildOfficeChair(group, item);
+    case 'ottoman': return buildOttoman(group, item);
+    case 'entryBench': return buildEntryBench(group, item);
+    case 'barStool': return buildBarStool(group, item);
+    case 'classicArmchair': return buildClassicArmchair(group, item);
     case 'table':
     case 'diningTable': return buildDiningTable(group, item);
     case 'roundTable': return buildRoundTable(group, item);
     case 'lowTable': return buildLowTable(group, item);
     case 'desk': return buildDesk(group, item);
+    case 'computerDesk': return buildComputerDesk(group, item);
     case 'tableLamp':
     case 'floorLamp':
     case 'ceilingLamp': return buildLamp(group, item, profile.shape);
     case 'wallShelf':
     case 'bookcase':
     case 'cabinet':
-    case 'storage': return buildStorage(group, item, profile.shape);
+    case 'storage': return buildStorage(group, item);
+    case 'sideboard': return buildSideboard(group, item);
+    case 'mediaConsole': return buildMediaConsole(group, item);
+    case 'nightstand': return buildNightstand(group, item);
     case 'bed': return buildBed(group, item);
     case 'plant': return buildPlant(group, item);
     case 'television': return buildTelevision(group, item);
@@ -433,6 +599,7 @@ export class ItemVisualFactory {
     group.userData.itemId = item.id;
     group.userData.catalogItemId = item.id;
     group.userData.visualShape = profile.shape;
+    group.userData.visualFamily = profile.visualFamily ?? profile.shape;
     group.userData.detailLevel = VISUAL_DETAIL_CONTRACT.detailLevel;
     group.userData.feedbackState = 'idle';
     buildShape(group, item, profile);

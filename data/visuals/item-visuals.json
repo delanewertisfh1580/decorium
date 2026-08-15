@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "defaults": {
     "chair": "chair",
     "table": "diningTable",
@@ -10,35 +10,29 @@
     "decor": "decor"
   },
   "items": {
-    "table-001": {
-      "shape": "diningTable",
-      "material": "woodLight"
-    },
-    "table-002": {
-      "shape": "lowTable",
-      "material": "wood"
-    },
-    "desk-001": {
-      "shape": "desk",
-      "material": "woodLight"
-    },
-    "lamp-001": {
-      "shape": "tableLamp",
-      "light": { "color": "#ffd38c", "intensity": 1.8, "range": 3.2 }
-    },
-    "lamp-002": {
-      "shape": "floorLamp",
-      "light": { "color": "#ffd38c", "intensity": 2.6, "range": 4.5 }
-    },
-    "lamp-003": {
-      "shape": "ceilingLamp",
-      "light": { "color": "#fff0c2", "intensity": 3.2, "range": 6 }
-    },
+    "chair-001": { "shape": "diningChair", "visualFamily": "diningChair", "material": "woodLight", "accent": "fabricLight" },
+    "chair-002": { "shape": "loungeArmchair", "visualFamily": "loungeArmchair", "material": "fabric", "accent": "woodDark" },
+    "chair-003": { "shape": "officeChair", "visualFamily": "officeChair", "material": "dark", "accent": "metal" },
+    "ottoman-001": { "shape": "ottoman", "visualFamily": "ottoman", "material": "fabricWarm", "accent": "woodDark" },
+    "bench-001": { "shape": "entryBench", "visualFamily": "entryBench", "material": "woodLight", "accent": "fabricWarm" },
+    "barstool-001": { "shape": "barStool", "visualFamily": "barStool", "material": "dark", "accent": "brass" },
+    "armchair-001": { "shape": "classicArmchair", "visualFamily": "classicArmchair", "material": "green", "accent": "woodDark" },
+    "sofa-001": { "shape": "sectionalSofa", "visualFamily": "sectionalSofa", "material": "fabric", "accent": "fabricLight" },
+    "sofa-002": { "shape": "straightSofa", "visualFamily": "straightSofa", "material": "fabricWarm", "accent": "woodDark" },
+    "table-001": { "shape": "diningTable", "material": "woodLight" },
+    "table-002": { "shape": "lowTable", "material": "wood" },
+    "table-003": { "shape": "computerDesk", "visualFamily": "computerDesk", "material": "woodLight", "accent": "metalDark" },
+    "desk-001": { "shape": "desk", "material": "woodLight" },
+    "lamp-001": { "shape": "tableLamp", "light": { "color": "#ffd38c", "intensity": 1.8, "range": 3.2 } },
+    "lamp-002": { "shape": "floorLamp", "light": { "color": "#ffd38c", "intensity": 2.6, "range": 4.5 } },
+    "lamp-003": { "shape": "ceilingLamp", "light": { "color": "#fff0c2", "intensity": 3.2, "range": 6 } },
     "shelf-001": { "shape": "wallShelf", "material": "woodLight" },
     "shelf-002": { "shape": "bookcase", "material": "wood" },
     "shelf-003": { "shape": "bookcase", "material": "woodLight" },
     "cabinet-001": { "shape": "cabinet", "material": "wood" },
-    "tvstand-001": { "shape": "cabinet", "material": "dark" },
+    "sideboard-001": { "shape": "sideboard", "visualFamily": "sideboard", "material": "woodDark", "accent": "brass" },
+    "tvstand-001": { "shape": "mediaConsole", "visualFamily": "mediaConsole", "material": "dark", "accent": "brass" },
+    "nightstand-001": { "shape": "nightstand", "visualFamily": "nightstand", "material": "woodLight", "accent": "brass" },
     "tv-001": { "shape": "television", "material": "dark", "accent": "screen" },
     "plant-001": { "shape": "plant", "accent": "green" },
     "mirror-001": { "shape": "mirror", "accent": "glass" },

@@ -53,8 +53,9 @@ describe('Production content contracts', () => {
   });
 
   it('keeps presentation shapes in a data-driven visual profile contract', () => {
-    expect(visualProfiles.version).toBe(2);
+    expect(visualProfiles.version).toBe(3);
     expect(visualProfiles.items['coffeetable-001'].shape).toBe('roundTable');
+    expect(visualProfiles.items['chair-002'].visualFamily).toBe('loungeArmchair');
     expect(level.availableItems.every(itemId => (
       visualProfiles.items[itemId] || visualProfiles.defaults[catalog.items.find(item => item.id === itemId)?.type]
     ))).toBe(true);
