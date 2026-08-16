@@ -58,10 +58,13 @@ function createConstraint(data) {
   );
 }
 
-function createErgonomicsRules(data = {}) {
+function createErgonomicsRules(data = {}, clientMultiplier = 1) {
   const rules = {};
   if (data?.minimumClearance) {
-    rules.minimumClearance = new MinimumClearanceRule(data.minimumClearance);
+    rules.minimumClearance = new MinimumClearanceRule({
+      ...data.minimumClearance,
+      clientMultiplier
+    });
   }
   if (Array.isArray(data?.passageZones)) {
     rules.passageZones = Object.freeze(data.passageZones.map(zone => new PassageZone(zone)));
@@ -180,7 +183,10 @@ export class LoadLevelUseCase {
           styleId,
           targetScore: clientBrief?.evaluationPolicy.completion.minimumStars ?? raw.targetScore ?? 3,
           compositionRules: clientBrief?.evaluationPolicy.compositionRules ?? raw.compositionRules ?? {},
-          ergonomicsRules: createErgonomicsRules(clientBrief?.evaluationPolicy.ergonomicsRules ?? raw.ergonomicsRules),
+          ergonomicsRules: createErgonomicsRules(
+            clientBrief?.evaluationPolicy.ergonomicsRules ?? raw.ergonomicsRules,
+            clientBrief?.spatialPreferences.clearanceMultiplier ?? 1
+          ),
           presentationEnvironment,
           clientBrief
         })

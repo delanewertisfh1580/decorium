@@ -56,6 +56,29 @@ describe('LoadLevelUseCase ClientBrief hydration', () => {
     expect(clientBriefRepository.getById).toHaveBeenCalledWith('brief-warm-host-001');
   });
 
+  it('applies the resolved client clearance multiplier to the hydrated minimum-clearance rule', async () => {
+    const levelRepository = { loadLevel: vi.fn().mockResolvedValue(rawLevel) };
+    const itemCatalog = { getItemsByIds: vi.fn().mockResolvedValue([item]) };
+    const constraintCatalog = { getConstraintsByStyleId: vi.fn().mockResolvedValue([]) };
+    const clientBriefRepository = {
+      getById: vi.fn().mockResolvedValue({
+        ...rawBrief,
+        spatialPreferences: {
+          ...rawBrief.spatialPreferences,
+          clearanceMultiplier: 0.75
+        }
+      })
+    };
+    const useCase = new LoadLevelUseCase(levelRepository, itemCatalog, constraintCatalog, null, clientBriefRepository);
+
+    const result = await useCase.execute('level-001');
+
+    expect(result.success).toBe(true);
+    expect(result.data.ergonomicsRules.minimumClearance.minimumDistance).toBe(0.9);
+    expect(result.data.ergonomicsRules.minimumClearance.clientMultiplier).toBe(0.75);
+    expect(result.data.ergonomicsRules.minimumClearance.effectiveMinimumDistance).toBeCloseTo(0.675, 5);
+  });
+
   it('rejects absent or cross-level client policy instead of using level-side evaluation fallback', async () => {
     const levelRepository = { loadLevel: vi.fn().mockResolvedValue(rawLevel) };
     const itemCatalog = { getItemsByIds: vi.fn().mockResolvedValue([item]) };

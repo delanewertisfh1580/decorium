@@ -40,7 +40,8 @@ class ClearanceViolation {
     this._rule = rule;
     this._itemIds = Object.freeze([leftItem.id, rightItem.id].sort());
     this._actualValue = actualValue;
-    this._severity = Math.min(1, Math.max(0, (rule.minimumDistance - actualValue) / rule.minimumDistance));
+    this._threshold = rule.effectiveMinimumDistance;
+    this._severity = Math.min(1, Math.max(0, (this._threshold - actualValue) / this._threshold));
     Object.freeze(this);
   }
 
@@ -55,7 +56,7 @@ class ClearanceViolation {
   get constraintId() { return this._rule.id; }
   get featureName() { return 'minimumClearance'; }
   get operator() { return '>='; }
-  get threshold() { return this._rule.minimumDistance; }
+  get threshold() { return this._threshold; }
   get actualValue() { return this._actualValue; }
   get severity() { return this._severity; }
   get messageKey() { return this._rule.messageKey; }
@@ -95,7 +96,7 @@ export class ClearanceEvaluator {
         const rightItem = placedItems[rightIndex];
         if (excludedPairKeys.has(canonicalPairKey(leftItem.id, rightItem.id))) continue;
         const gap = footprintGap(leftItem, rightItem);
-        if (gap < rule.minimumDistance) {
+        if (gap < rule.effectiveMinimumDistance) {
           violations.push(new ClearanceViolation(rule, leftItem, rightItem, gap));
         }
       }
