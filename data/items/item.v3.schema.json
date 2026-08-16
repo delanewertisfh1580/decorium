@@ -50,7 +50,7 @@
                 "uniqueItems": true,
                 "items": {
                   "type": "string",
-                  "enum": ["dining-seat", "dining-surface", "lounge-seat", "coffee-surface", "view-target"]
+                  "enum": ["dining-seat", "dining-surface", "lounge-seat", "coffee-surface", "view-target", "work-seat", "work-surface"]
                 }
               },
               "frontAxis": {

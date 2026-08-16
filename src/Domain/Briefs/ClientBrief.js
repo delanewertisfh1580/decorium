@@ -3,6 +3,8 @@ const DENSITY_VALUES = new Set(['intimate', 'balanced', 'open']);
 const EMPTY_SPACE_MODES = new Set(['allow', 'discourage-excess', 'require-open']);
 const CRITICAL_RULE_MODES = new Set(['block-completion', 'cap-stars', 'informational']);
 
+import RequiredFunctionalScenario from '../Ergonomics/RequiredFunctionalScenario.js';
+
 function requiredString(value, label) {
   if (typeof value !== 'string' || value.trim() === '') {
     throw new Error(`ClientBrief ${label} must be a non-empty string`);
@@ -118,6 +120,11 @@ function normalizeEvaluationPolicy(value) {
     || !CRITICAL_RULE_MODES.has(completion.criticalRuleMode)) {
     throw new Error('ClientBrief evaluationPolicy completion must contain a supported criticalRuleMode');
   }
+  const ergonomicsRules = value.ergonomicsRules ?? {};
+  const requiredFunctionalScenarios = ergonomicsRules.requiredFunctionalScenarios;
+  if (!Array.isArray(requiredFunctionalScenarios)) {
+    throw new Error('ClientBrief evaluationPolicy ergonomicsRules.requiredFunctionalScenarios must be an array');
+  }
   return freezeDeep({
     styleMode: value.styleMode,
     completion: {
@@ -125,7 +132,12 @@ function normalizeEvaluationPolicy(value) {
       criticalRuleMode: completion.criticalRuleMode
     },
     compositionRules: { ...(value.compositionRules ?? {}) },
-    ergonomicsRules: { ...(value.ergonomicsRules ?? {}) }
+    ergonomicsRules: {
+      ...ergonomicsRules,
+      requiredFunctionalScenarios: requiredFunctionalScenarios.map(scenario => (
+        new RequiredFunctionalScenario(scenario).toJSON()
+      ))
+    }
   });
 }
 

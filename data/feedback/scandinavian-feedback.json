@@ -108,6 +108,24 @@
     "severity": "high"
   },
   {
+    "id": "scenario-dining-hosting-required",
+    "category": "violation",
+    "template": "Соберите обеденную группу: добавьте стол и два места для сидения.",
+    "severity": "high"
+  },
+  {
+    "id": "scenario-evening-media-required",
+    "category": "violation",
+    "template": "Соберите медиа-зону: добавьте место для отдыха, телевизор и журнальный столик.",
+    "severity": "high"
+  },
+  {
+    "id": "scenario-focused-work-required",
+    "category": "violation",
+    "template": "Соберите рабочее место: добавьте письменный стол и место для работы.",
+    "severity": "high"
+  },
+  {
     "id": "functional-lounge-faces-view-target",
     "category": "violation",
     "template": "Поверните диван к телевизору, чтобы зона отдыха работала как единый сценарий.",

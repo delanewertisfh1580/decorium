@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import ClientBrief from '../../../src/Domain/Briefs/ClientBrief.js';
+import RequiredFunctionalScenario from '../../../src/Domain/Ergonomics/RequiredFunctionalScenario.js';
 import { LoadLevelUseCase } from '../../../src/Application/UseCases/LoadLevelUseCase.js';
 
 const item = Object.freeze({ id: 'chair-001' });
@@ -31,7 +32,25 @@ const rawBrief = {
     styleMode: 'weighted-targets-v1',
     completion: { minimumStars: 4, criticalRuleMode: 'block-completion' },
     compositionRules: { minItems: 4, requiredRoles: ['seating', 'lighting'] },
-    ergonomicsRules: { minimumClearance: { minimumDistance: 0.9, weight: 1 }, passageZones: [], functionalLayoutRules: [] }
+    ergonomicsRules: {
+      minimumClearance: { minimumDistance: 0.9, weight: 1 },
+      passageZones: [],
+      functionalLayoutRules: [],
+      requiredFunctionalScenarios: [
+        {
+          schemaVersion: 1,
+          id: 'dining-hosting',
+          label: 'Обеденная группа',
+          requiredRoles: [
+            { affordance: 'dining-surface', minCount: 1 },
+            { affordance: 'dining-seat', minCount: 2 }
+          ],
+          weight: 1.3,
+          critical: true,
+          messageKey: 'scenario-dining-hosting-required'
+        }
+      ]
+    }
   }
 };
 
@@ -52,6 +71,8 @@ describe('LoadLevelUseCase ClientBrief hydration', () => {
     expect(result.data.targetScore).toBe(4);
     expect(result.data.compositionRules).toEqual(rawBrief.evaluationPolicy.compositionRules);
     expect(result.data.ergonomicsRules.minimumClearance.minimumDistance).toBe(0.9);
+    expect(result.data.ergonomicsRules.requiredFunctionalScenarios[0]).toBeInstanceOf(RequiredFunctionalScenario);
+    expect(result.data.ergonomicsRules.requiredFunctionalScenarios[0].id).toBe('dining-hosting');
     expect(constraintCatalog.getConstraintsByStyleId).toHaveBeenCalledWith('scandinavian');
     expect(clientBriefRepository.getById).toHaveBeenCalledWith('brief-warm-host-001');
   });

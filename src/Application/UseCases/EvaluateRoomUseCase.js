@@ -13,6 +13,7 @@ function serializeViolation(violation, type = null) {
     messageKey: violation.messageKey,
     message: violation.constraint.description,
     ...(type ? { type } : {}),
+    ...(typeof violation.critical === 'boolean' ? { critical: violation.critical } : {}),
     ...(Array.isArray(violation.itemIds) ? { itemIds: [...violation.itemIds] } : {})
   };
 }
@@ -55,7 +56,15 @@ export class EvaluateRoomUseCase {
       if (!roomState) return EvaluationResultDTO.failure(`ROOM_NOT_FOUND: Room ${roomId} not found.`);
 
       const placedItems = roomState.getItems();
+      const hasErgonomicsChannel = Boolean(this.ergonomicsEvaluator);
+      const hasSpatialRules = Boolean(ergonomicsRules.minimumClearance)
+        || (Array.isArray(ergonomicsRules.passageZones) && ergonomicsRules.passageZones.length > 0)
+        || (Array.isArray(ergonomicsRules.functionalLayoutRules) && ergonomicsRules.functionalLayoutRules.length > 0)
+        || (Array.isArray(ergonomicsRules.requiredFunctionalScenarios) && ergonomicsRules.requiredFunctionalScenarios.length > 0);
       if (placedItems.length === 0) {
+        const ergonomicsViolations = hasErgonomicsChannel && hasSpatialRules
+          ? this.ergonomicsEvaluator.evaluate(roomState, ergonomicsRules)
+          : [];
         const feedback = this.feedbackCatalog
           ? await this.feedbackCatalog.formatFeedback('composition-empty')
           : 'Комната пуста (Room is empty). Добавьте предметы, чтобы получить оценку.';
@@ -64,7 +73,7 @@ export class EvaluateRoomUseCase {
           penalty: 1,
           stars: 0,
           nextThreshold: 0.4,
-          violations: [],
+          violations: ergonomicsViolations.map(violation => serializeViolation(violation, 'ergonomics')),
           itemCount: 0,
           roomVector: null,
           feedback
@@ -78,10 +87,6 @@ export class EvaluateRoomUseCase {
       const styleChannelViolations = [...styleViolations, ...composition.violations];
       const styleScoring = this.styleScorer.evaluate(styleChannelViolations);
 
-      const hasErgonomicsChannel = Boolean(this.ergonomicsEvaluator);
-      const hasSpatialRules = Boolean(ergonomicsRules.minimumClearance)
-        || (Array.isArray(ergonomicsRules.passageZones) && ergonomicsRules.passageZones.length > 0)
-        || (Array.isArray(ergonomicsRules.functionalLayoutRules) && ergonomicsRules.functionalLayoutRules.length > 0);
       const ergonomicsViolations = hasErgonomicsChannel && hasSpatialRules
         ? this.ergonomicsEvaluator.evaluate(roomState, ergonomicsRules)
         : [];

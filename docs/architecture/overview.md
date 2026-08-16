@@ -1,7 +1,7 @@
 # Architecture overview
 
 **Статус:** Active production reference
-**Обновлено:** 15 августа 2026 г.
+**Обновлено:** 16 августа 2026 г.
 
 Decorium — static Vite web application на JavaScript ES modules с Three.js presentation и Clean Architecture ядром. Проект использует Three.js 0.160, AJV 8 для schema validation, Vitest 4 и versioned JSON content. `src/main.js` — единственный composition root.
 
@@ -51,12 +51,12 @@ The repository lazy-loads only the active profile's static GLB, caches its sourc
 
 ```text
 Level clientBriefId → validated ClientBrief repository → ClientBrief Domain value
-  → LoadLevelUseCase → current primary style / completion / composition / ergonomics inputs
+  → LoadLevelUseCase → current primary style / completion / composition / ergonomics / required-scenario inputs
 Player intent → GameController → Application use case → RoomState
 Evaluate → constraint/style/composition/spatial evaluators → score aggregation → authored feedback → EvaluationView
 ```
 
-Evaluation is deterministic. Presentation receives the hydrated brief plus serialized feedback and score data; it never reimplements rule logic. Current runtime uses the brief’s **primary** target with the one shipped starter style dataset and derives completion/composition/ergonomics policy from the brief. Secondary/accent weighting, spatial preference and client-priority channels are explicitly persisted inputs awaiting dedicated deterministic evaluator slices.
+Evaluation is deterministic. Presentation receives the hydrated brief plus serialized feedback and score data; it never reimplements rule logic. Current runtime uses the brief’s **primary** target with the one shipped starter style dataset and derives completion, composition, clearance multiplier, functional layout and required scenario policy from the brief. Secondary/accent weighting, density, empty-space preference and client-priority channels remain explicitly persisted inputs awaiting dedicated deterministic evaluator slices.
 
 ### Profile and campaign
 
@@ -74,10 +74,11 @@ Player settings and completed level progress are persisted in profile schema V3.
 | `PlayerProfile v3` | Local profile, settings and completed levels. | Domain + Infrastructure persistence boundary |
 | Item catalog V3 | 34 authored items, feature vectors and semantic interaction profiles. | `data/items`, JSON schema, catalog loader |
 | Level definition | Bounds, available items, initial placement, ClientBrief and presentation references, prerequisites. | `data/levels`, topology-only level schema |
-| `PresentationEnvironmentProfile v1` | Closed-preset visual scene policy and ambient fixture ownership. | `data/presentation`, JSON schema, Infrastructure repository and Presentation resolver |
+| `PresentationEnvironmentProfile v2` | Closed-preset visual scene policy and ambient fixture ownership. | `data/presentation`, JSON schema, Infrastructure repository and Presentation resolver |
 | `RoomCompositionPbrAssetManifest v1` | Static GLB-to-environment-profile mapping, PBR conformance and lazy/fallback/performance contract. | `data/visuals`, Presentation asset repository and scene lifecycle |
 | `InteractionProfile v1` | Affordances, local front axis and usable sides. | Domain item semantics |
 | `FunctionalLayoutRule v1` | Adjacency or directional `front-adjacency` functional relationships. | Domain ergonomics |
+| `RequiredFunctionalScenario v1` | Client-required affordance roles and cardinality, independently evaluated when anchors are absent. | ClientBrief policy, Domain ergonomics and LoadLevel hydration |
 | `ClientBrief v1` | Bound client identity, weighted style targets, priorities, spatial preferences and current evaluation policy. | `data/briefs`, schema, validated repository, Domain value and LoadLevel hydration |
 | BuildInfo / release manifest | Build identity for release verification. | Release pipeline |
 
@@ -89,8 +90,9 @@ Player settings and completed level progress are persisted in profile schema V3.
 4. Every persisted or authored contract is versioned and validated.
 5. Deterministic outcomes are reproducible from saved state and authored inputs.
 6. Functional matches are evaluated before generic clearance exclusions, so valid pairs are not double-penalized.
-7. Style mixing is interpreted only from explicit client-brief policy; no global default aesthetic is hidden in UI or evaluator heuristics.
-8. Presentation environment is not a gameplay evaluator input; visual ownership is explicit in versioned authored content.
+7. Required client scenarios are evaluated independently of existing anchors; relationship quality never substitutes for scenario presence.
+8. Style mixing is interpreted only from explicit client-brief policy; no global default aesthetic is hidden in UI or evaluator heuristics.
+9. Presentation environment is not a gameplay evaluator input; visual ownership is explicit in versioned authored content.
 
 ## Verification
 

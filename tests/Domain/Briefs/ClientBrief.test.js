@@ -36,7 +36,21 @@ const validBrief = {
     ergonomicsRules: {
       minimumClearance: { minimumDistance: 0.9, weight: 1 },
       passageZones: [],
-      functionalLayoutRules: []
+      functionalLayoutRules: [],
+      requiredFunctionalScenarios: [
+        {
+          schemaVersion: 1,
+          id: 'dining-hosting',
+          label: 'Обеденная группа',
+          requiredRoles: [
+            { affordance: 'dining-surface', minCount: 1 },
+            { affordance: 'dining-seat', minCount: 2 }
+          ],
+          weight: 1.3,
+          critical: true,
+          messageKey: 'scenario-dining-hosting-required'
+        }
+      ]
     }
   }
 };
@@ -52,9 +66,26 @@ describe('ClientBrief', () => {
     expect(brief.clientPriorities).toEqual(validBrief.clientPriorities);
     expect(brief.spatialPreferences.clearanceMultiplier).toBe(0.75);
     expect(brief.evaluationPolicy.completion.criticalRuleMode).toBe('block-completion');
+    expect(brief.evaluationPolicy.ergonomicsRules.requiredFunctionalScenarios).toEqual(
+      validBrief.evaluationPolicy.ergonomicsRules.requiredFunctionalScenarios
+    );
+    expect(Object.isFrozen(brief.evaluationPolicy.ergonomicsRules.requiredFunctionalScenarios)).toBe(true);
     expect(Object.isFrozen(brief)).toBe(true);
     expect(Object.isFrozen(brief.styleTargets)).toBe(true);
     expect(Object.isFrozen(brief.spatialPreferences)).toBe(true);
+  });
+
+  it('rejects a brief with malformed required functional scenario policy', () => {
+    expect(() => new ClientBrief({
+      ...validBrief,
+      evaluationPolicy: {
+        ...validBrief.evaluationPolicy,
+        ergonomicsRules: {
+          ...validBrief.evaluationPolicy.ergonomicsRules,
+          requiredFunctionalScenarios: [{ ...validBrief.evaluationPolicy.ergonomicsRules.requiredFunctionalScenarios[0], id: '' }]
+        }
+      }
+    })).toThrow('RequiredFunctionalScenario id must be a non-empty string');
   });
 
   it('rejects a brief without one normalized primary style target or valid client-specific spatial policy', () => {

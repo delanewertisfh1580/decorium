@@ -7,6 +7,7 @@ import { LinearConstraint } from '../../Domain/Constraints/LinearConstraint.js';
 import MinimumClearanceRule from '../../Domain/Ergonomics/MinimumClearanceRule.js';
 import PassageZone from '../../Domain/Ergonomics/PassageZone.js';
 import FunctionalLayoutRule from '../../Domain/Ergonomics/FunctionalLayoutRule.js';
+import RequiredFunctionalScenario from '../../Domain/Ergonomics/RequiredFunctionalScenario.js';
 import ClientBrief from '../../Domain/Briefs/ClientBrief.js';
 
 const FEATURE_ALIASES = {
@@ -72,6 +73,11 @@ function createErgonomicsRules(data = {}, clientMultiplier = 1) {
   if (Array.isArray(data?.functionalLayoutRules)) {
     rules.functionalLayoutRules = Object.freeze(
       data.functionalLayoutRules.map(rule => new FunctionalLayoutRule(rule))
+    );
+  }
+  if (Array.isArray(data?.requiredFunctionalScenarios)) {
+    rules.requiredFunctionalScenarios = Object.freeze(
+      data.requiredFunctionalScenarios.map(scenario => new RequiredFunctionalScenario(scenario))
     );
   }
   return Object.freeze(rules);

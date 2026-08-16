@@ -1,7 +1,7 @@
 # Content model
 
 **Статус:** Active production reference
-**Обновлено:** 15 августа 2026 г.
+**Обновлено:** 16 августа 2026 г.
 
 Этот документ — единственный current guide для authored JSON Decorium. Content rules не должны копироваться в Presentation и не должны выводиться из display names, visual meshes или UI category labels.
 
@@ -14,7 +14,7 @@
 | Items | `data/items/catalog.v3.json`, `data/items/item.v3.schema.json` | Catalog schema V3 |
 | Levels | `data/levels/manifest.json`, `data/levels/level-*.json`, `data/schemas/level.schema.json` | Manifest V1 and topology-only level schema, including required ClientBrief and presentation references |
 | Client briefs | `data/briefs/client-briefs.v1.json`, `data/briefs/client-brief.v1.schema.json` | ClientBrief catalog V1: client identity, style targets, priorities, spatial preferences and evaluation policy |
-| Presentation environments | `data/presentation/environment-profiles.v1.json`, `data/presentation/environment-profile.v1.schema.json` | Profile catalog V1 and strict closed-vocabulary schema |
+| Presentation environments | `data/presentation/environment-profiles.v2.json`, `data/presentation/environment-profile.v2.schema.json` | Profile catalog V2 and strict closed-vocabulary schema |
 | Scoring | `data/scoring/scoring-parameters.json` | Versioned scoring parameters loader |
 | Current starter style | `data/styles/scandinavian.json`, `data/constraints/scandinavian-constraints.json` | One current MVP-derived dataset; not product-wide canon |
 | Current starter feedback | `data/feedback/scandinavian-feedback.json` | One current feedback catalog; not future client-brief scope |
@@ -43,7 +43,7 @@ The catalog currently has **34** items. Each item contains a stable `id`, displa
 
 | Interaction field | Allowed values | Meaning |
 |---|---|---|
-| `affordances` | `dining-seat`, `dining-surface`, `lounge-seat`, `coffee-surface`, `view-target` | Semantic roles used by functional layout evaluation. |
+| `affordances` | `dining-seat`, `dining-surface`, `lounge-seat`, `coffee-surface`, `view-target`, `work-seat`, `work-surface` | Semantic roles used by functional relationships and required client scenarios. |
 | `frontAxis` | `positiveX`, `negativeX`, `positiveZ`, `negativeZ`, `null` | Local front direction before placed-item rotation. |
 | `usableSides` | Cardinal local axes | Sides on which adjacency partners may satisfy the anchor. |
 
@@ -58,14 +58,14 @@ Adding a catalog item requires V3 schema validity, a complete feature vector, se
 | Identity | `schemaVersion`, stable brief ID, level binding, client ID and display name. | Active loading and player presentation. |
 | Style targets | One primary and optional secondary/accent IDs with normalized weights. | Primary target feeds the current starter-style channel; weighted mixing follows in its own evaluator slice. |
 | Client priorities | Stable labels and positive weights. | Visible in the player brief; scoring activation follows in a dedicated priority channel. |
-| Spatial preferences | Density, clearance multiplier and empty-space target/mode/weight. | Authored and replayable; spatial-truth evaluator activation follows in its own slice. |
-| Evaluation policy | Completion target, composition and ergonomics rule sets. | Active source of current evaluator inputs. |
+| Spatial preferences | Density, clearance multiplier and empty-space target/mode/weight. | Clearance multiplier actively scales `MinimumClearanceRule`; density and empty-space channels remain staged. |
+| Evaluation policy | Completion target, composition, existing ergonomics rules and required functional scenarios. | Active source of current evaluator inputs; required scenarios emit critical diagnostics. |
 
-Future V1 extensions may add explicit mix compatibility, functional scenario cardinality, hard constraints and feedback mapping only through schema evolution, red contracts and deterministic evaluators. The evaluator must consume only authored brief policy, style catalogs and RoomState. It must not infer client taste from item names, use an LLM at runtime or encode a default aesthetic in Presentation.
+Future V1 extensions may add explicit mix compatibility, hard constraints and additional feedback mapping only through schema evolution, red contracts and deterministic evaluators. The evaluator must consume only authored brief policy, style catalogs and RoomState. It must not infer client taste from item names, use an LLM at runtime or encode a default aesthetic in Presentation.
 
 ## Authored presentation environments
 
-Every shipped level must declare `presentationProfileId`. `LoadLevelUseCase` resolves the reference through the validated PresentationEnvironment repository and returns the hydrated profile in `LevelDTO.presentationEnvironment`. The profile catalog is `schemaVersion: 1`; each profile is likewise versioned and selects only closed presets for floor, wall, openings, camera, lighting, exterior and scene-life.
+Every shipped level must declare `presentationProfileId`. `LoadLevelUseCase` resolves the reference through the validated PresentationEnvironment repository and returns the hydrated profile in `LevelDTO.presentationEnvironment`. The profile catalog is `schemaVersion: 2`; each profile is likewise versioned and selects only closed presets for floor, wall, openings, camera, lighting, exterior and scene-life.
 
 ```json
 {
@@ -84,7 +84,9 @@ A level definition declares geometry, available items, initial placement and `pr
 | `adjacency` | none | Dining table requires sufficient seats on declared usable sides. |
 | `front-adjacency` | `maxAngleDegrees` in `(0, 90]` | Sofa faces TV; coffee surface lies in front of the sofa. |
 
-All functional rules use semantic selectors, `minPartners`, edge-to-edge `distance`, positive `weight` and an authored `messageKey`. Partners are consumed one-to-one for a rule. Successful functional pairs are passed to the clearance evaluator as narrow exclusions; unrelated tight pairs retain their clearance penalties.
+All functional relationship rules use semantic selectors, `minPartners`, edge-to-edge `distance`, positive `weight` and an authored `messageKey`. Partners are consumed one-to-one for a rule. Successful functional pairs are passed to the clearance evaluator as narrow exclusions; unrelated tight pairs retain their clearance penalties.
+
+A required functional scenario is separate policy: it declares one or more affordance roles and `minCount` cardinality even when no anchor is present. `RequiredFunctionalScenarioEvaluator` emits a critical role-level diagnostic for each missing role. Scenarios are client-owned in `ClientBrief`, not inferred from level topology; `dining-hosting`, `evening-media` and `focused-work` are the shipped initial scenarios.
 
 ```json
 {
@@ -103,9 +105,9 @@ All functional rules use semantic selectors, `minPartners`, edge-to-edge `distan
 
 ## Scoring and feedback
 
-Style fit, client-priority satisfaction and ergonomics remain separate deterministic inputs. Current parameters aggregate the ClientBrief primary-style starter score and ergonomics as **70% / 30%**. ClientBrief V1 has already replaced level-side policy ownership; later slices will activate weighted secondary/accent targets, client priorities, density, clearance multiplier and empty-space preference as explicit channels without changing the invariant that feedback never changes score.
+Style fit, client-priority satisfaction and ergonomics remain separate deterministic inputs. Current parameters aggregate the ClientBrief primary-style starter score and ergonomics as **70% / 30%**. ClientBrief V1 has replaced level-side policy ownership; clearance multiplier and required scenarios are active client-owned ergonomics inputs. Later slices activate weighted secondary/accent targets, client priorities, density and empty-space preference without changing the invariant that feedback never changes score.
 
-Ergonomics violations include generic clearance, passage zones and functional layouts. The same violation flows to `ErgonomicsScorer` and to the feedback catalog. Every new policy requires a matching feedback entry with a stable `id`, category, severity and player-actionable template; `EvaluationView` only resolves and renders it.
+Ergonomics violations include generic clearance, passage zones, functional relationships and required functional scenarios. The same violation flows to `ErgonomicsScorer` and to the feedback catalog. Every new policy requires a matching feedback entry with a stable `id`, category, severity and player-actionable template; `EvaluationView` only resolves and renders it.
 
 ## Visual profiles
 

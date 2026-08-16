@@ -1,7 +1,7 @@
 # Product overview
 
 **Статус:** Active production vision and current baseline
-**Обновлено:** 15 августа 2026 г.
+**Обновлено:** 16 августа 2026 г.
 
 Decorium — браузерная Three.js-игра о проектировании интерьеров **для конкретных заказчиков**. Игрок собирает комнату из authored catalog, размещает и поворачивает предметы, а затем получает детерминированную оценку того, насколько решение отвечает стилевому замыслу, смешению эстетик, функциональным потребностям и явным ограничениям client brief.
 
@@ -30,19 +30,19 @@ Decorium — браузерная Three.js-игра о проектирован�
 | Functional brief | Сценарии использования комнаты. | Dining for four, media viewing, reading corner, child-safe passage. |
 | Hard constraints | Непереговорные условия помещения, бюджета или клиента. | Сохранить проход, не блокировать окно, использовать existing heirloom. |
 
-`ClientBrief v1` is now a runtime-loaded, versioned source contract. Its primary target currently feeds the existing starter-style channel, while weighted secondary/accent targets, mixing policy, priorities and spatial preferences remain declared data until their dedicated deterministic evaluator slices activate them. Presentation must not simulate those pending channels with UI heuristics.
+`ClientBrief v1` is now a runtime-loaded, versioned source contract. Its primary target currently feeds the starter-style channel; its `clearanceMultiplier` actively adjusts minimum-clearance ergonomics, and its required functional scenarios actively diagnose missing client groups. Weighted secondary/accent targets, mixing policy, priorities, density and empty-space preference remain declared data until their dedicated deterministic evaluator slices activate them. Presentation must not simulate pending channels with UI heuristics.
 
 ## Current production baseline
 
-Сегодня в репозитории существуют три authored levels и три versioned `ClientBrief v1` records. Каждый level теперь содержит только topology/inventory/presentation reference; hydrated brief является единственным source of truth для client identity, completion target, composition, ergonomics, style targets, priorities и spatial preferences. **Scandinavian starter dataset** всё ещё является единственным активным style/constraint dataset: current evaluator временно использует primary target brief, тогда как weighted secondary/accent targets, density, clearance multiplier и empty-space preference уже сохранены как deterministic authored inputs и будут активированы отдельными mechanics slices.
+Сегодня в репозитории существуют три authored levels и три versioned `ClientBrief v1` records. Каждый level теперь содержит только topology/inventory/presentation reference; hydrated brief является единственным source of truth для client identity, completion target, composition, ergonomics, style targets, priorities и spatial preferences. **Scandinavian starter dataset** всё ещё является единственным активным style/constraint dataset: current evaluator временно использует primary target brief. Client clearance multiplier и required dining/media/work scenarios уже активны как deterministic ergonomics inputs; weighted secondary/accent targets, density и empty-space preference ожидают отдельных mechanics slices.
 
 Profile schema V3 хранится локально и включает settings (`reducedMotion`, `uiScale`, `qualityTier`) и прогресс прохождения. Touch и keyboard paths поддерживаются одним intent contract. Каталог группирует available items по UI-категориям, поддерживает поиск и сохраняет browsing context в пределах текущей игровой сессии после placement; эта навигация не меняет authored availability или gameplay rules. Priority furniture variants use data-driven visual families, so form distinguishes dining, lounge, office and other furniture roles independently from authored semantic profiles. The priority seating pack now renders from versioned authored GLB prefabs with an immediate procedural fallback; asset loading remains a Presentation concern. Итоговая оценка пока агрегирует current primary-style score и ergonomics с весами **70% / 30%**; thresholds звёзд и параметры находятся в versioned data, а не в UI. ClientBrief now owns the inputs that will replace this temporary global policy channel by channel.
 
 | Текущий уровень | Функциональный сценарий | Ключевое правило |
 |---|---|---|
-| `level-001` | Обеденная зона | Обеденному столу нужны два места `dining-seat`; корректная пара стол—стул не получает ложный clearance penalty. |
-| `level-002` | Зона отдыха | Диван должен смотреть на explicit `view-target` TV; журнальный столик располагается перед диваном. |
-| `level-003` | Кампания и progression | Использует общие style, composition и spatial contracts без невозможных functional rules. |
+| `level-001` | Тёплые ужины | Critical scenario требует 1 `dining-surface` и 2 `dining-seat`; existing table–seat relationship remains a separate placement-quality rule. |
+| `level-002` | Камерный медиа-вечер | Critical scenario требует `lounge-seat`, `view-target` и `coffee-surface`; sofa orientation and coffee-table position remain separate placement-quality rules. |
+| `level-003` | Светлая рабочая студия | Critical scenario требует `work-surface` и `work-seat`; desk and repeat-placeable chair semantics are explicit authored data. |
 
 ## Границы продукта
 

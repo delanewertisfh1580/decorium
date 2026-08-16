@@ -65,6 +65,20 @@
               "weight": 1.2,
               "messageKey": "functional-dining-seat-required"
             }
+          ],
+          "requiredFunctionalScenarios": [
+            {
+              "schemaVersion": 1,
+              "id": "dining-hosting",
+              "label": "Обеденная группа",
+              "requiredRoles": [
+                { "affordance": "dining-surface", "minCount": 1 },
+                { "affordance": "dining-seat", "minCount": 2 }
+              ],
+              "weight": 1.3,
+              "critical": true,
+              "messageKey": "scenario-dining-hosting-required"
+            }
           ]
         }
       }
@@ -148,6 +162,21 @@
               "weight": 0.9,
               "messageKey": "functional-coffee-surface-in-front-of-lounge-seat"
             }
+          ],
+          "requiredFunctionalScenarios": [
+            {
+              "schemaVersion": 1,
+              "id": "evening-media",
+              "label": "Медиа-зона для спокойного вечера",
+              "requiredRoles": [
+                { "affordance": "lounge-seat", "minCount": 1 },
+                { "affordance": "view-target", "minCount": 1 },
+                { "affordance": "coffee-surface", "minCount": 1 }
+              ],
+              "weight": 1.3,
+              "critical": true,
+              "messageKey": "scenario-evening-media-required"
+            }
           ]
         }
       }
@@ -204,7 +233,21 @@
               "weight": 1.5
             }
           ],
-          "functionalLayoutRules": []
+          "functionalLayoutRules": [],
+          "requiredFunctionalScenarios": [
+            {
+              "schemaVersion": 1,
+              "id": "focused-work",
+              "label": "Рабочее место",
+              "requiredRoles": [
+                { "affordance": "work-surface", "minCount": 1 },
+                { "affordance": "work-seat", "minCount": 1 }
+              ],
+              "weight": 1.2,
+              "critical": true,
+              "messageKey": "scenario-focused-work-required"
+            }
+          ]
         }
       }
     }

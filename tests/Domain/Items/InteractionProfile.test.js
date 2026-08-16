@@ -24,6 +24,18 @@ describe('InteractionProfile', () => {
     expect(Object.isFrozen(profile)).toBe(true);
   });
 
+  it('supports explicit work-seat and work-surface semantics for client-authored work scenarios', () => {
+    const profile = new InteractionProfile({
+      schemaVersion: 1,
+      affordances: ['work-seat', 'work-surface'],
+      frontAxis: 'positiveZ',
+      usableSides: []
+    });
+
+    expect(profile.hasAffordance('work-seat')).toBe(true);
+    expect(profile.hasAffordance('work-surface')).toBe(true);
+  });
+
   it('provides an explicit empty v1 profile for items without functional affordances', () => {
     expect(InteractionProfile.empty().toJSON()).toEqual({
       schemaVersion: 1,

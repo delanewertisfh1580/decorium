@@ -32,7 +32,8 @@
       "interactionProfile": {
         "schemaVersion": 1,
         "affordances": [
-          "dining-seat"
+          "dining-seat",
+          "work-seat"
         ],
         "frontAxis": "positiveZ",
         "usableSides": []
@@ -490,7 +491,7 @@
       },
       "interactionProfile": {
         "schemaVersion": 1,
-        "affordances": [],
+        "affordances": ["work-surface"],
         "frontAxis": null,
         "usableSides": []
       }

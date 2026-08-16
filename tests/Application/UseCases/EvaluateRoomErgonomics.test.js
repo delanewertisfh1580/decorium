@@ -133,4 +133,85 @@ describe('EvaluateRoomUseCase ergonomics channel', () => {
       messageKey: 'functional-dining-seat-required'
     }));
   });
+
+  it('preserves missing required-scenario diagnostics for an empty room', async () => {
+    const scenarioViolation = {
+      constraintId: 'required-scenario:dining-hosting:dining-surface',
+      featureName: 'requiredFunctionalScenario',
+      operator: '>=',
+      threshold: 1,
+      actualValue: 0,
+      severity: 1,
+      critical: true,
+      messageKey: 'scenario-dining-hosting-required',
+      itemIds: [],
+      constraint: { weight: 1.3, description: 'Клиентская функциональная группа неполна.' }
+    };
+    const rules = { requiredFunctionalScenarios: [{ id: 'dining-hosting' }] };
+    const emptyRoom = RoomState.createEmpty(new RoomBounds(8, 6));
+    const ergonomicsEvaluator = { evaluate: () => [scenarioViolation] };
+    const useCase = new EvaluateRoomUseCase(
+      { getState: async () => emptyRoom },
+      new ConstraintEvaluator(),
+      new StyleScorer({ maxPenalty: 1 }),
+      new StarRatingPolicy({ 0: 0, 1: 0.2, 2: 0.4, 3: 0.6, 4: 0.8, 5: 0.9 }),
+      null,
+      ergonomicsEvaluator,
+      { evaluate: () => ({ penalty: 1.3, score: 0, violations: [scenarioViolation] }) },
+      { aggregate: () => ({ totalScore: 0, styleWeight: 0.7, ergonomicsWeight: 0.3 }) }
+    );
+
+    const result = await useCase.execute('room-001', [], {}, rules);
+
+    expect(result.success).toBe(true);
+    expect(result.evaluationData.violations).toContainEqual(expect.objectContaining({
+      type: 'ergonomics',
+      feature: 'requiredFunctionalScenario',
+      critical: true,
+      messageKey: 'scenario-dining-hosting-required'
+    }));
+  });
+
+  it('activates the ergonomics channel for required-scenario-only rules and serializes critical diagnostics', async () => {
+    const scenarioViolation = {
+      constraintId: 'required-scenario:evening-media:view-target',
+      featureName: 'requiredFunctionalScenario',
+      operator: '>=',
+      threshold: 1,
+      actualValue: 0,
+      severity: 1,
+      critical: true,
+      messageKey: 'scenario-evening-media-required',
+      itemIds: [],
+      constraint: { weight: 1.3, description: 'Клиентская функциональная группа неполна.' }
+    };
+    const rules = { requiredFunctionalScenarios: [{ id: 'evening-media' }] };
+    const ergonomicsEvaluator = {
+      evaluate: (_room, receivedRules) => {
+        expect(receivedRules).toBe(rules);
+        return [scenarioViolation];
+      }
+    };
+    const ergonomicsScorer = { evaluate: violations => ({ penalty: 1.3, score: 0.35, violations }) };
+    const scoreAggregator = { aggregate: () => ({ totalScore: 0.76, styleWeight: 0.7, ergonomicsWeight: 0.3 }) };
+    const useCase = new EvaluateRoomUseCase(
+      { getState: async () => activeRoom() },
+      new ConstraintEvaluator(),
+      new StyleScorer({ maxPenalty: 1 }),
+      new StarRatingPolicy({ 0: 0, 1: 0.2, 2: 0.4, 3: 0.6, 4: 0.8, 5: 0.9 }),
+      null,
+      ergonomicsEvaluator,
+      ergonomicsScorer,
+      scoreAggregator
+    );
+
+    const result = await useCase.execute('room-001', [], {}, rules);
+
+    expect(result.success).toBe(true);
+    expect(result.evaluationData.violations).toContainEqual(expect.objectContaining({
+      type: 'ergonomics',
+      feature: 'requiredFunctionalScenario',
+      messageKey: 'scenario-evening-media-required'
+    }));
+  });
 });
