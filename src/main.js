@@ -16,6 +16,7 @@ import { JsonFeedbackCatalog } from './Infrastructure/DataLoaders/JsonFeedbackCa
 import { ConstraintEvaluator } from './Domain/Constraints/ConstraintEvaluator.js';
 import { StyleScorer } from './Domain/Scoring/StyleScorer.js';
 import { StarRatingPolicy } from './Domain/Scoring/StarRatingPolicy.js';
+import ScorecardCalibrationPolicy from './Domain/Scoring/ScorecardCalibrationPolicy.js';
 import SpatialErgonomicsEvaluator from './Domain/Ergonomics/SpatialErgonomicsEvaluator.js';
 import ClearanceEvaluator from './Domain/Ergonomics/ClearanceEvaluator.js';
 import PassageZoneEvaluator from './Domain/Ergonomics/PassageZoneEvaluator.js';
@@ -142,7 +143,7 @@ async function bootstrap() {
       roomRepository,
       new ConstraintEvaluator(),
       new StyleScorer(scoring),
-      new StarRatingPolicy(scoring.starRatingThresholds),
+      new StarRatingPolicy(scoring.starRatingThresholds, { epsilon: scoring.scoreEpsilon }),
       feedbackCatalog,
       new SpatialErgonomicsEvaluator(
         new ClearanceEvaluator(),
@@ -153,6 +154,10 @@ async function bootstrap() {
       new EvaluationScoreAggregator({
         styleWeight: scoring.styleWeight,
         ergonomicsWeight: scoring.ergonomicsWeight
+      }),
+      new ScorecardCalibrationPolicy({
+        schemaVersion: scoring.schemaVersion,
+        criticalStarCap: scoring.criticalStarCap
       })
     );
 

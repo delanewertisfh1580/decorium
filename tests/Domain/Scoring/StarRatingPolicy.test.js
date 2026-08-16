@@ -26,6 +26,13 @@ describe('StarRatingPolicy', () => {
     expect(policy.calculateStars(1.1)).toBe(5);
   });
 
+  it('uses an authored numerical epsilon only for floating-point threshold noise', () => {
+    const calibratedPolicy = new StarRatingPolicy(thresholds, { epsilon: 0.000001 });
+
+    expect(calibratedPolicy.calculateStars(0.5599995)).toBe(3);
+    expect(calibratedPolicy.calculateStars(0.559)).toBe(2);
+  });
+
   it('returns the next canonical threshold', () => {
     expect(policy.evaluate(0)).toEqual({ stars: 0, score: 0, nextThreshold: 0.4 });
     expect(policy.evaluate(0.6)).toEqual({ stars: 3, score: 0.6, nextThreshold: 0.71 });

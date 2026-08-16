@@ -15,7 +15,7 @@
 | Levels | `data/levels/manifest.json`, `data/levels/level-*.json`, `data/schemas/level.schema.json` | Manifest V1 and topology-only level schema, including required ClientBrief and presentation references |
 | Client briefs | `data/briefs/client-briefs.v1.json`, `data/briefs/client-brief.v1.schema.json` | ClientBrief catalog V1: client identity, style targets, priorities, spatial preferences and evaluation policy |
 | Presentation environments | `data/presentation/environment-profiles.v2.json`, `data/presentation/environment-profile.v2.schema.json` | Profile catalog V2 and strict closed-vocabulary schema |
-| Scoring | `data/scoring/scoring-parameters.json` | Versioned scoring parameters loader |
+| Scoring | `data/scoring/scoring-parameters.json`, `data/schemas/scoring-parameters.schema.json` | Strict scoring parameters V1 schema and runtime validation |
 | Current starter style | `data/styles/scandinavian.json`, `data/constraints/scandinavian-constraints.json` | One current MVP-derived dataset; not product-wide canon |
 | Current starter feedback | `data/feedback/scandinavian-feedback.json` | One current feedback catalog; not future client-brief scope |
 | Visuals | `data/visuals/item-visuals.json` | Presentation-only visual profile |
@@ -59,7 +59,7 @@ Adding a catalog item requires V3 schema validity, a complete feature vector, se
 | Style targets | One primary and optional secondary/accent IDs with normalized weights. | Primary target feeds the current starter-style channel; weighted mixing follows in its own evaluator slice. |
 | Client priorities | Stable labels and positive weights. | Visible in the player brief; scoring activation follows in a dedicated priority channel. |
 | Spatial preferences | Density, clearance multiplier and empty-space target/mode/weight. | Clearance multiplier actively scales `MinimumClearanceRule`; density and empty-space channels remain staged. |
-| Evaluation policy | Completion target, composition, existing ergonomics rules and required functional scenarios. | Active source of current evaluator inputs; required scenarios emit critical diagnostics. |
+| Evaluation policy | Completion target, `criticalRuleMode`, composition, existing ergonomics rules and required functional scenarios. | Active source of current evaluator inputs; critical scenarios feed deterministic scorecard caps and completion eligibility. |
 
 Future V1 extensions may add explicit mix compatibility, hard constraints and additional feedback mapping only through schema evolution, red contracts and deterministic evaluators. The evaluator must consume only authored brief policy, style catalogs and RoomState. It must not infer client taste from item names, use an LLM at runtime or encode a default aesthetic in Presentation.
 
@@ -108,6 +108,16 @@ A required functional scenario is separate policy: it declares one or more affor
 Style fit, client-priority satisfaction and ergonomics remain separate deterministic inputs. Current parameters aggregate the ClientBrief primary-style starter score and ergonomics as **70% / 30%**. ClientBrief V1 has replaced level-side policy ownership; clearance multiplier and required scenarios are active client-owned ergonomics inputs. Later slices activate weighted secondary/accent targets, client priorities, density and empty-space preference without changing the invariant that feedback never changes score.
 
 Ergonomics violations include generic clearance, passage zones, functional relationships and required functional scenarios. The same violation flows to `ErgonomicsScorer` and to the feedback catalog. Every new policy requires a matching feedback entry with a stable `id`, category, severity and player-actionable template; `EvaluationView` only resolves and renders it.
+
+`scoring-parameters.json` is `schemaVersion: 1` and owns numeric calibration rather than Presentation constants. `scoreEpsilon` is a bounded floating-point comparison tolerance for star thresholds; it does not alter authored score values. `criticalStarCap` is the global cap used when a ClientBrief completion policy encounters critical diagnostics. `ScorecardCalibrationPolicy` preserves `rawScore` / `rawStars`, derives display `stars`, and returns explicit `completionEligible`, `completionBlockReason` and stable critical IDs.
+
+| ClientBrief `criticalRuleMode` | Critical diagnostic result |
+|---|---|
+| `block-completion` | Display stars are capped below `minimumStars` and completion is ineligible. |
+| `cap-stars` | Display stars are capped at the authored global cap; eligibility follows the capped result. |
+| `informational` | Raw rating and normal target eligibility remain unchanged. |
+
+Completion is persisted only from Application’s explicit eligibility result. Presentation forwards policy/data but must never compare stars, apply a cap or derive an unlock decision.
 
 ## Visual profiles
 

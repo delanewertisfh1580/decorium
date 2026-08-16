@@ -390,7 +390,8 @@ export class GameController {
       this.level.roomId,
       this.roomViewModel.constraints,
       this.level.compositionRules,
-      this.level.ergonomicsRules
+      this.level.ergonomicsRules,
+      this.level.clientBrief?.evaluationPolicy?.completion ?? null
     );
     if (!result.success) {
       this._showStatus(result.error);
@@ -401,6 +402,9 @@ export class GameController {
         levelId: this.level.levelId,
         stars: result.evaluationData.stars,
         targetScore: this.level.targetScore,
+        ...(typeof result.evaluationData.completionEligible === 'boolean'
+          ? { completionEligible: result.evaluationData.completionEligible }
+          : {}),
         profile: this.playerProfile
       });
       if (completion.success) {

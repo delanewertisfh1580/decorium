@@ -1,4 +1,5 @@
 {
+  "schemaVersion": 1,
   "starRatingThresholds": {
     "0": 0.0,
     "1": 0.0,
@@ -10,5 +11,7 @@
   "maxPenalty": 1.0,
   "styleWeight": 0.7,
   "ergonomicsWeight": 0.3,
-  "defaultWeight": 1.0
+  "defaultWeight": 1.0,
+  "criticalStarCap": 2,
+  "scoreEpsilon": 0.000001
 }

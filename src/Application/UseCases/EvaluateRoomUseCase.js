@@ -27,12 +27,16 @@ export class EvaluateRoomUseCase {
     feedbackCatalog = null,
     ergonomicsEvaluator = null,
     ergonomicsScorer = null,
-    scoreAggregator = null
+    scoreAggregator = null,
+    scorecardCalibrationPolicy = null
   ) {
     if (!roomRepository) throw new Error('EvaluateRoomUseCase: roomRepository is required.');
     if (!constraintEvaluator) throw new Error('EvaluateRoomUseCase: constraintEvaluator is required.');
     if (!styleScorer) throw new Error('EvaluateRoomUseCase: styleScorer is required.');
     if (!starRatingPolicy) throw new Error('EvaluateRoomUseCase: starRatingPolicy is required.');
+    if (scorecardCalibrationPolicy && typeof scorecardCalibrationPolicy.evaluate !== 'function') {
+      throw new Error('EvaluateRoomUseCase: scorecardCalibrationPolicy must provide evaluate.');
+    }
     const ergonomicsDependencies = [ergonomicsEvaluator, ergonomicsScorer, scoreAggregator];
     if (ergonomicsDependencies.some(Boolean) && !ergonomicsDependencies.every(Boolean)) {
       throw new Error('EvaluateRoomUseCase: ergonomics dependencies must be provided together.');
@@ -45,9 +49,10 @@ export class EvaluateRoomUseCase {
     this.ergonomicsEvaluator = ergonomicsEvaluator;
     this.ergonomicsScorer = ergonomicsScorer;
     this.scoreAggregator = scoreAggregator;
+    this.scorecardCalibrationPolicy = scorecardCalibrationPolicy;
   }
 
-  async execute(roomId, constraints, compositionRules = {}, ergonomicsRules = {}) {
+  async execute(roomId, constraints, compositionRules = {}, ergonomicsRules = {}, completion = null) {
     if (!roomId || typeof roomId !== 'string') return EvaluationResultDTO.failure('INVALID_INPUT: RoomID is required.');
     if (!Array.isArray(constraints)) return EvaluationResultDTO.failure('INVALID_INPUT: Constraints must be an array.');
 
@@ -68,11 +73,19 @@ export class EvaluateRoomUseCase {
         const feedback = this.feedbackCatalog
           ? await this.feedbackCatalog.formatFeedback('composition-empty')
           : 'Комната пуста (Room is empty). Добавьте предметы, чтобы получить оценку.';
+        const scorecard = this._evaluateScorecard(0, ergonomicsViolations, completion);
         return EvaluationResultDTO.success({
           score: 0,
+          rawScore: scorecard.rawScore,
+          rawStars: scorecard.rawStars,
           penalty: 1,
-          stars: 0,
-          nextThreshold: 0.4,
+          stars: scorecard.stars,
+          nextThreshold: scorecard.nextThreshold,
+          ...(scorecard.hasCalibration ? {
+            completionEligible: scorecard.completionEligible,
+            completionBlockReason: scorecard.completionBlockReason,
+            criticalViolationIds: scorecard.criticalViolationIds
+          } : {}),
           violations: ergonomicsViolations.map(violation => serializeViolation(violation, 'ergonomics')),
           itemCount: 0,
           roomVector: null,
@@ -97,17 +110,24 @@ export class EvaluateRoomUseCase {
         ? this.scoreAggregator.aggregate({ styleScore: styleScoring.score, ergonomicsScore: ergonomicsScoring.score })
         : null;
       const score = aggregate?.totalScore ?? styleScoring.score;
-      const rating = this.starRatingPolicy.evaluate(score);
       const allViolations = [...styleChannelViolations, ...ergonomicsViolations];
+      const scorecard = this._evaluateScorecard(score, allViolations, completion);
       const feedback = this.feedbackCatalog
-        ? await this.feedbackCatalog.getEvaluationFeedback(rating.stars, allViolations)
-        : this._generateFeedback(rating.stars, allViolations);
+        ? await this.feedbackCatalog.getEvaluationFeedback(scorecard.stars, allViolations)
+        : this._generateFeedback(scorecard.stars, allViolations);
 
       return EvaluationResultDTO.success({
         score,
+        rawScore: scorecard.rawScore,
+        rawStars: scorecard.rawStars,
         penalty: styleScoring.penalty,
-        stars: rating.stars,
-        nextThreshold: rating.nextThreshold,
+        stars: scorecard.stars,
+        nextThreshold: scorecard.nextThreshold,
+        ...(scorecard.hasCalibration ? {
+          completionEligible: scorecard.completionEligible,
+          completionBlockReason: scorecard.completionBlockReason,
+          criticalViolationIds: scorecard.criticalViolationIds
+        } : {}),
         violations: [
           ...styleChannelViolations.map(violation => serializeViolation(violation)),
           ...ergonomicsViolations.map(violation => serializeViolation(violation, 'ergonomics'))
@@ -127,6 +147,26 @@ export class EvaluateRoomUseCase {
       console.error(`EvaluateRoomUseCase: Error evaluating room ${roomId}:`, error);
       return EvaluationResultDTO.failure(`UNEXPECTED_ERROR: ${error.message}`);
     }
+  }
+
+  _evaluateScorecard(score, violations, completion) {
+    if (this.scorecardCalibrationPolicy && completion) {
+      return { ...this.scorecardCalibrationPolicy.evaluate({
+        totalScore: score,
+        ratingPolicy: this.starRatingPolicy,
+        completion,
+        violations
+      }), hasCalibration: true };
+    }
+
+    const rawRating = this.starRatingPolicy.evaluate(score);
+    return {
+      rawScore: score,
+      rawStars: rawRating.stars,
+      stars: rawRating.stars,
+      nextThreshold: rawRating.nextThreshold,
+      hasCalibration: false
+    };
   }
 
   _generateFeedback(stars) {

@@ -12,7 +12,7 @@ export class RecordLevelCompletionUseCase {
     this.timestampProvider = timestampProvider;
   }
 
-  async execute({ levelId, stars, targetScore, profile }) {
+  async execute({ levelId, stars, targetScore, completionEligible, profile }) {
     if (!(profile instanceof PlayerProfile)) {
       return { success: false, error: 'INVALID_PROFILE: PlayerProfile domain object is required.' };
     }
@@ -20,7 +20,12 @@ export class RecordLevelCompletionUseCase {
       return { success: false, error: 'INVALID_COMPLETION_SCORE: stars and targetScore must be integers between 0 and 5.' };
     }
 
-    if (stars < targetScore) {
+    if (completionEligible !== undefined && typeof completionEligible !== 'boolean') {
+      return { success: false, error: 'INVALID_COMPLETION_ELIGIBILITY: completionEligible must be a boolean when supplied.' };
+    }
+
+    const eligibleForCompletion = completionEligible ?? stars >= targetScore;
+    if (!eligibleForCompletion) {
       return { success: true, data: profile, didComplete: false };
     }
 

@@ -32,6 +32,26 @@ describe('RecordLevelCompletionUseCase', () => {
     expect(result).toMatchObject({ success: true, didComplete: true });
   });
 
+  it('does not persist a completion when a scorecard critical-rule gate explicitly denies eligibility', async () => {
+    const savePlayerProfileUseCase = { execute: vi.fn() };
+    const profile = createProfile();
+    const useCase = new RecordLevelCompletionUseCase(
+      savePlayerProfileUseCase,
+      () => '2026-08-14T10:05:00.000Z'
+    );
+
+    const result = await useCase.execute({
+      levelId: 'level-001',
+      stars: 5,
+      targetScore: 3,
+      completionEligible: false,
+      profile
+    });
+
+    expect(savePlayerProfileUseCase.execute).not.toHaveBeenCalled();
+    expect(result).toEqual({ success: true, data: profile, didComplete: false });
+  });
+
   it('does not persist a completion below the authored target', async () => {
     const savePlayerProfileUseCase = { execute: vi.fn() };
     const profile = createProfile();

@@ -1,11 +1,15 @@
 import { getScoringParameters } from './scoringParameters.js';
 
 export class StarRatingPolicy {
-  constructor(thresholds) {
+  constructor(thresholds, { epsilon = 0 } = {}) {
     if (!thresholds || typeof thresholds !== 'object') {
       throw new Error('StarRatingPolicy: thresholds must be a valid object');
     }
+    if (typeof epsilon !== 'number' || !Number.isFinite(epsilon) || epsilon < 0 || epsilon > 0.01) {
+      throw new Error('StarRatingPolicy: epsilon must be between 0 and 0.01');
+    }
     this.thresholds = { ...thresholds };
+    this.epsilon = epsilon;
     for (const stars of ['0', '1', '2', '3', '4', '5']) {
       if (!(stars in this.thresholds)) {
         throw new Error(`StarRatingPolicy: missing threshold for ${stars} stars`);
@@ -24,7 +28,7 @@ export class StarRatingPolicy {
     if (clampedScore <= 0) return 0;
 
     for (let stars = 5; stars >= 1; stars -= 1) {
-      if (clampedScore >= this.thresholds[String(stars)]) return stars;
+      if (clampedScore + this.epsilon >= this.thresholds[String(stars)]) return stars;
     }
     return 1;
   }

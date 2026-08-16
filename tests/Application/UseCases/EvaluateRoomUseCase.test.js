@@ -9,6 +9,7 @@ import { ConstraintEvaluator } from '../../../src/Domain/Constraints/ConstraintE
 import { LinearConstraint } from '../../../src/Domain/Constraints/LinearConstraint.js';
 import { StyleScorer } from '../../../src/Domain/Scoring/StyleScorer.js';
 import { StarRatingPolicy } from '../../../src/Domain/Scoring/StarRatingPolicy.js';
+import ScorecardCalibrationPolicy from '../../../src/Domain/Scoring/ScorecardCalibrationPolicy.js';
 import { getScoringParameters, initializeScoringParameters, resetScoringParameters } from '../../../src/Domain/Scoring/scoringParameters.js';
 
 const createTestBounds = () => new RoomBounds(5, 5);
@@ -34,6 +35,9 @@ describe('EvaluateRoomUseCase', () => {
 
   // Тестовые параметры оценки
   const testScoringParams = {
+    schemaVersion: 1,
+    criticalStarCap: 2,
+    scoreEpsilon: 0.000001,
     starRatingThresholds: {
       "0": 0.0,
       "1": 0.2,
@@ -270,6 +274,58 @@ describe('EvaluateRoomUseCase', () => {
       expect(result.success).toBe(true);
       expect(result.evaluationData.stars).toBeGreaterThanOrEqual(4);
       expect(result.evaluationData.score).toBeGreaterThan(0.8);
+    });
+  });
+
+  describe('Calibrated scorecard', () => {
+    it('returns raw scoring facts and blocks completion when a critical brief rule is violated', async () => {
+      const featureVector = new FeatureVector({
+        woodShare: 0.8, metalShare: 0.1, glassShare: 0.1, plasticShare: 0.1, textileShare: 0.2,
+        lightColorShare: 0.7, darkColorShare: 0.3, warmPaletteShare: 0.8, saturationLevel: 0.3,
+        formSimplicity: 0.6, roundnessShare: 0.4, rectilinearShare: 0.6, sizeNorm: 0.5,
+        priceNorm: 0.5, lightingFunctionShare: 0.1, storageFunctionShare: 0.2
+      });
+      const roomState = RoomState.createEmpty(createTestBounds()).addItem(new Item({
+        id: 'item-calibration', name: 'Calibration item', type: 'chair', featureVector
+      }));
+      roomRepository.getState = async () => roomState;
+      const criticalViolation = {
+        constraintId: 'required-scenario:evening-media:view-target',
+        featureName: 'media-viewing', operator: 'required', threshold: 1, actualValue: 0,
+        severity: 'critical', messageKey: 'ergonomics.required-scenario',
+        constraint: { description: 'Media seating is required.' }, critical: true, itemIds: []
+      };
+      const scorecardCalibrationPolicy = new ScorecardCalibrationPolicy({ schemaVersion: 1, criticalStarCap: 2 });
+      const calibratedUseCase = new EvaluateRoomUseCase(
+        roomRepository,
+        constraintEvaluator,
+        styleScorer,
+        starRatingPolicy,
+        { getEvaluationFeedback: async () => 'feedback' },
+        { evaluate: () => [criticalViolation] },
+        { evaluate: () => ({ score: 0.7, penalty: 0.3 }) },
+        { aggregate: () => ({ totalScore: 0.91, styleWeight: 0.7, ergonomicsWeight: 0.3 }) },
+        scorecardCalibrationPolicy
+      );
+
+      const result = await calibratedUseCase.execute(
+        'room-001',
+        [],
+        {},
+        { requiredFunctionalScenarios: [{}] },
+        { minimumStars: 3, criticalRuleMode: 'block-completion' }
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.evaluationData).toMatchObject({
+        score: 0.91,
+        rawScore: 0.91,
+        rawStars: 4,
+        stars: 2,
+        completionEligible: false,
+        completionBlockReason: 'critical-rule',
+        criticalViolationIds: ['required-scenario:evening-media:view-target']
+      });
     });
   });
 
