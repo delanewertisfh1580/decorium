@@ -35,7 +35,7 @@
 
 ### Delivery evidence
 
-[Slice reports](slices/) фиксируют завершённые вертикальные поставки: scope, contracts, acceptance evidence и non-goals. Последний отчёт — [PROD-021: Scorecard calibration and completion gates](slices/PROD-021-scorecard-calibration-completion-gates.md). Эти отчёты являются evidence delivery, но текущие product и technical правила по-прежнему поддерживаются в разделах выше.
+[Slice reports](slices/) фиксируют завершённые вертикальные поставки: scope, contracts, acceptance evidence и non-goals. Последний отчёт — [PROD-022: Explainable evaluation UI](slices/PROD-022-explainable-evaluation-ui.md). Эти отчёты являются evidence delivery, но текущие product и technical правила по-прежнему поддерживаются в разделах выше.
 
 ### ADR
 

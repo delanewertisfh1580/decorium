@@ -1,6 +1,7 @@
 import EvaluationResultDTO from '../DTOs/EvaluationResultDTO.js';
 import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
 import { evaluateComposition } from '../../Domain/Scoring/CompositionEvaluator.js';
+import EvaluationExplanationAssembler from '../Services/EvaluationExplanationAssembler.js';
 
 function serializeViolation(violation, type = null) {
   return {
@@ -28,7 +29,8 @@ export class EvaluateRoomUseCase {
     ergonomicsEvaluator = null,
     ergonomicsScorer = null,
     scoreAggregator = null,
-    scorecardCalibrationPolicy = null
+    scorecardCalibrationPolicy = null,
+    violationImpactPolicy = null
   ) {
     if (!roomRepository) throw new Error('EvaluateRoomUseCase: roomRepository is required.');
     if (!constraintEvaluator) throw new Error('EvaluateRoomUseCase: constraintEvaluator is required.');
@@ -36,6 +38,9 @@ export class EvaluateRoomUseCase {
     if (!starRatingPolicy) throw new Error('EvaluateRoomUseCase: starRatingPolicy is required.');
     if (scorecardCalibrationPolicy && typeof scorecardCalibrationPolicy.evaluate !== 'function') {
       throw new Error('EvaluateRoomUseCase: scorecardCalibrationPolicy must provide evaluate.');
+    }
+    if (violationImpactPolicy && typeof violationImpactPolicy.evaluate !== 'function') {
+      throw new Error('EvaluateRoomUseCase: violationImpactPolicy must provide evaluate.');
     }
     const ergonomicsDependencies = [ergonomicsEvaluator, ergonomicsScorer, scoreAggregator];
     if (ergonomicsDependencies.some(Boolean) && !ergonomicsDependencies.every(Boolean)) {
@@ -50,6 +55,9 @@ export class EvaluateRoomUseCase {
     this.ergonomicsScorer = ergonomicsScorer;
     this.scoreAggregator = scoreAggregator;
     this.scorecardCalibrationPolicy = scorecardCalibrationPolicy;
+    this.evaluationExplanationAssembler = violationImpactPolicy
+      ? new EvaluationExplanationAssembler({ violationImpactPolicy, feedbackCatalog })
+      : null;
   }
 
   async execute(roomId, constraints, compositionRules = {}, ergonomicsRules = {}, completion = null) {
@@ -74,6 +82,13 @@ export class EvaluateRoomUseCase {
           ? await this.feedbackCatalog.formatFeedback('composition-empty')
           : 'Комната пуста (Room is empty). Добавьте предметы, чтобы получить оценку.';
         const scorecard = this._evaluateScorecard(0, ergonomicsViolations, completion);
+        const explanation = await this._assembleExplanation({
+          roomState,
+          styleViolations: [],
+          ergonomicsViolations,
+          scorecard,
+          completion
+        });
         return EvaluationResultDTO.success({
           score: 0,
           rawScore: scorecard.rawScore,
@@ -86,6 +101,7 @@ export class EvaluateRoomUseCase {
             completionBlockReason: scorecard.completionBlockReason,
             criticalViolationIds: scorecard.criticalViolationIds
           } : {}),
+          ...(explanation ? { explanation } : {}),
           violations: ergonomicsViolations.map(violation => serializeViolation(violation, 'ergonomics')),
           itemCount: 0,
           roomVector: null,
@@ -112,6 +128,13 @@ export class EvaluateRoomUseCase {
       const score = aggregate?.totalScore ?? styleScoring.score;
       const allViolations = [...styleChannelViolations, ...ergonomicsViolations];
       const scorecard = this._evaluateScorecard(score, allViolations, completion);
+      const explanation = await this._assembleExplanation({
+        roomState,
+        styleViolations: styleChannelViolations,
+        ergonomicsViolations,
+        scorecard,
+        completion
+      });
       const feedback = this.feedbackCatalog
         ? await this.feedbackCatalog.getEvaluationFeedback(scorecard.stars, allViolations)
         : this._generateFeedback(scorecard.stars, allViolations);
@@ -128,6 +151,7 @@ export class EvaluateRoomUseCase {
           completionBlockReason: scorecard.completionBlockReason,
           criticalViolationIds: scorecard.criticalViolationIds
         } : {}),
+        ...(explanation ? { explanation } : {}),
         violations: [
           ...styleChannelViolations.map(violation => serializeViolation(violation)),
           ...ergonomicsViolations.map(violation => serializeViolation(violation, 'ergonomics'))
@@ -147,6 +171,18 @@ export class EvaluateRoomUseCase {
       console.error(`EvaluateRoomUseCase: Error evaluating room ${roomId}:`, error);
       return EvaluationResultDTO.failure(`UNEXPECTED_ERROR: ${error.message}`);
     }
+  }
+
+  async _assembleExplanation({ roomState, styleViolations, ergonomicsViolations, scorecard, completion }) {
+    if (!this.evaluationExplanationAssembler || !completion || !scorecard.hasCalibration) return null;
+    return this.evaluationExplanationAssembler.assemble({
+      roomState,
+      styleViolations,
+      ergonomicsViolations,
+      ratingPolicy: this.starRatingPolicy,
+      completion,
+      scorecard
+    });
   }
 
   _evaluateScorecard(score, violations, completion) {

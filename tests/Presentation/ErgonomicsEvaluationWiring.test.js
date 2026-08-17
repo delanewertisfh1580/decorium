@@ -13,6 +13,8 @@ describe('ergonomics evaluation wiring', () => {
     expect(mainSource).toContain('new FunctionalLayoutEvaluator()');
     expect(mainSource).toContain('ErgonomicsScorer');
     expect(mainSource).toContain('EvaluationScoreAggregator');
+    expect(mainSource).toContain('ViolationImpactPolicy');
+    expect(mainSource).toContain('new ViolationImpactPolicy({');
   });
 
   it('passes active level ergonomics rules into the evaluation use case', () => {

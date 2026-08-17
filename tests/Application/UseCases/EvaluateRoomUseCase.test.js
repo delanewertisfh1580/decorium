@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import EvaluateRoomUseCase from '../../../src/Application/UseCases/EvaluateRoomUseCase.js';
 import EvaluationResultDTO from '../../../src/Application/DTOs/EvaluationResultDTO.js';
 import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
@@ -325,6 +325,97 @@ describe('EvaluateRoomUseCase', () => {
         completionEligible: false,
         completionBlockReason: 'critical-rule',
         criticalViolationIds: ['required-scenario:evening-media:view-target']
+      });
+    });
+  });
+
+  describe('Explainable evaluation DTO', () => {
+    it('returns a versioned explanation with supplied counterfactual impact and resolved violation instances', async () => {
+      const featureVector = new FeatureVector({
+        woodShare: 0.8, metalShare: 0.1, glassShare: 0.1, plasticShare: 0.1, textileShare: 0.2,
+        lightColorShare: 0.7, darkColorShare: 0.3, warmPaletteShare: 0.8, saturationLevel: 0.3,
+        formSimplicity: 0.6, roundnessShare: 0.4, rectilinearShare: 0.6, sizeNorm: 0.5,
+        priceNorm: 0.5, lightingFunctionShare: 0.1, storageFunctionShare: 0.2
+      });
+      const roomState = RoomState.createEmpty(createTestBounds()).addItem(new Item({
+        id: 'item-explained', name: 'Explained chair', type: 'chair', featureVector
+      }));
+      roomRepository.getState = async () => roomState;
+      const violation = {
+        constraintId: 'ergonomics-minimum-clearance:item-explained',
+        featureName: 'minimum-clearance', operator: 'gte', threshold: 0.8, actualValue: 0.3,
+        severity: 0.7, messageKey: 'ergonomics-minimum-clearance',
+        constraint: { description: 'Keep the route clear.' }, critical: false, itemIds: ['item-explained']
+      };
+      const violationImpactPolicy = {
+        evaluate: vi.fn(() => ({
+          current: { styleScore: 1, ergonomicsScore: 0.5, totalScore: 0.85, stars: 4, completionEligible: true },
+          impacts: [{
+            violationId: 'ergonomics-minimum-clearance:item-explained',
+            channel: 'ergonomics', channelScoreDelta: 0.5, totalScoreDelta: 0.15,
+            displayStarsDelta: 1, completionEffect: 'none'
+          }]
+        }))
+      };
+      const explainableUseCase = new EvaluateRoomUseCase(
+        roomRepository,
+        constraintEvaluator,
+        styleScorer,
+        starRatingPolicy,
+        {
+          getEvaluationFeedback: async () => ['feedback'],
+          getViolationExplanation: async () => ({
+            messageKey: 'ergonomics-minimum-clearance',
+            severity: 'high',
+            remediation: 'Оставьте больше прохода между предметами.'
+          })
+        },
+        { evaluate: () => [violation] },
+        { evaluate: () => ({ score: 0.5, penalty: 0.7 }) },
+        { aggregate: () => ({ totalScore: 0.85, styleWeight: 0.7, ergonomicsWeight: 0.3 }) },
+        new ScorecardCalibrationPolicy({ schemaVersion: 1, criticalStarCap: 2 }),
+        violationImpactPolicy
+      );
+
+      const result = await explainableUseCase.execute(
+        'room-001',
+        [],
+        {},
+        { minimumClearance: {} },
+        { minimumStars: 3, criticalRuleMode: 'block-completion' }
+      );
+
+      expect(violationImpactPolicy.evaluate).toHaveBeenCalledWith({
+        styleViolations: [],
+        ergonomicsViolations: [violation],
+        ratingPolicy: starRatingPolicy,
+        completion: { minimumStars: 3, criticalRuleMode: 'block-completion' }
+      });
+      expect(result.evaluationData.explanation).toEqual({
+        schemaVersion: 1,
+        scorecard: {
+          rawScore: 0.85,
+          rawStars: 4,
+          displayStars: 4,
+          completionEligible: true,
+          completionBlockReason: null
+        },
+        violations: [{
+          id: 'ergonomics-minimum-clearance:item-explained',
+          channel: 'ergonomics',
+          scope: 'instances',
+          rule: { messageKey: 'ergonomics-minimum-clearance', description: 'Keep the route clear.' },
+          fact: { operator: 'gte', actual: 0.3, desired: 0.8 },
+          severity: { level: 'high', value: 0.7, critical: false },
+          impact: {
+            channelScoreDelta: 0.5,
+            totalScoreDelta: 0.15,
+            displayStarsDelta: 1,
+            completionEffect: 'none'
+          },
+          remediation: 'Оставьте больше прохода между предметами.',
+          instances: [{ instanceId: 'item-explained', itemId: 'item-explained', displayName: 'Explained chair' }]
+        }]
       });
     });
   });

@@ -17,3 +17,4 @@
 | [PROD-019 — Client-specific clearance multiplier](PROD-019-client-clearance-multiplier.md) | Completed | ClientBrief clearance preferences now deterministically scale minimum-clearance thresholds and severity while preserving authored rule diagnostics. |
 | [PROD-020 — Required functional scenarios](PROD-020-required-functional-scenarios.md) | Completed | Client-owned dining, media and work groups now emit deterministic critical ergonomics diagnostics when missing. |
 | [PROD-021 — Scorecard calibration and completion gates](PROD-021-scorecard-calibration-completion-gates.md) | Completed | Versioned scorecard calibration preserves raw facts, caps critical failures and provides authoritative completion eligibility. |
+| [PROD-022 — Explainable evaluation UI](PROD-022-explainable-evaluation-ui.md) | Completed | Immutable causal explanation cards expose rule facts, counterfactual recovery, authored correction and safe instance focus. |

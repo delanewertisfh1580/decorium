@@ -53,11 +53,12 @@ The repository lazy-loads only the active profile's static GLB, caches its sourc
 Level clientBriefId → validated ClientBrief repository → ClientBrief Domain value
   → LoadLevelUseCase → current primary style / completion / composition / ergonomics / required-scenario inputs
 Player intent → GameController → Application use case → RoomState
-Evaluate → constraint/style/composition/spatial evaluators → score aggregation → `ScorecardCalibrationPolicy` → calibrated feedback/result → EvaluationView
+Evaluate → constraint/style/composition/spatial evaluators → score aggregation → `ScorecardCalibrationPolicy` → `ViolationImpactPolicy` → `EvaluationExplanationAssembler` → calibrated feedback/result → EvaluationView
+Explanation focus intent (`instanceId`) → GameController validation → existing RoomViewModel selection rendering
 Calibrated result (`stars`, `completionEligible`) → `RecordLevelCompletionUseCase` → ProgressionPolicy
 ```
 
-Evaluation is deterministic. Presentation receives the hydrated brief plus serialized feedback and score data; it never reimplements rule logic. `ScorecardCalibrationPolicy` preserves `rawScore` and `rawStars`, then derives display stars and explicit `completionEligible` from versioned scoring calibration plus the ClientBrief completion mode and diagnostics. `GameController` forwards those facts only; `RecordLevelCompletionUseCase` owns persistence gating. Current runtime uses the brief’s **primary** target with the one shipped starter style dataset and derives completion, composition, clearance multiplier, functional layout and required scenario policy from the brief. Secondary/accent weighting, density, empty-space preference and client-priority channels remain explicitly persisted inputs awaiting dedicated deterministic evaluator slices.
+Evaluation is deterministic. Presentation receives the hydrated brief plus serialized feedback and score data; it never reimplements rule logic. `ScorecardCalibrationPolicy` preserves `rawScore` and `rawStars`, then derives display stars and explicit `completionEligible` from versioned scoring calibration plus the ClientBrief completion mode and diagnostics. `ViolationImpactPolicy` calculates exact counterfactual recovery for one diagnostic at a time, and `EvaluationExplanationAssembler` combines that Domain fact with authored feedback and live RoomState instance references into immutable explanation V1. `GameController` forwards scorecard facts, persists completion through Application and only validates presentation focus intent. Current runtime uses the brief’s **primary** target with the one shipped starter style dataset and derives completion, composition, clearance multiplier, functional layout and required scenario policy from the brief. Secondary/accent weighting, density, empty-space preference and client-priority channels remain explicitly persisted inputs awaiting dedicated deterministic evaluator slices.
 
 ### Profile and campaign
 
@@ -83,6 +84,7 @@ Player settings and completed level progress are persisted in profile schema V3.
 | `ClientBrief v1` | Bound client identity, weighted style targets, priorities, spatial preferences and current evaluation policy. | `data/briefs`, schema, validated repository, Domain value and LoadLevel hydration |
 | `ScoringParameters v1` | Star thresholds, bounded numerical epsilon and critical-star cap for calibrated scorecards. | `data/scoring`, schema, runtime validation, composition root and Domain policy |
 | `ScorecardCalibrationPolicy` | Preserved raw score/rating, critical diagnostic caps and authoritative completion eligibility. | Domain scoring and Application evaluation/completion boundaries |
+| `EvaluationExplanation v1` | Immutable causal rule/fact/remediation/impact/instance snapshot for the result panel. | Domain impact policy, Application assembly, Infrastructure feedback adapter and Presentation rendering |
 | BuildInfo / release manifest | Build identity for release verification. | Release pipeline |
 
 ## Non-negotiable invariants
@@ -97,6 +99,7 @@ Player settings and completed level progress are persisted in profile schema V3.
 8. Style mixing is interpreted only from explicit client-brief policy; no global default aesthetic is hidden in UI or evaluator heuristics.
 9. Presentation environment is not a gameplay evaluator input; visual ownership is explicit in versioned authored content.
 10. Completion eligibility is produced by calibrated Domain/Application evaluation and forwarded by UI; it is never inferred from presentation state or a UI-side star comparison.
+11. Per-diagnostic recovery is an exact Domain counterfactual and authored remediation is supplied through Application; Presentation may render or focus an instance but cannot apportion score impact.
 
 ## Verification
 

@@ -25,6 +25,16 @@ export class JsonFeedbackCatalog {
     );
   }
 
+  async getViolationExplanation(messageKey, values = {}) {
+    const feedback = await this.getFeedbackById(messageKey);
+    if (!feedback || feedback.category !== 'violation') return null;
+    return Object.freeze({
+      messageKey,
+      severity: feedback.severity,
+      remediation: await this.formatFeedback(messageKey, values)
+    });
+  }
+
   async getEvaluationFeedback(stars, violations) {
     const feedback = await this.loadAllFeedback();
     const messages = [];

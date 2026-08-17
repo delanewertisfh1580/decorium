@@ -109,6 +109,10 @@ Style fit, client-priority satisfaction and ergonomics remain separate determini
 
 Ergonomics violations include generic clearance, passage zones, functional relationships and required functional scenarios. The same violation flows to `ErgonomicsScorer` and to the feedback catalog. Every new policy requires a matching feedback entry with a stable `id`, category, severity and player-actionable template; `EvaluationView` only resolves and renders it.
 
+`EvaluationExplanation V1` is a runtime Application-to-Presentation contract, not persisted JSON. It combines existing stable diagnostic ID, rule description, actual/desired fact, channel, numeric severity, authored severity/remediation, exact counterfactual recovery and current RoomState instance references. Feedback entry `severity` must use `low`, `medium` or `high`; ClientBrief/Domain `critical: true` remains the authoritative critical override. Every current shipped style, composition, ergonomics and ClientBrief `messageKey` is coverage-tested against an authored violation feedback entry.
+
+Counterfactual recovery is calculated outside content and UI by `ViolationImpactPolicy`: it means the exact scorecard delta if only that diagnostic were corrected. It is not a content-authored weight or additive per-item blame. Instance references must resolve from the evaluated RoomState; an absent scenario or aggregate style rule remains explicitly room-scoped.
+
 `scoring-parameters.json` is `schemaVersion: 1` and owns numeric calibration rather than Presentation constants. `scoreEpsilon` is a bounded floating-point comparison tolerance for star thresholds; it does not alter authored score values. `criticalStarCap` is the global cap used when a ClientBrief completion policy encounters critical diagnostics. `ScorecardCalibrationPolicy` preserves `rawScore` / `rawStars`, derives display `stars`, and returns explicit `completionEligible`, `completionBlockReason` and stable critical IDs.
 
 | ClientBrief `criticalRuleMode` | Critical diagnostic result |

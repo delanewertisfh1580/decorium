@@ -62,7 +62,9 @@ export class GameController {
       onClear: () => this._onClear(),
       onEvaluate: () => this._dispatchIntent(INPUT_INTENTS.EVALUATE)
     });
-    this.evaluationView = new EvaluationView(evaluationContainer);
+    this.evaluationView = new EvaluationView(evaluationContainer, {
+      onFocusInstance: instanceId => this._onExplainabilityFocus(instanceId)
+    });
 
     await this.roomView.init();
     await this.catalogView.init();
@@ -196,6 +198,19 @@ export class GameController {
     this.roomView.cancelPlacement();
     this.roomViewModel.selectItem(itemId);
     this._showStatus('Перетащите предмет или кликните по полу для перемещения');
+    this._render();
+  }
+
+  _onExplainabilityFocus(instanceId) {
+    const placed = this.roomViewModel?.roomState?.getItem(instanceId);
+    if (!placed) {
+      this._showStatus('Предмет из результата оценки больше не находится в комнате. Оцените комнату повторно.');
+      return;
+    }
+    this.pendingItemId = null;
+    this.roomView.cancelPlacement();
+    this.roomViewModel.selectItem(instanceId);
+    this._showStatus(`Выбран предмет из объяснения: ${placed.item.name}`);
     this._render();
   }
 

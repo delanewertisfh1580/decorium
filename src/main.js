@@ -23,6 +23,7 @@ import PassageZoneEvaluator from './Domain/Ergonomics/PassageZoneEvaluator.js';
 import FunctionalLayoutEvaluator from './Domain/Ergonomics/FunctionalLayoutEvaluator.js';
 import ErgonomicsScorer from './Domain/Scoring/ErgonomicsScorer.js';
 import EvaluationScoreAggregator from './Domain/Scoring/EvaluationScoreAggregator.js';
+import ViolationImpactPolicy from './Domain/Scoring/ViolationImpactPolicy.js';
 import { initializeScoringParameters, getScoringParameters } from './Domain/Scoring/scoringParameters.js';
 import EvaluateRoomUseCase from './Application/UseCases/EvaluateRoomUseCase.js';
 import LoadLevelUseCase from './Application/UseCases/LoadLevelUseCase.js';
@@ -139,26 +140,38 @@ async function bootstrap() {
     const rotateItemUseCase = new RotateItemUseCase(roomRepository);
     const removeItemUseCase = new RemoveItemUseCase(roomRepository);
     const scoring = getScoringParameters();
+    const styleScorer = new StyleScorer(scoring);
+    const starRatingPolicy = new StarRatingPolicy(scoring.starRatingThresholds, { epsilon: scoring.scoreEpsilon });
+    const ergonomicsScorer = new ErgonomicsScorer(scoring);
+    const scoreAggregator = new EvaluationScoreAggregator({
+      styleWeight: scoring.styleWeight,
+      ergonomicsWeight: scoring.ergonomicsWeight
+    });
+    const scorecardCalibrationPolicy = new ScorecardCalibrationPolicy({
+      schemaVersion: scoring.schemaVersion,
+      criticalStarCap: scoring.criticalStarCap
+    });
+    const violationImpactPolicy = new ViolationImpactPolicy({
+      styleScorer,
+      ergonomicsScorer,
+      scoreAggregator,
+      scorecardCalibrationPolicy
+    });
     const evaluateRoomUseCase = new EvaluateRoomUseCase(
       roomRepository,
       new ConstraintEvaluator(),
-      new StyleScorer(scoring),
-      new StarRatingPolicy(scoring.starRatingThresholds, { epsilon: scoring.scoreEpsilon }),
+      styleScorer,
+      starRatingPolicy,
       feedbackCatalog,
       new SpatialErgonomicsEvaluator(
         new ClearanceEvaluator(),
         new PassageZoneEvaluator(),
         new FunctionalLayoutEvaluator()
       ),
-      new ErgonomicsScorer(scoring),
-      new EvaluationScoreAggregator({
-        styleWeight: scoring.styleWeight,
-        ergonomicsWeight: scoring.ergonomicsWeight
-      }),
-      new ScorecardCalibrationPolicy({
-        schemaVersion: scoring.schemaVersion,
-        criticalStarCap: scoring.criticalStarCap
-      })
+      ergonomicsScorer,
+      scoreAggregator,
+      scorecardCalibrationPolicy,
+      violationImpactPolicy
     );
 
     const controller = new GameController({
