@@ -1,0 +1,255 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ClientBriefCatalogV2",
+  "type": "object",
+  "required": ["schemaVersion", "briefs"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "briefs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/brief" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "brief": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "id",
+        "levelId",
+        "client",
+        "title",
+        "summary",
+        "styleTargets",
+        "clientPriorities",
+        "spatialPreferences",
+        "evaluationPolicy"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 2 },
+        "id": { "type": "string", "pattern": "^brief-[a-z0-9-]+$" },
+        "levelId": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "client": {
+          "type": "object",
+          "required": ["id", "displayName"],
+          "properties": {
+            "id": { "type": "string", "pattern": "^client-[a-z0-9-]+$" },
+            "displayName": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 },
+        "styleTargets": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["styleId", "role", "weight"],
+            "properties": {
+              "styleId": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+              "role": { "enum": ["primary", "secondary", "accent"] },
+              "weight": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "clientPriorities": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "weight", "rule"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+              "label": { "type": "string", "minLength": 1 },
+              "weight": { "type": "number", "exclusiveMinimum": 0, "maximum": 5 },
+              "rule": { "$ref": "#/definitions/clientPriorityRule" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "spatialPreferences": {
+          "type": "object",
+          "required": ["density", "clearanceMultiplier", "emptySpacePreference"],
+          "properties": {
+            "density": { "enum": ["intimate", "balanced", "open"] },
+            "clearanceMultiplier": { "type": "number", "minimum": 0.25, "maximum": 2 },
+            "emptySpacePreference": {
+              "type": "object",
+              "required": ["mode", "targetFreeAreaRatio", "weight"],
+              "properties": {
+                "mode": { "enum": ["allow", "discourage-excess", "require-open"] },
+                "targetFreeAreaRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+                "weight": { "type": "number", "exclusiveMinimum": 0, "maximum": 5 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "evaluationPolicy": { "$ref": "#/definitions/evaluationPolicy" }
+      },
+      "additionalProperties": false
+    },
+    "clientPriorityRule": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "messageKey"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "kind": { "enum": ["functional-scenario", "spatial-preferences"] },
+        "scenarioId": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "messageKey": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [{
+        "if": { "properties": { "kind": { "const": "functional-scenario" } } },
+        "then": { "required": ["scenarioId"] },
+        "else": { "not": { "required": ["scenarioId"] } }
+      }],
+      "additionalProperties": false
+    },
+    "evaluationPolicy": {
+      "type": "object",
+      "required": ["styleMode", "completion", "compositionRules", "ergonomicsRules"],
+      "properties": {
+        "styleMode": { "const": "weighted-targets-v1" },
+        "completion": {
+          "type": "object",
+          "required": ["minimumStars", "criticalRuleMode"],
+          "properties": {
+            "minimumStars": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "criticalRuleMode": { "enum": ["block-completion", "cap-stars", "informational"] }
+          },
+          "additionalProperties": false
+        },
+        "compositionRules": {
+          "type": "object",
+          "properties": {
+            "minItems": { "type": "integer", "minimum": 1 },
+            "requiredRoles": {
+              "type": "array",
+              "items": { "enum": ["seating", "surface", "lighting", "storage", "decor"] },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "ergonomicsRules": {
+          "type": "object",
+          "required": ["minimumClearance", "passageZones", "functionalLayoutRules", "requiredFunctionalScenarios"],
+          "properties": {
+            "minimumClearance": {
+              "type": "object",
+              "required": ["minimumDistance"],
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "minimumDistance": { "type": "number", "exclusiveMinimum": 0 },
+                "weight": { "type": "number", "exclusiveMinimum": 0 },
+                "messageKey": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            },
+            "passageZones": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "label", "x", "z", "width", "depth"],
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "label": { "type": "string", "minLength": 1 },
+                  "x": { "type": "number" },
+                  "z": { "type": "number" },
+                  "width": { "type": "number", "exclusiveMinimum": 0 },
+                  "depth": { "type": "number", "exclusiveMinimum": 0 },
+                  "weight": { "type": "number", "exclusiveMinimum": 0 },
+                  "messageKey": { "type": "string", "minLength": 1 }
+                },
+                "additionalProperties": false
+              }
+            },
+            "functionalLayoutRules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["schemaVersion", "id", "kind", "anchorSelector", "partnerSelector", "minPartners", "distance", "weight", "messageKey"],
+                "properties": {
+                  "schemaVersion": { "const": 1 },
+                  "id": { "type": "string", "minLength": 1 },
+                  "kind": { "enum": ["adjacency", "front-adjacency"] },
+                  "anchorSelector": { "$ref": "#/definitions/affordanceSelector" },
+                  "partnerSelector": { "$ref": "#/definitions/affordanceSelector" },
+                  "minPartners": { "type": "integer", "minimum": 1 },
+                  "distance": {
+                    "type": "object",
+                    "required": ["min", "max"],
+                    "properties": {
+                      "min": { "type": "number", "minimum": 0 },
+                      "max": { "type": "number", "exclusiveMinimum": 0 }
+                    },
+                    "additionalProperties": false
+                  },
+                  "maxAngleDegrees": { "type": "number", "exclusiveMinimum": 0, "maximum": 90 },
+                  "weight": { "type": "number", "exclusiveMinimum": 0 },
+                  "messageKey": { "type": "string", "minLength": 1 }
+                },
+                "allOf": [{
+                  "if": { "properties": { "kind": { "const": "front-adjacency" } } },
+                  "then": { "required": ["maxAngleDegrees"] }
+                }],
+                "additionalProperties": false
+              }
+            },
+            "requiredFunctionalScenarios": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["schemaVersion", "id", "label", "requiredRoles", "weight", "critical", "messageKey"],
+                "properties": {
+                  "schemaVersion": { "const": 1 },
+                  "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+                  "label": { "type": "string", "minLength": 1 },
+                  "requiredRoles": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": ["affordance", "minCount"],
+                      "properties": {
+                        "affordance": { "$ref": "#/definitions/affordance" },
+                        "minCount": { "type": "integer", "minimum": 1 }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "weight": { "type": "number", "exclusiveMinimum": 0 },
+                  "critical": { "type": "boolean" },
+                  "messageKey": { "type": "string", "minLength": 1 }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "affordance": {
+      "enum": ["dining-seat", "dining-surface", "lounge-seat", "coffee-surface", "view-target", "work-seat", "work-surface"]
+    },
+    "affordanceSelector": {
+      "type": "object",
+      "required": ["affordance"],
+      "properties": {
+        "affordance": {
+          "enum": ["dining-seat", "dining-surface", "lounge-seat", "coffee-surface", "view-target", "work-seat", "work-surface"]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

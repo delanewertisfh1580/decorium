@@ -1,62 +1,74 @@
 # Product overview
 
 **Статус:** Active production vision and current baseline
-**Обновлено:** 16 августа 2026 г.
+**Обновлено:** 17 августа 2026 г.
 
-Decorium — браузерная Three.js-игра о проектировании интерьеров **для конкретных заказчиков**. Игрок собирает комнату из authored catalog, размещает и поворачивает предметы, а затем получает детерминированную оценку того, насколько решение отвечает стилевому замыслу, смешению эстетик, функциональным потребностям и явным ограничениям client brief.
+Decorium — браузерная Three.js-игра о проектировании интерьеров **для конкретных заказчиков**. Игрок собирает комнату из authored catalog, размещает и поворачивает предметы, а затем получает детерминированную оценку того, насколько решение отвечает смешению эстетик, личным приоритетам и эргономическим требованиям `ClientBrief`.[1] [2]
 
-> **Product canon:** Decorium — мультистилевая игра. Один стиль не является правилом продукта, а «хороший» интерьер определяется конкретным заказчиком и его brief, а не универсальным шаблоном.
+> **Product canon:** Decorium — мультистилевая игра. Один стиль не является правилом продукта, а «хороший» интерьер определяется explicit brief заказчика, а не универсальным шаблоном.
 
 ## Игровой цикл
 
 | Шаг | Действие игрока | Результат системы |
 |---|---|---|
-| 1 | Открывает профиль и выбирает заказ/уровень кампании | Восстанавливаются settings, completed levels и session context. |
-| 2 | Читает brief: предпочтения клиента, допустимое смешение стилей, функциональные потребности и ограничения помещения | Hydrated versioned `ClientBrief` supplies authored policy; UI displays it without interpretation. |
-| 3 | Выбирает предметы, расставляет и поворачивает их в 3D-комнате | RoomState создаёт stable instance IDs; действия можно переместить, повернуть, удалить или отменить. |
-| 4 | Нажимает «Оценить» | Application оркестрирует style fit, composition и spatial ergonomics, затем калибрует scorecard по critical rules brief. |
-| 5 | Читает результат и уточняет композицию | UI показывает total score, calibrated stars, sub-scores и actionable feedback. |
-| 6 | Выполняет условия заказа | Profile records completion только при `completionEligible`; campaign availability пересчитывается и открывает следующий brief. |
+| 1 | Открывает профиль и выбирает заказ/уровень кампании. | Восстанавливаются settings, completed levels и session context. |
+| 2 | Читает brief: стили, запросы клиента, сценарии и ограничения. | Hydrated `ClientBrief v2` supplies versioned authored policy; UI displays it without interpretation. |
+| 3 | Выбирает, размещает и поворачивает предметы в 3D-комнате. | `RoomState` создаёт stable instance IDs; действия можно переместить, повернуть, удалить или отменить. |
+| 4 | Нажимает «Оценить». | Application вычисляет multi-style fit, composition, client-priority satisfaction и spatial ergonomics, затем калибрует scorecard. |
+| 5 | Читает результат и уточняет композицию. | UI показывает total score, calibrated stars, три канала, style targets и actionable explanation. |
+| 6 | Выполняет условия заказа. | Profile records completion только при `completionEligible`; campaign availability пересчитывается и открывает следующий brief. |
 
 ## Production vision: styles and client briefs
 
-Каждый заказ должен иметь versioned `ClientBrief`, который делает вкусы и ограничения клиента явными authored data. Brief может назначать основной стиль, вторичные поддерживающие стили, допустимые сочетания, относительные веса, обязательные и запрещённые свойства, функциональные сценарии, budget/space constraints и критерии завершённости. Это позволяет уровню поощрять осмысленный эклектичный интерьер, а не наказывать его за несовпадение с единственным стилем.
+Каждый заказ имеет versioned `ClientBrief`, который делает вкусы и ограничения клиента явными authored data. Brief назначает primary/secondary/accent style targets с весами, client priorities с explicit rules, spatial preferences, functional scenarios и completion criteria. Это позволяет поощрять осмысленный eclectic интерьер или нужную компактность комнаты, а не наказывать их за отклонение от скрытого global default.[2] [3]
 
-| Слой policy | Роль в будущем `ClientBrief` | Пример |
+| Слой policy | Shipped contract | Пример результата |
 |---|---|---|
-| Style palette | Основные и вторичные стилевые цели с весами. | Mid-century как primary; Japandi accents как secondary. |
-| Mixing policy | Допустимые пары/семейства стилей, balance и конфликтующие комбинации. | Тёплое дерево связывает две эстетики; несовместимый декоративный акцент получает feedback. |
-| Client priorities | Что важнее именно этому заказчику. | Готовность к приёму гостей важнее минималистичной визуальной плотности. |
-| Functional brief | Сценарии использования комнаты. | Dining for four, media viewing, reading corner, child-safe passage. |
-| Hard constraints | Непереговорные условия помещения, бюджета или клиента. | Сохранить проход, не блокировать окно, использовать existing heirloom. |
-
-`ClientBrief v1` is now a runtime-loaded, versioned source contract. Its primary target currently feeds the starter-style channel; its `clearanceMultiplier` actively adjusts minimum-clearance ergonomics, and its required functional scenarios actively diagnose missing client groups. Under the shipped `block-completion` policy, a critical diagnostic caps displayed stars below the brief target and makes completion ineligible. The player now receives the resulting rule, actual/desired fact, authored correction and exact recovery impact; UI may focus an existing affected instance but never computes this policy. Weighted secondary/accent targets, mixing policy, priorities, density and empty-space preference remain declared data until their dedicated deterministic evaluator slices activate them.
+| Style palette | Exact primary/secondary/accent targets with normalized weights. | Скандинавский primary, Japandi secondary и Эклектика accent получают отдельные target scores. |
+| Composition blend | Authoritative `0.75/0.25` target-fit/composition blend. | Room-level composition участвует один раз, а не дублируется для каждого стиля. |
+| Client priorities | `functional-scenario` или `spatial-preferences` rule with weight and label. | Готовность принять гостей или камерная атмосфера видимо меняет channel «Запросы клиента». |
+| Spatial preferences | Fixed-grid occupancy plus authored density/free-area parameters. | Клиент может предпочитать собранную или открытую комнату. |
+| Hard completion | `minimumStars` and `criticalRuleMode` in brief policy. | Missing critical scenario caps display stars and blocks completion. |
 
 ## Current production baseline
 
-Сегодня в репозитории существуют три authored levels и три versioned `ClientBrief v1` records. Каждый level теперь содержит только topology/inventory/presentation reference; hydrated brief является единственным source of truth для client identity, completion target, composition, ergonomics, style targets, priorities и spatial preferences. **Scandinavian starter dataset** всё ещё является единственным активным style/constraint dataset: current evaluator временно использует primary target brief. Client clearance multiplier и required dining/media/work scenarios уже активны как deterministic ergonomics inputs; weighted secondary/accent targets, density и empty-space preference ожидают отдельных mechanics slices.
+В репозитории существуют три authored levels, три `ClientBrief v2` records и exact profile catalog для Scandinavian, Japandi и Eclectic. Level владеет только topology, inventory и presentation reference; immutable `evaluationSpec` гидрирует client identity, style targets, priorities, spatial preferences, composition, ergonomics и completion в Application boundary.[1] [4]
 
-Profile schema V3 хранится локально и включает settings (`reducedMotion`, `uiScale`, `qualityTier`) и прогресс прохождения. Touch и keyboard paths поддерживаются одним intent contract. Каталог группирует available items по UI-категориям, поддерживает поиск и сохраняет browsing context в пределах текущей игровой сессии после placement; эта навигация не меняет authored availability или gameplay rules. Priority furniture variants use data-driven visual families, so form distinguishes dining, lounge, office and other furniture roles independently from authored semantic profiles. The priority seating pack now renders from versioned authored GLB prefabs with an immediate procedural fallback; asset loading remains a Presentation concern. Итоговая оценка пока агрегирует current primary-style score и ergonomics с весами **70% / 30%**. Versioned scoring data owns thresholds, a narrow numeric epsilon and critical-star cap; a calibrated scorecard preserves raw values separately from displayed stars and authoritative completion eligibility. Explainable evaluation V1 preserves the causal bridge for each diagnostic—without moving score policy into UI—so a player can see whether a correction restores stars or the last completion gate. ClientBrief now owns the inputs that will replace this temporary global policy channel by channel.
+Score имеет три независимых канала: **50% style**, **20% client priorities** и **30% ergonomics**. Style channel сочетает normalized weighted target fit и composition с весами **75% / 25%**. Client-priority channel нормализует положительные weights, а fixed `0.1 m` occupancy grid измеряет free-area ratio без двойного счёта перекрывающихся footprints. `ScorecardCalibrationPolicy` по-прежнему единолично выводит display stars и `completionEligible`; UI не сравнивает stars и не открывает уровни.[5] [6]
 
-| Текущий уровень | Функциональный сценарий | Ключевое правило |
+`EvaluationExplanation v2` отражает source каждого active diagnostic: style, client priority или ergonomics. Card показывает supplied fact/desired value, severity, authored remediation, exact counterfactual recovery и—если applicable—priority label или live instance focus. Presentation форматирует только эти данные и не выводит policy из label, mesh или category.[6] [7]
+
+| Текущий уровень | Функциональный сценарий | Клиентский акцент |
 |---|---|---|
-| `level-001` | Тёплые ужины | Critical scenario требует 1 `dining-surface` и 2 `dining-seat`; existing table–seat relationship remains a separate placement-quality rule. Missing scenario blocks completion. |
-| `level-002` | Камерный медиа-вечер | Critical scenario требует `lounge-seat`, `view-target` и `coffee-surface`; sofa orientation and coffee-table position remain separate placement-quality rules. Missing scenario blocks completion. |
-| `level-003` | Светлая рабочая студия | Critical scenario требует `work-surface` и `work-seat`; desk and repeat-placeable chair semantics are explicit authored data. Missing scenario blocks completion. |
+| `level-001` | Тёплые ужины: 1 `dining-surface` и 2 `dining-seat`. | Готовность принимать гостей; missing critical scenario blocks completion. |
+| `level-002` | Камерный медиа-вечер: `lounge-seat`, `view-target` и `coffee-surface`. | Камерная плотность и media comfort могут влиять через brief-owned priority rules. |
+| `level-003` | Светлая рабочая студия: `work-surface` и `work-seat`. | Открытость пространства и поддержка focused work оцениваются явно, а не из визуальной догадки. |
 
 ## Границы продукта
 
-Decorium является static web-приложением: ему не требуются backend, пользовательский аккаунт, environment variables или внешние API. Контент загружается вместе с приложением, а все игровые решения воспроизводимы из authored data и сохранённого RoomState.
+Decorium является static web-приложением: ему не требуются backend, пользовательский аккаунт, environment variables или внешние API. Контент загружается вместе с приложением, а игровые решения воспроизводимы из authored versioned data и сохранённого `RoomState`.[4] [8]
 
-Cloud sync, multiplayer, платежи, runtime AI-judge, непрозрачная автоматическая расстановка, pathfinding, аудио и native packaging не входят в current baseline. Мультистилевой `ClientBrief` pipeline, напротив, является **активным production-направлением** и описан в [Production roadmap](roadmap.md).
+Cloud sync, multiplayer, платежи, runtime AI-judge, непрозрачная автоматическая расстановка, pathfinding, аудио и native packaging не входят в current baseline. Следующий отдельный production slice — semantic catalog coverage, чтобы каждый shipped item имел declared spatial behavior; это не изменяет уже активный multi-style brief pipeline.[9]
 
 ## Продуктовые инварианты
 
-1. UI отображает brief и результат, но не вычисляет style fit, progression или economy.
+1. UI отображает brief и результат, но не вычисляет style fit, priority satisfaction, progression или economy.
 2. Игровая оценка детерминированна и объяснима через authored feedback messages.
 3. Семантика мебели задаётся authored `InteractionProfile`, а не названием или visual mesh.
-4. Все persisted, content и client-brief contracts имеют version/schema version.
-5. Функциональная близость не должна ошибочно наказываться universal clearance rule.
-6. Смешение стилей оценивается относительно explicit policy заказчика, а не как отклонение от global default style.
+4. Все persisted, content и client-brief contracts имеют schema version и validation boundary.
+5. Functional proximity не должна ошибочно наказываться generic clearance rule.
+6. Style mixing и client preferences оцениваются только относительно explicit authored policy, а не global default aesthetic.
 
 За структурами данных и authoring workflow обращайтесь к [Content model](../systems/content-model.md); за техническими зависимостями — к [Architecture overview](../architecture/overview.md).
+
+## References
+
+[1]: ../../src/Application/UseCases/LoadLevelUseCase.js "V2 brief hydration"
+[2]: ../../src/Domain/Briefs/ClientBrief.js "ClientBrief V2 value object"
+[3]: ../../data/briefs/client-briefs.v2.json "Shipped client briefs"
+[4]: ../systems/content-model.md "Content model"
+[5]: ../../data/scoring/scoring-parameters.json "Scoring parameters V2"
+[6]: ../../src/Application/UseCases/EvaluateRoomUseCase.js "Three-channel evaluation"
+[7]: ../../src/Presentation/Views/EvaluationView.js "Evaluation result rendering"
+[8]: ../architecture/overview.md "Architecture overview"
+[9]: roadmap.md "Production roadmap"

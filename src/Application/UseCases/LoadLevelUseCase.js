@@ -155,7 +155,41 @@ export class LoadLevelUseCase {
 
       const styleId = clientBrief?.primaryStyleTarget.styleId ?? raw.styleId ?? 'default';
       let constraints;
-      if (this.constraintCatalog && styleId !== 'default') {
+      let evaluationSpec = null;
+      const compositionRules = clientBrief?.evaluationPolicy.compositionRules ?? raw.compositionRules ?? {};
+      const ergonomicsRules = createErgonomicsRules(
+        clientBrief?.evaluationPolicy.ergonomicsRules ?? raw.ergonomicsRules,
+        clientBrief?.spatialPreferences.clearanceMultiplier ?? 1
+      );
+      const completion = clientBrief?.evaluationPolicy.completion ?? null;
+      if (clientBrief?.schemaVersion === 2) {
+        if (!this.constraintCatalog) {
+          return { success: false, error: `INVALID_LEVEL_DATA: Missing style constraint catalog for ${clientBrief.id}` };
+        }
+        const styleTargets = await Promise.all(clientBrief.styleTargets.map(async target => {
+          const profile = await this.constraintCatalog.getStyleProfileById(target.styleId);
+          if (!profile || !Array.isArray(profile.constraints) || profile.constraints.length === 0) {
+            throw new Error(`Unknown style constraint profile ${target.styleId}`);
+          }
+          return Object.freeze({
+            styleId: target.styleId,
+            label: profile.label,
+            role: target.role,
+            weight: target.weight,
+            constraints: Object.freeze([...profile.constraints])
+          });
+        }));
+        constraints = styleTargets.find(target => target.styleId === styleId).constraints;
+        evaluationSpec = Object.freeze({
+          schemaVersion: 1,
+          styleTargets: Object.freeze(styleTargets),
+          clientPriorities: Object.freeze([...clientBrief.clientPriorities]),
+          spatialPreferences: clientBrief.spatialPreferences,
+          compositionRules: Object.freeze({ ...compositionRules }),
+          ergonomicsRules,
+          completion: Object.freeze({ ...completion })
+        });
+      } else if (this.constraintCatalog && styleId !== 'default') {
         constraints = await this.constraintCatalog.getConstraintsByStyleId(styleId);
       } else {
         constraints = (raw.constraints ?? []).map(createConstraint);
@@ -187,14 +221,12 @@ export class LoadLevelUseCase {
           availableItems,
           constraints,
           styleId,
-          targetScore: clientBrief?.evaluationPolicy.completion.minimumStars ?? raw.targetScore ?? 3,
-          compositionRules: clientBrief?.evaluationPolicy.compositionRules ?? raw.compositionRules ?? {},
-          ergonomicsRules: createErgonomicsRules(
-            clientBrief?.evaluationPolicy.ergonomicsRules ?? raw.ergonomicsRules,
-            clientBrief?.spatialPreferences.clearanceMultiplier ?? 1
-          ),
+          targetScore: completion?.minimumStars ?? raw.targetScore ?? 3,
+          compositionRules,
+          ergonomicsRules,
           presentationEnvironment,
-          clientBrief
+          clientBrief,
+          evaluationSpec
         })
       };
     } catch (error) {

@@ -2,6 +2,7 @@ import EvaluationResultDTO from '../DTOs/EvaluationResultDTO.js';
 import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
 import { evaluateComposition } from '../../Domain/Scoring/CompositionEvaluator.js';
 import EvaluationExplanationAssembler from '../Services/EvaluationExplanationAssembler.js';
+import MultiChannelEvaluationExplanationAssembler from '../Services/MultiChannelEvaluationExplanationAssembler.js';
 
 function serializeViolation(violation, type = null) {
   return {
@@ -30,7 +31,8 @@ export class EvaluateRoomUseCase {
     ergonomicsScorer = null,
     scoreAggregator = null,
     scorecardCalibrationPolicy = null,
-    violationImpactPolicy = null
+    violationImpactPolicy = null,
+    multiStyleDependencies = null
   ) {
     if (!roomRepository) throw new Error('EvaluateRoomUseCase: roomRepository is required.');
     if (!constraintEvaluator) throw new Error('EvaluateRoomUseCase: constraintEvaluator is required.');
@@ -46,6 +48,15 @@ export class EvaluateRoomUseCase {
     if (ergonomicsDependencies.some(Boolean) && !ergonomicsDependencies.every(Boolean)) {
       throw new Error('EvaluateRoomUseCase: ergonomics dependencies must be provided together.');
     }
+    const requiredV2Dependencies = ['multiStyleEvaluator', 'styleChannelPolicy', 'roomOccupancyProfile', 'clientPriorityEvaluator', 'threeChannelScoreAggregator'];
+    if (multiStyleDependencies) {
+      for (const dependency of requiredV2Dependencies) {
+        if (!multiStyleDependencies[dependency] || typeof multiStyleDependencies[dependency].evaluate !== 'function'
+          && typeof multiStyleDependencies[dependency].aggregate !== 'function') {
+          throw new Error(`EvaluateRoomUseCase: multiStyleDependencies.${dependency} must provide an evaluation method.`);
+        }
+      }
+    }
     this.roomRepository = roomRepository;
     this.constraintEvaluator = constraintEvaluator;
     this.styleScorer = styleScorer;
@@ -55,12 +66,19 @@ export class EvaluateRoomUseCase {
     this.ergonomicsScorer = ergonomicsScorer;
     this.scoreAggregator = scoreAggregator;
     this.scorecardCalibrationPolicy = scorecardCalibrationPolicy;
+    this.multiStyleDependencies = multiStyleDependencies;
     this.evaluationExplanationAssembler = violationImpactPolicy
       ? new EvaluationExplanationAssembler({ violationImpactPolicy, feedbackCatalog })
       : null;
+    this.multiChannelEvaluationExplanationAssembler = multiStyleDependencies?.multiChannelViolationImpactPolicy
+      ? new MultiChannelEvaluationExplanationAssembler({
+        violationImpactPolicy: multiStyleDependencies.multiChannelViolationImpactPolicy,
+        feedbackCatalog
+      })
+      : null;
   }
 
-  async execute(roomId, constraints, compositionRules = {}, ergonomicsRules = {}, completion = null) {
+  async execute(roomId, constraints, compositionRules = {}, ergonomicsRules = {}, completion = null, evaluationSpec = null) {
     if (!roomId || typeof roomId !== 'string') return EvaluationResultDTO.failure('INVALID_INPUT: RoomID is required.');
     if (!Array.isArray(constraints)) return EvaluationResultDTO.failure('INVALID_INPUT: Constraints must be an array.');
 
@@ -69,6 +87,9 @@ export class EvaluateRoomUseCase {
       if (!roomState) return EvaluationResultDTO.failure(`ROOM_NOT_FOUND: Room ${roomId} not found.`);
 
       const placedItems = roomState.getItems();
+      if (evaluationSpec?.schemaVersion === 1 && this.multiStyleDependencies) {
+        return this._evaluateV2({ roomState, placedItems, evaluationSpec });
+      }
       const hasErgonomicsChannel = Boolean(this.ergonomicsEvaluator);
       const hasSpatialRules = Boolean(ergonomicsRules.minimumClearance)
         || (Array.isArray(ergonomicsRules.passageZones) && ergonomicsRules.passageZones.length > 0)
@@ -171,6 +192,123 @@ export class EvaluateRoomUseCase {
       console.error(`EvaluateRoomUseCase: Error evaluating room ${roomId}:`, error);
       return EvaluationResultDTO.failure(`UNEXPECTED_ERROR: ${error.message}`);
     }
+  }
+
+  async _evaluateV2({ roomState, placedItems, evaluationSpec }) {
+    const { multiStyleEvaluator, styleChannelPolicy, roomOccupancyProfile, clientPriorityEvaluator, threeChannelScoreAggregator } = this.multiStyleDependencies;
+    const roomVector = placedItems.length > 0
+      ? FeatureVector.average(placedItems.map(placed => placed.featureVector))
+      : null;
+    const multiStyle = roomVector
+      ? multiStyleEvaluator.evaluate({ roomVector, targets: evaluationSpec.styleTargets })
+      : {
+        weightedTargetFit: 0,
+        targets: evaluationSpec.styleTargets.map(target => ({
+          styleId: target.styleId,
+          role: target.role,
+          weight: target.weight,
+          score: 0,
+          penalty: 1,
+          violations: []
+        }))
+      };
+    const styleTargetViolations = multiStyle.targets.flatMap(target => target.violations);
+    const composition = evaluateComposition(placedItems, evaluationSpec.compositionRules);
+    const compositionScoring = this.styleScorer.evaluate(composition.violations);
+    const styleChannel = styleChannelPolicy.evaluate({
+      weightedTargetFit: multiStyle.weightedTargetFit,
+      compositionScore: compositionScoring.score
+    });
+    const occupancyProfile = roomOccupancyProfile.evaluate({ roomState });
+    const priority = clientPriorityEvaluator.evaluate({
+      priorities: evaluationSpec.clientPriorities,
+      scenarios: evaluationSpec.ergonomicsRules.requiredFunctionalScenarios ?? [],
+      roomState,
+      occupancyProfile,
+      spatialPreferences: evaluationSpec.spatialPreferences
+    });
+    const ergonomicsViolations = this.ergonomicsEvaluator
+      ? this.ergonomicsEvaluator.evaluate(roomState, evaluationSpec.ergonomicsRules)
+      : [];
+    const ergonomicsScoring = this.ergonomicsScorer
+      ? this.ergonomicsScorer.evaluate(ergonomicsViolations)
+      : { score: 1, penalty: 0 };
+    const aggregate = threeChannelScoreAggregator.aggregate({
+      styleScore: styleChannel.score,
+      clientPriorityScore: priority.score,
+      ergonomicsScore: ergonomicsScoring.score
+    });
+    const allViolations = [...styleTargetViolations, ...composition.violations, ...priority.violations, ...ergonomicsViolations];
+    const scorecard = this._evaluateScorecard(aggregate.totalScore, allViolations, evaluationSpec.completion);
+    const explanation = this.multiChannelEvaluationExplanationAssembler
+      ? await this.multiChannelEvaluationExplanationAssembler.assemble({
+        roomState,
+        targetResults: multiStyle.targets,
+        compositionViolations: composition.violations,
+        priorityResults: priority.results,
+        ergonomicsViolations,
+        ratingPolicy: this.starRatingPolicy,
+        completion: evaluationSpec.completion,
+        scorecard
+      })
+      : null;
+    const feedback = this.feedbackCatalog
+      ? await this.feedbackCatalog.getEvaluationFeedback(scorecard.stars, allViolations)
+      : this._generateFeedback(scorecard.stars, allViolations);
+
+    return EvaluationResultDTO.success({
+      score: aggregate.totalScore,
+      rawScore: scorecard.rawScore,
+      rawStars: scorecard.rawStars,
+      penalty: compositionScoring.penalty,
+      stars: scorecard.stars,
+      nextThreshold: scorecard.nextThreshold,
+      ...(scorecard.hasCalibration ? {
+        completionEligible: scorecard.completionEligible,
+        completionBlockReason: scorecard.completionBlockReason,
+        criticalViolationIds: scorecard.criticalViolationIds
+      } : {}),
+      ...(explanation ? { explanation } : {}),
+      violations: [
+        ...styleTargetViolations.map(violation => serializeViolation(violation, 'style')),
+        ...composition.violations.map(violation => serializeViolation(violation, 'style')),
+        ...priority.violations.map(violation => serializeViolation(violation, 'client-priority')),
+        ...ergonomicsViolations.map(violation => serializeViolation(violation, 'ergonomics'))
+      ],
+      itemCount: placedItems.length,
+      roomVector: roomVector?.toArray() ?? null,
+      feedback,
+      styleScore: styleChannel.score,
+      clientPriorityScore: priority.score,
+      ergonomicsScore: ergonomicsScoring.score,
+      stylePenalty: compositionScoring.penalty,
+      ergonomicsPenalty: ergonomicsScoring.penalty,
+      scoreWeights: {
+        style: aggregate.styleWeight,
+        clientPriorities: aggregate.clientPriorityWeight,
+        ergonomics: aggregate.ergonomicsWeight
+      },
+      scoreBreakdown: {
+        schemaVersion: 1,
+        style: {
+          score: styleChannel.score,
+          weight: aggregate.styleWeight,
+          weightedTargetFit: multiStyle.weightedTargetFit,
+          compositionScore: compositionScoring.score,
+          targets: multiStyle.targets
+        },
+        clientPriorities: {
+          score: priority.score,
+          weight: aggregate.clientPriorityWeight,
+          results: priority.results,
+          occupancyProfile
+        },
+        ergonomics: {
+          score: ergonomicsScoring.score,
+          weight: aggregate.ergonomicsWeight
+        }
+      }
+    });
   }
 
   async _assembleExplanation({ roomState, styleViolations, ergonomicsViolations, scorecard, completion }) {

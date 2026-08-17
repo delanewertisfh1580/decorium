@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "schemaVersion": 1,
+      "id": "scandinavian",
+      "label": "Скандинавский",
+      "constraints": [
+        {
+          "id": "scand-wood-min",
+          "feature": "woodShare",
+          "operator": "gte",
+          "threshold": 0.5,
+          "weight": 2,
+          "messageKey": "scand-wood-low"
+        },
+        {
+          "id": "scand-form-simple",
+          "feature": "formSimplicity",
+          "operator": "gte",
+          "threshold": 0.6,
+          "weight": 1.5,
+          "messageKey": "scand-form-complex"
+        },
+        {
+          "id": "scand-saturation-low",
+          "feature": "saturationLevel",
+          "operator": "lte",
+          "threshold": 0.5,
+          "weight": 1,
+          "messageKey": "scand-saturation-high"
+        },
+        {
+          "id": "scand-plastic-free",
+          "feature": "plasticShare",
+          "operator": "lte",
+          "threshold": 0.1,
+          "weight": 1.5,
+          "messageKey": "scand-plastic-high"
+        },
+        {
+          "id": "scand-warm-tone",
+          "feature": "warmPaletteShare",
+          "operator": "gte",
+          "threshold": 0.5,
+          "weight": 1,
+          "messageKey": "scand-color-cold"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "japandi",
+      "label": "Japandi",
+      "constraints": [
+        {
+          "id": "japandi-natural-materials",
+          "feature": "woodShare",
+          "operator": "gte",
+          "threshold": 0.45,
+          "weight": 1.25,
+          "messageKey": "japandi-natural-materials-low"
+        },
+        {
+          "id": "japandi-calm-palette",
+          "feature": "saturationLevel",
+          "operator": "lte",
+          "threshold": 0.4,
+          "weight": 1.15,
+          "messageKey": "japandi-saturation-high"
+        },
+        {
+          "id": "japandi-simple-forms",
+          "feature": "formSimplicity",
+          "operator": "gte",
+          "threshold": 0.65,
+          "weight": 1.2,
+          "messageKey": "japandi-forms-complex"
+        },
+        {
+          "id": "japandi-warm-neutral",
+          "feature": "warmPaletteShare",
+          "operator": "gte",
+          "threshold": 0.45,
+          "weight": 1,
+          "messageKey": "japandi-warm-neutral-low"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "eclectic",
+      "label": "Эклектика",
+      "constraints": [
+        {
+          "id": "eclectic-color-expression",
+          "feature": "saturationLevel",
+          "operator": "gte",
+          "threshold": 0.35,
+          "weight": 1.1,
+          "messageKey": "eclectic-color-expression-low"
+        },
+        {
+          "id": "eclectic-material-contrast",
+          "feature": "metalShare",
+          "operator": "gte",
+          "threshold": 0.15,
+          "weight": 1,
+          "messageKey": "eclectic-material-contrast-low"
+        },
+        {
+          "id": "eclectic-shape-variety",
+          "feature": "roundnessShare",
+          "operator": "gte",
+          "threshold": 0.25,
+          "weight": 0.9,
+          "messageKey": "eclectic-shape-variety-low"
+        }
+      ]
+    }
+  ]
+}

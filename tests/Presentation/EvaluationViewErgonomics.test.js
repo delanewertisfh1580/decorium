@@ -106,3 +106,54 @@ describe('EvaluationView ergonomics sub-scores', () => {
     expect(container.querySelector('[data-score-channel]')).toBeNull();
   });
 });
+
+
+describe('PROD-023 multi-style evaluation view', () => {
+  it('renders three supplied score channels and a V2 client-priority explanation without evaluating policy in UI', () => {
+    const container = document.createElement('div');
+    const view = new EvaluationView(container);
+
+    view.render({
+      score: 0.73,
+      stars: 4,
+      styleScore: 0.7,
+      clientPriorityScore: 0.5,
+      ergonomicsScore: 0.9,
+      scoreWeights: { style: 0.5, clientPriorities: 0.2, ergonomics: 0.3 },
+      scoreBreakdown: {
+        schemaVersion: 1,
+        style: {
+          targets: [
+            { styleId: 'scandinavian', label: 'Скандинавский', role: 'primary', weight: 0.7, score: 0.9 },
+            { styleId: 'japandi', label: 'Japandi', role: 'secondary', weight: 0.2, score: 0.6 }
+          ]
+        }
+      },
+      violations: [{ id: 'client-priority:warm-intimacy', type: 'client-priority' }],
+      feedback: [],
+      explanation: {
+        schemaVersion: 2,
+        scorecard: { rawScore: 0.73, rawStars: 4, displayStars: 4, completionEligible: true, completionBlockReason: null },
+        violations: [{
+          id: 'client-priority:warm-intimacy',
+          channel: 'client-priority',
+          scope: 'room',
+          priority: { id: 'warm-intimacy', label: 'Камерная атмосфера', ruleKind: 'spatial-preferences' },
+          rule: { messageKey: 'priority-warm-intimacy', description: 'Камерная атмосфера' },
+          fact: { operator: 'gte', actual: 0.5, desired: 1 },
+          severity: { level: 'medium', value: 0.5, critical: false },
+          impact: { channelScoreDelta: 0.5, totalScoreDelta: 0.1, displayStarsDelta: 0, completionEffect: 'none' },
+          remediation: 'Сделайте пространство более собранным.',
+          instances: []
+        }]
+      }
+    });
+
+    expect(container.querySelector('[data-score-channel="client-priority"]')).not.toBeNull();
+    expect(container.textContent).toContain('Запросы клиента');
+    expect(container.textContent).toContain('Скандинавский');
+    expect(container.textContent).toContain('Japandi');
+    expect(container.querySelector('[data-violation-id="client-priority:warm-intimacy"]').textContent).toContain('Камерная атмосфера');
+    expect(container.textContent).toContain('Сделайте пространство более собранным.');
+  });
+});

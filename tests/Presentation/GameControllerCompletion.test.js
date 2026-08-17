@@ -54,7 +54,8 @@ describe('GameController completion integration', () => {
       [],
       {},
       {},
-      { minimumStars: 3, criticalRuleMode: 'block-completion' }
+      { minimumStars: 3, criticalRuleMode: 'block-completion' },
+      null
     );
     expect(recordLevelCompletionUseCase.execute).toHaveBeenCalledWith({
       levelId: 'level-001', stars: 3, targetScore: 3, completionEligible: true, profile

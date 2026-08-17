@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StyleConstraintCatalogV1",
+  "type": "object",
+  "required": ["schemaVersion", "profiles"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/profile" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "profile": {
+      "type": "object",
+      "required": ["schemaVersion", "id", "label", "constraints"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "label": { "type": "string", "minLength": 1 },
+        "constraints": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/constraint" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "constraint": {
+      "type": "object",
+      "required": ["id", "feature", "operator", "threshold", "weight", "messageKey"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "feature": {
+          "enum": [
+            "woodShare", "metalShare", "glassShare", "plasticShare", "textileShare",
+            "lightColorShare", "darkColorShare", "warmPaletteShare", "saturationLevel",
+            "formSimplicity", "roundnessShare", "rectilinearShare", "sizeNorm", "priceNorm",
+            "lightingFunctionShare", "storageFunctionShare"
+          ]
+        },
+        "operator": { "enum": ["gte", "lte"] },
+        "threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+        "weight": { "type": "number", "exclusiveMinimum": 0, "maximum": 5 },
+        "messageKey": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

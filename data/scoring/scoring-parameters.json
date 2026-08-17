@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "starRatingThresholds": {
     "0": 0.0,
     "1": 0.0,
@@ -9,9 +9,25 @@
     "5": 0.86
   },
   "maxPenalty": 1.0,
-  "styleWeight": 0.7,
-  "ergonomicsWeight": 0.3,
   "defaultWeight": 1.0,
   "criticalStarCap": 2,
-  "scoreEpsilon": 0.000001
+  "scoreEpsilon": 0.000001,
+  "channelWeights": {
+    "style": 0.5,
+    "clientPriorities": 0.2,
+    "ergonomics": 0.3
+  },
+  "styleBlend": {
+    "targetFit": 0.75,
+    "composition": 0.25
+  },
+  "occupancy": {
+    "schemaVersion": 1,
+    "cellSizeMeters": 0.1
+  },
+  "densityProfiles": {
+    "intimate": { "targetFreeAreaRatio": 0.42, "tolerance": 0.08 },
+    "balanced": { "targetFreeAreaRatio": 0.5, "tolerance": 0.1 },
+    "open": { "targetFreeAreaRatio": 0.62, "tolerance": 0.08 }
+  }
 }

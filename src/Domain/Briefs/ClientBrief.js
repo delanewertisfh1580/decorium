@@ -66,7 +66,30 @@ function normalizeClient(value) {
   });
 }
 
-function normalizePriorities(value) {
+function normalizePriorityRule(value, index) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(`ClientBrief clientPriorities[${index}].rule must be an object`);
+  }
+  if (value.schemaVersion !== 1) {
+    throw new Error(`ClientBrief clientPriorities[${index}].rule schemaVersion must be 1`);
+  }
+  const kind = requiredString(value.kind, `clientPriorities[${index}].rule.kind`);
+  const messageKey = requiredString(value.messageKey, `clientPriorities[${index}].rule.messageKey`);
+  if (kind === 'functional-scenario') {
+    return Object.freeze({
+      schemaVersion: 1,
+      kind,
+      scenarioId: requiredString(value.scenarioId, `clientPriorities[${index}].rule.scenarioId`),
+      messageKey
+    });
+  }
+  if (kind === 'spatial-preferences') {
+    return Object.freeze({ schemaVersion: 1, kind, messageKey });
+  }
+  throw new Error(`ClientBrief clientPriorities[${index}].rule kind is not supported: ${kind}`);
+}
+
+function normalizePriorities(value, schemaVersion) {
   if (!Array.isArray(value) || value.length === 0) {
     throw new Error('ClientBrief clientPriorities must be a non-empty array');
   }
@@ -78,11 +101,13 @@ function normalizePriorities(value) {
     const id = requiredString(priority.id, `clientPriorities[${index}].id`);
     if (ids.has(id)) throw new Error(`ClientBrief clientPriorities duplicate id: ${id}`);
     ids.add(id);
-    return Object.freeze({
+    const normalized = {
       id,
       label: requiredString(priority.label, `clientPriorities[${index}].label`),
       weight: finiteNumber(priority.weight, `clientPriorities[${index}].weight`, { min: 0, max: 5, exclusiveMin: true })
-    });
+    };
+    if (schemaVersion === 2) normalized.rule = normalizePriorityRule(priority.rule, index);
+    return Object.freeze(normalized);
   }));
 }
 
@@ -143,7 +168,7 @@ function normalizeEvaluationPolicy(value) {
 
 export class ClientBrief {
   constructor({ schemaVersion, id, levelId, client, title, summary, styleTargets, clientPriorities, spatialPreferences, evaluationPolicy } = {}) {
-    if (schemaVersion !== 1) throw new Error('ClientBrief schemaVersion must be 1');
+    if (schemaVersion !== 1 && schemaVersion !== 2) throw new Error('ClientBrief schemaVersion must be 1 or 2');
     this._schemaVersion = schemaVersion;
     this._id = requiredString(id, 'id');
     this._levelId = requiredString(levelId, 'levelId');
@@ -151,7 +176,7 @@ export class ClientBrief {
     this._title = requiredString(title, 'title');
     this._summary = requiredString(summary, 'summary');
     this._styleTargets = normalizeStyleTargets(styleTargets);
-    this._clientPriorities = normalizePriorities(clientPriorities);
+    this._clientPriorities = normalizePriorities(clientPriorities, schemaVersion);
     this._spatialPreferences = normalizeSpatialPreferences(spatialPreferences);
     this._evaluationPolicy = normalizeEvaluationPolicy(evaluationPolicy);
     Object.freeze(this);
@@ -178,7 +203,7 @@ export class ClientBrief {
       title: this.title,
       summary: this.summary,
       styleTargets: this.styleTargets.map(target => ({ ...target })),
-      clientPriorities: this.clientPriorities.map(priority => ({ ...priority })),
+      clientPriorities: this.clientPriorities.map(priority => structuredClone(priority)),
       spatialPreferences: {
         density: this.spatialPreferences.density,
         clearanceMultiplier: this.spatialPreferences.clearanceMultiplier,

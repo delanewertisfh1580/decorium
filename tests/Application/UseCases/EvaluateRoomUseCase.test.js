@@ -499,3 +499,92 @@ describe('EvaluateRoomUseCase', () => {
     });
   });
 });
+
+
+describe('PROD-023 multi-style and client-priority evaluation', () => {
+  it('uses the V2 evaluationSpec to compose multi-style, client-priority and ergonomics channels without UI scoring', async () => {
+    const roomRepository = { getState: async () => null };
+    const constraintEvaluator = new ConstraintEvaluator();
+    const styleScorer = new StyleScorer({ maxPenalty: 1, defaultWeight: 1 });
+    const starRatingPolicy = new StarRatingPolicy({ '0': 0, '1': 0, '2': 0.4, '3': 0.56, '4': 0.71, '5': 0.86 });
+    const roomState = RoomState.createEmpty(createTestBounds()).addItem(new Item({
+      id: 'item-v2',
+      name: 'V2 chair',
+      type: 'chair',
+      featureVector: new FeatureVector({
+        woodShare: 0.8, metalShare: 0.2, glassShare: 0.1, plasticShare: 0.1, textileShare: 0.2,
+        lightColorShare: 0.7, darkColorShare: 0.3, warmPaletteShare: 0.7, saturationLevel: 0.3,
+        formSimplicity: 0.8, roundnessShare: 0.3, rectilinearShare: 0.7, sizeNorm: 0.5,
+        priceNorm: 0.5, lightingFunctionShare: 0.2, storageFunctionShare: 0.2
+      })
+    }));
+    roomRepository.getState = async () => roomState;
+    const priorityViolation = {
+      constraintId: 'client-priority:warm-intimacy', featureName: 'spatialPreferencePriority', operator: 'gte',
+      threshold: 1, actualValue: 0.5, severity: 0.5, messageKey: 'priority-warm-intimacy',
+      constraint: { description: 'Камерная атмосфера' }, critical: false, itemIds: []
+    };
+    const multiStyleResult = {
+      weightedTargetFit: 0.8,
+      targets: [{ styleId: 'scandinavian', role: 'primary', weight: 0.7, score: 0.9, penalty: 0.1, violations: [] }]
+    };
+    const clientPriorityResult = {
+      score: 0.5,
+      results: [{ id: 'warm-intimacy', label: 'Камерная атмосфера', weight: 1, ruleKind: 'spatial-preferences', satisfaction: 0.5, satisfied: false }],
+      violations: [priorityViolation]
+    };
+    const multiStyleDependencies = {
+      multiStyleEvaluator: {
+        evaluate: vi.fn(() => multiStyleResult)
+      },
+      styleChannelPolicy: { evaluate: vi.fn(() => ({ score: 0.7, targetFitWeight: 0.75, compositionWeight: 0.25 })) },
+      roomOccupancyProfile: { evaluate: vi.fn(() => ({ schemaVersion: 1, freeAreaRatio: 0.7 })) },
+      clientPriorityEvaluator: {
+        evaluate: vi.fn(() => clientPriorityResult)
+      },
+      threeChannelScoreAggregator: {
+        aggregate: vi.fn(() => ({ totalScore: 0.73, styleWeight: 0.5, clientPriorityWeight: 0.2, ergonomicsWeight: 0.3 }))
+      }
+    };
+    const useCase = new EvaluateRoomUseCase(
+      roomRepository,
+      constraintEvaluator,
+      styleScorer,
+      starRatingPolicy,
+      { getEvaluationFeedback: async () => ['feedback'] },
+      { evaluate: () => [] },
+      { evaluate: () => ({ score: 0.9, penalty: 0.1 }) },
+      { aggregate: () => ({ totalScore: 0.9, styleWeight: 0.7, ergonomicsWeight: 0.3 }) },
+      null,
+      null,
+      multiStyleDependencies
+    );
+    const evaluationSpec = {
+      schemaVersion: 1,
+      styleTargets: [{ styleId: 'scandinavian', role: 'primary', weight: 1, constraints: [] }],
+      clientPriorities: [{ id: 'warm-intimacy', rule: { kind: 'spatial-preferences' } }],
+      spatialPreferences: { density: 'intimate', emptySpacePreference: { mode: 'discourage-excess', targetFreeAreaRatio: 0.42 } },
+      compositionRules: {},
+      ergonomicsRules: { minimumClearance: {} },
+      completion: { minimumStars: 3, criticalRuleMode: 'informational' }
+    };
+
+    const result = await useCase.execute('room-001', [], {}, {}, null, evaluationSpec);
+
+    expect(result.success).toBe(true);
+    expect(result.evaluationData).toMatchObject({
+      score: 0.73,
+      styleScore: 0.7,
+      clientPriorityScore: 0.5,
+      ergonomicsScore: 0.9,
+      scoreWeights: { style: 0.5, clientPriorities: 0.2, ergonomics: 0.3 },
+      scoreBreakdown: {
+        schemaVersion: 1,
+        style: expect.objectContaining({ score: 0.7, targets: multiStyleResult.targets }),
+        clientPriorities: expect.objectContaining({ score: 0.5, results: clientPriorityResult.results }),
+        ergonomics: { score: 0.9, weight: 0.3 }
+      }
+    });
+    expect(result.evaluationData.violations).toContainEqual(expect.objectContaining({ id: 'client-priority:warm-intimacy', type: 'client-priority' }));
+  });
+});

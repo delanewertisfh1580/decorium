@@ -3,10 +3,15 @@ import { readFileSync } from 'node:fs';
 
 const parameters = JSON.parse(readFileSync('data/scoring/scoring-parameters.json', 'utf8'));
 
-describe('PROD-003 scoring configuration', () => {
-  it('assigns explicit normalized style and ergonomics weights', () => {
-    expect(parameters.styleWeight).toBe(0.7);
-    expect(parameters.ergonomicsWeight).toBe(0.3);
-    expect(parameters.styleWeight + parameters.ergonomicsWeight).toBe(1);
+describe('PROD-023 production scoring configuration', () => {
+  it('declares explicit normalized style, client-priority and ergonomics channel weights', () => {
+    expect(parameters.schemaVersion).toBe(2);
+    expect(parameters.channelWeights).toEqual({
+      style: 0.5,
+      clientPriorities: 0.2,
+      ergonomics: 0.3
+    });
+    expect(Object.values(parameters.channelWeights).reduce((total, weight) => total + weight, 0)).toBeCloseTo(1, 12);
+    expect(parameters.styleBlend).toEqual({ targetFit: 0.75, composition: 0.25 });
   });
 });

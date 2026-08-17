@@ -406,7 +406,8 @@ export class GameController {
       this.roomViewModel.constraints,
       this.level.compositionRules,
       this.level.ergonomicsRules,
-      this.level.clientBrief?.evaluationPolicy?.completion ?? null
+      this.level.clientBrief?.evaluationPolicy?.completion ?? null,
+      this.level.evaluationSpec ?? null
     );
     if (!result.success) {
       this._showStatus(result.error);

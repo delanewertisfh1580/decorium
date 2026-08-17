@@ -88,6 +88,39 @@ describe('ClientBrief', () => {
     })).toThrow('RequiredFunctionalScenario id must be a non-empty string');
   });
 
+  it('accepts V2 priorities only when each client request owns a schema-versioned evaluation rule', () => {
+    const priorityRules = [
+      {
+        ...validBrief.clientPriorities[0],
+        rule: {
+          schemaVersion: 1,
+          kind: 'functional-scenario',
+          scenarioId: 'dining-hosting',
+          messageKey: 'priority-host-guests'
+        }
+      },
+      {
+        ...validBrief.clientPriorities[1],
+        rule: {
+          schemaVersion: 1,
+          kind: 'spatial-preferences',
+          messageKey: 'priority-keep-circulation'
+        }
+      }
+    ];
+    const brief = new ClientBrief({ ...validBrief, schemaVersion: 2, clientPriorities: priorityRules });
+
+    expect(brief.schemaVersion).toBe(2);
+    expect(brief.clientPriorities).toEqual(priorityRules);
+    expect(Object.isFrozen(brief.clientPriorities[0].rule)).toBe(true);
+
+    expect(() => new ClientBrief({
+      ...validBrief,
+      schemaVersion: 2,
+      clientPriorities: [{ ...priorityRules[0], rule: undefined }, priorityRules[1]]
+    })).toThrow('ClientBrief clientPriorities[0].rule must be an object');
+  });
+
   it('rejects a brief without one normalized primary style target or valid client-specific spatial policy', () => {
     expect(() => new ClientBrief({
       ...validBrief,

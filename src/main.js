@@ -24,6 +24,13 @@ import FunctionalLayoutEvaluator from './Domain/Ergonomics/FunctionalLayoutEvalu
 import ErgonomicsScorer from './Domain/Scoring/ErgonomicsScorer.js';
 import EvaluationScoreAggregator from './Domain/Scoring/EvaluationScoreAggregator.js';
 import ViolationImpactPolicy from './Domain/Scoring/ViolationImpactPolicy.js';
+import MultiStyleEvaluator from './Domain/Scoring/MultiStyleEvaluator.js';
+import StyleChannelPolicy from './Domain/Scoring/StyleChannelPolicy.js';
+import RoomOccupancyProfile from './Domain/Scoring/RoomOccupancyProfile.js';
+import SpatialPreferenceEvaluator from './Domain/Scoring/SpatialPreferenceEvaluator.js';
+import ClientPriorityEvaluator from './Domain/Scoring/ClientPriorityEvaluator.js';
+import ThreeChannelScoreAggregator from './Domain/Scoring/ThreeChannelScoreAggregator.js';
+import MultiChannelViolationImpactPolicy from './Domain/Scoring/MultiChannelViolationImpactPolicy.js';
 import { initializeScoringParameters, getScoringParameters } from './Domain/Scoring/scoringParameters.js';
 import EvaluateRoomUseCase from './Application/UseCases/EvaluateRoomUseCase.js';
 import LoadLevelUseCase from './Application/UseCases/LoadLevelUseCase.js';
@@ -85,11 +92,12 @@ async function bootstrap() {
       appRoot: document.getElementById('app')
     });
 
-    const [levelSchema, itemSchema, presentationEnvironmentSchema, clientBriefSchema, scoringParameters] = await Promise.all([
+    const [levelSchema, itemSchema, presentationEnvironmentSchema, clientBriefSchema, styleConstraintCatalogSchema, scoringParameters] = await Promise.all([
       SchemaLoader.loadLevelSchema(),
       SchemaLoader.loadItemSchema(),
       SchemaLoader.loadPresentationEnvironmentSchema(),
       SchemaLoader.loadClientBriefSchema(),
+      SchemaLoader.loadStyleConstraintCatalogSchema(),
       loadJson('./data/scoring/scoring-parameters.json')
     ]);
     initializeScoringParameters(scoringParameters);
@@ -100,7 +108,7 @@ async function bootstrap() {
       presentationEnvironmentSchema
     );
     const clientBriefRepository = new JsonClientBriefRepository(
-      './data/briefs/client-briefs.v1.json',
+      './data/briefs/client-briefs.v2.json',
       clientBriefSchema
     );
     const savePlayerProfileUseCase = new SavePlayerProfileUseCase(profileRepository);
@@ -115,7 +123,10 @@ async function bootstrap() {
       () => new Date().toISOString()
     );
     const itemCatalog = new JsonItemCatalog('./data/items', itemSchema);
-    const constraintCatalog = new JsonConstraintCatalog();
+    const constraintCatalog = new JsonConstraintCatalog(
+      './data/styles/style-constraint-catalog.v1.json',
+      styleConstraintCatalogSchema
+    );
     const styleCatalog = new JsonStyleCatalog();
     const feedbackCatalog = new JsonFeedbackCatalog();
     await Promise.all([
@@ -148,7 +159,7 @@ async function bootstrap() {
       ergonomicsWeight: scoring.ergonomicsWeight
     });
     const scorecardCalibrationPolicy = new ScorecardCalibrationPolicy({
-      schemaVersion: scoring.schemaVersion,
+      schemaVersion: 1,
       criticalStarCap: scoring.criticalStarCap
     });
     const violationImpactPolicy = new ViolationImpactPolicy({
@@ -157,6 +168,44 @@ async function bootstrap() {
       scoreAggregator,
       scorecardCalibrationPolicy
     });
+    const multiStyleEvaluator = new MultiStyleEvaluator({
+      constraintEvaluator: new ConstraintEvaluator(),
+      styleScorer
+    });
+    const styleChannelPolicy = new StyleChannelPolicy({
+      targetFitWeight: scoring.styleBlend.targetFit,
+      compositionWeight: scoring.styleBlend.composition
+    });
+    const roomOccupancyProfile = {
+      evaluate: ({ roomState }) => RoomOccupancyProfile.evaluate({
+        roomState,
+        cellSizeMeters: scoring.occupancy.cellSizeMeters
+      })
+    };
+    const spatialPreferenceEvaluator = new SpatialPreferenceEvaluator({
+      densityProfiles: scoring.densityProfiles
+    });
+    const clientPriorityEvaluator = new ClientPriorityEvaluator({ spatialPreferenceEvaluator });
+    const threeChannelScoreAggregator = new ThreeChannelScoreAggregator({
+      styleWeight: scoring.channelWeights.style,
+      clientPriorityWeight: scoring.channelWeights.clientPriorities,
+      ergonomicsWeight: scoring.channelWeights.ergonomics
+    });
+    const multiChannelViolationImpactPolicy = new MultiChannelViolationImpactPolicy({
+      styleScorer,
+      ergonomicsScorer,
+      styleChannelPolicy,
+      threeChannelScoreAggregator,
+      scorecardCalibrationPolicy
+    });
+    const multiStyleDependencies = {
+      multiStyleEvaluator,
+      styleChannelPolicy,
+      roomOccupancyProfile,
+      clientPriorityEvaluator,
+      threeChannelScoreAggregator,
+      multiChannelViolationImpactPolicy
+    };
     const evaluateRoomUseCase = new EvaluateRoomUseCase(
       roomRepository,
       new ConstraintEvaluator(),
@@ -171,7 +220,8 @@ async function bootstrap() {
       ergonomicsScorer,
       scoreAggregator,
       scorecardCalibrationPolicy,
-      violationImpactPolicy
+      violationImpactPolicy,
+      multiStyleDependencies
     );
 
     const controller = new GameController({

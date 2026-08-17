@@ -10,8 +10,8 @@ const readJson = file => JSON.parse(readFileSync(join(root, file), 'utf8'));
 describe('static production data assets', () => {
   it('lists every JSON file requested by the runtime loaders', () => {
     const expected = [
-      'data/briefs/client-brief.v1.schema.json',
-      'data/briefs/client-briefs.v1.json',
+      'data/briefs/client-brief.v2.schema.json',
+      'data/briefs/client-briefs.v2.json',
       'data/constraints/scandinavian-constraints.json',
       'data/feedback/scandinavian-feedback.json',
       'data/items/catalog.v3.json',
@@ -24,7 +24,9 @@ describe('static production data assets', () => {
       'data/levels/level-003.json',
       'data/schemas/level.schema.json',
       'data/scoring/scoring-parameters.json',
-      'data/styles/scandinavian.json'
+      'data/styles/scandinavian.json',
+      'data/styles/style-constraint-catalog.v1.schema.json',
+      'data/styles/style-constraint-catalog.v1.json'
     ];
 
     expect(STATIC_DATA_FILES).toEqual(expected);

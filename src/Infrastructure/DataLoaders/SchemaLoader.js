@@ -10,7 +10,11 @@ export class SchemaLoader {
   }
 
   static async loadClientBriefSchema() {
-    return this.load('./data/briefs/client-brief.v1.schema.json');
+    return this.load('./data/briefs/client-brief.v2.schema.json');
+  }
+
+  static async loadStyleConstraintCatalogSchema() {
+    return this.load('./data/styles/style-constraint-catalog.v1.schema.json');
   }
 
   static async loadItemSchema() {

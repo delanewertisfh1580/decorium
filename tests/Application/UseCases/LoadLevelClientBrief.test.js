@@ -77,6 +77,53 @@ describe('LoadLevelUseCase ClientBrief hydration', () => {
     expect(clientBriefRepository.getById).toHaveBeenCalledWith('brief-warm-host-001');
   });
 
+  it('hydrates all V2 style targets, priority rules and spatial preferences into an immutable evaluationSpec', async () => {
+    const mixedBrief = {
+      ...rawBrief,
+      schemaVersion: 2,
+      styleTargets: [
+        { styleId: 'scandinavian', role: 'primary', weight: 0.7 },
+        { styleId: 'japandi', role: 'secondary', weight: 0.2 },
+        { styleId: 'eclectic', role: 'accent', weight: 0.1 }
+      ],
+      clientPriorities: [{
+        id: 'host-guests', label: 'Принимать гостей', weight: 1,
+        rule: { schemaVersion: 1, kind: 'functional-scenario', scenarioId: 'dining-hosting', messageKey: 'priority-host-guests' }
+      }]
+    };
+    const constraintsByStyleId = {
+      scandinavian: [Object.freeze({ id: 'scand-wood-min' })],
+      japandi: [Object.freeze({ id: 'japandi-natural-materials' })],
+      eclectic: [Object.freeze({ id: 'eclectic-color-expression' })]
+    };
+    const profilesByStyleId = {
+      scandinavian: Object.freeze({ id: 'scandinavian', label: 'Скандинавский', constraints: constraintsByStyleId.scandinavian }),
+      japandi: Object.freeze({ id: 'japandi', label: 'Japandi', constraints: constraintsByStyleId.japandi }),
+      eclectic: Object.freeze({ id: 'eclectic', label: 'Эклектика', constraints: constraintsByStyleId.eclectic })
+    };
+    const levelRepository = { loadLevel: vi.fn().mockResolvedValue(rawLevel) };
+    const itemCatalog = { getItemsByIds: vi.fn().mockResolvedValue([item]) };
+    const constraintCatalog = { getStyleProfileById: vi.fn(styleId => Promise.resolve(profilesByStyleId[styleId] ?? null)) };
+    const clientBriefRepository = { getById: vi.fn().mockResolvedValue(mixedBrief) };
+    const useCase = new LoadLevelUseCase(levelRepository, itemCatalog, constraintCatalog, null, clientBriefRepository);
+
+    const result = await useCase.execute('level-001');
+
+    expect(result.success).toBe(true);
+    expect(result.data.evaluationSpec).toMatchObject({
+      schemaVersion: 1,
+      styleTargets: [
+        { styleId: 'scandinavian', label: 'Скандинавский', role: 'primary', weight: 0.7, constraints: constraintsByStyleId.scandinavian },
+        { styleId: 'japandi', label: 'Japandi', role: 'secondary', weight: 0.2, constraints: constraintsByStyleId.japandi },
+        { styleId: 'eclectic', label: 'Эклектика', role: 'accent', weight: 0.1, constraints: constraintsByStyleId.eclectic }
+      ],
+      clientPriorities: mixedBrief.clientPriorities,
+      spatialPreferences: mixedBrief.spatialPreferences
+    });
+    expect(Object.isFrozen(result.data.evaluationSpec)).toBe(true);
+    expect(constraintCatalog.getStyleProfileById).toHaveBeenCalledTimes(3);
+  });
+
   it('applies the resolved client clearance multiplier to the hydrated minimum-clearance rule', async () => {
     const levelRepository = { loadLevel: vi.fn().mockResolvedValue(rawLevel) };
     const itemCatalog = { getItemsByIds: vi.fn().mockResolvedValue([item]) };

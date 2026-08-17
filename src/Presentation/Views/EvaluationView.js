@@ -13,7 +13,9 @@ function formatNumber(value) {
 }
 
 function channelLabel(channel) {
-  return channel === 'ergonomics' ? 'Эргономика' : 'Стиль';
+  if (channel === 'ergonomics') return 'Эргономика';
+  if (channel === 'client-priority') return 'Запросы клиента';
+  return 'Стиль';
 }
 
 function severityLabel(severity) {
@@ -67,6 +69,7 @@ function explanationCard(violation) {
         <span class="explanation-severity">${escapeHtml(severityLabel(violation.severity))}</span>
         <span class="explanation-channel">${escapeHtml(channelLabel(violation.channel))}</span>
       </header>
+      ${violation.priority ? `<p class="explanation-priority">Запрос клиента: ${escapeHtml(violation.priority.label)}</p>` : ''}
       <h3>${escapeHtml(violation.rule?.description)}</h3>
       <dl class="explanation-facts">
         <div><dt>Фактически</dt><dd>${escapeHtml(formatNumber(violation.fact?.actual))}</dd></div>
@@ -80,7 +83,7 @@ function explanationCard(violation) {
 }
 
 function explanationList(explanation) {
-  if (!explanation || explanation.schemaVersion !== 1 || !Array.isArray(explanation.violations) || explanation.violations.length === 0) {
+  if (!explanation || ![1, 2].includes(explanation.schemaVersion) || !Array.isArray(explanation.violations) || explanation.violations.length === 0) {
     return '';
   }
   return `<ol class="explanation-list" data-explanation-list>${explanation.violations.map(violation => (
@@ -106,11 +109,21 @@ export class EvaluationView {
       ? `<p class="score-label">${result.violations.length} подсказок для следующей попытки</p>`
       : '<p class="score-label success-note">Комната собрана гармонично</p>';
     const hasSubScores = typeof result.styleScore === 'number' && typeof result.ergonomicsScore === 'number';
+    const targetRows = Array.isArray(result.scoreBreakdown?.style?.targets) && result.scoreBreakdown.style.targets.length > 0
+      ? `<ul class="style-target-breakdown" aria-label="Целевые стили клиента">${result.scoreBreakdown.style.targets.map(target => (
+        `<li data-style-target="${escapeHtml(target.styleId)}"><span>${escapeHtml(target.label ?? target.styleId)} · ${escapeHtml(target.role)}</span><strong>${Math.round(target.score * 100)}/100</strong></li>`
+      )).join('')}</ul>`
+      : '';
+    const clientPriorityChannel = typeof result.clientPriorityScore === 'number'
+      ? `<div data-score-channel="client-priority"><dt>Запросы клиента</dt><dd>${Math.round(result.clientPriorityScore * 100)}<small>/100</small></dd></div>`
+      : '';
     const subScores = hasSubScores ? `
       <dl class="score-channels" aria-label="Состав оценки">
         <div data-score-channel="style"><dt>Стиль</dt><dd>${Math.round(result.styleScore * 100)}<small>/100</small></dd></div>
+        ${clientPriorityChannel}
         <div data-score-channel="ergonomics"><dt>Эргономика</dt><dd>${Math.round(result.ergonomicsScore * 100)}<small>/100</small></dd></div>
       </dl>
+      ${targetRows}
     ` : '';
     const explanation = result.explanation;
     this.container.innerHTML = `

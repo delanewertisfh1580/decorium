@@ -53,14 +53,15 @@ describe('Documentation requirements', () => {
     }
   });
 
-  it('defines a multi-style, client-brief-driven product vision and labels Scandinavian as current starter content', () => {
+  it('defines an active multi-style, client-brief-driven V2 production baseline', () => {
     const productOverview = readFileSync(join(ROOT, 'docs', 'product', 'overview.md'), 'utf8');
     const contentModel = readFileSync(join(ROOT, 'docs', 'systems', 'content-model.md'), 'utf8');
 
     expect(productOverview).toContain('мультистил');
-    expect(productOverview).toContain('ClientBrief');
-    expect(productOverview).toContain('Scandinavian starter dataset');
-    expect(contentModel).toContain('ClientBrief v1');
+    expect(productOverview).toContain('ClientBrief v2');
+    expect(productOverview).toContain('50% style');
+    expect(contentModel).toContain('ClientBrief v2');
+    expect(contentModel).toContain('style-constraint-catalog.v1');
   });
 
   it('keeps every local Markdown link resolvable after documentation moves', () => {

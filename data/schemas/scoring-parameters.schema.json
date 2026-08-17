@@ -1,18 +1,21 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ScoringParameters",
+  "title": "ScoringParametersV2",
   "type": "object",
   "required": [
     "schemaVersion",
     "starRatingThresholds",
-    "styleWeight",
-    "ergonomicsWeight",
     "maxPenalty",
+    "defaultWeight",
     "criticalStarCap",
-    "scoreEpsilon"
+    "scoreEpsilon",
+    "channelWeights",
+    "styleBlend",
+    "occupancy",
+    "densityProfiles"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "starRatingThresholds": {
       "type": "object",
       "required": ["0", "1", "2", "3", "4", "5"],
@@ -27,11 +30,52 @@
       "additionalProperties": false
     },
     "maxPenalty": { "type": "number", "exclusiveMinimum": 0 },
-    "styleWeight": { "type": "number", "minimum": 0, "maximum": 1 },
-    "ergonomicsWeight": { "type": "number", "minimum": 0, "maximum": 1 },
     "defaultWeight": { "type": "number", "minimum": 0 },
     "criticalStarCap": { "type": "integer", "minimum": 0, "maximum": 4 },
-    "scoreEpsilon": { "type": "number", "minimum": 0, "maximum": 0.01 }
+    "scoreEpsilon": { "type": "number", "minimum": 0, "maximum": 0.01 },
+    "channelWeights": { "$ref": "#/definitions/normalizedWeights" },
+    "styleBlend": { "$ref": "#/definitions/normalizedWeights" },
+    "occupancy": {
+      "type": "object",
+      "required": ["schemaVersion", "cellSizeMeters"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "cellSizeMeters": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "densityProfiles": {
+      "type": "object",
+      "required": ["intimate", "balanced", "open"],
+      "properties": {
+        "intimate": { "$ref": "#/definitions/densityProfile" },
+        "balanced": { "$ref": "#/definitions/densityProfile" },
+        "open": { "$ref": "#/definitions/densityProfile" }
+      },
+      "additionalProperties": false
+    }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "definitions": {
+    "normalizedWeights": {
+      "type": "object",
+      "properties": {
+        "style": { "type": "number", "minimum": 0, "maximum": 1 },
+        "clientPriorities": { "type": "number", "minimum": 0, "maximum": 1 },
+        "ergonomics": { "type": "number", "minimum": 0, "maximum": 1 },
+        "targetFit": { "type": "number", "minimum": 0, "maximum": 1 },
+        "composition": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "densityProfile": {
+      "type": "object",
+      "required": ["targetFreeAreaRatio", "tolerance"],
+      "properties": {
+        "targetFreeAreaRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "tolerance": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
 }

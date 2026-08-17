@@ -136,5 +136,83 @@
     "category": "violation",
     "template": "Поставьте журнальный столик перед диваном, оставив удобное расстояние.",
     "severity": "medium"
+  },
+  {
+    "id": "japandi-natural-materials-low",
+    "category": "violation",
+    "template": "Добавьте больше натуральных материалов: Japandi опирается на дерево и спокойную тактильность (минимум {threshold}, у вас {value}).",
+    "severity": "high"
+  },
+  {
+    "id": "japandi-saturation-high",
+    "category": "violation",
+    "template": "Снизьте визуальный шум: Japandi предпочитает приглушённую палитру (максимум {threshold}, у вас {value}).",
+    "severity": "medium"
+  },
+  {
+    "id": "japandi-forms-complex",
+    "category": "violation",
+    "template": "Упростите силуэты мебели: Japandi соединяет спокойные, лаконичные формы (минимум {threshold}, у вас {value}).",
+    "severity": "medium"
+  },
+  {
+    "id": "japandi-warm-neutral-low",
+    "category": "violation",
+    "template": "Добавьте тёплые нейтральные оттенки для более цельной Japandi-палитры (минимум {threshold}, у вас {value}).",
+    "severity": "low"
+  },
+  {
+    "id": "eclectic-color-expression-low",
+    "category": "violation",
+    "template": "Добавьте выразительный цветовой акцент: эклектике нужна управляемая индивидуальность (минимум {threshold}, у вас {value}).",
+    "severity": "medium"
+  },
+  {
+    "id": "eclectic-material-contrast-low",
+    "category": "violation",
+    "template": "Добавьте контрастный материал, например металл, чтобы эклектичная композиция не выглядела однообразно (минимум {threshold}, у вас {value}).",
+    "severity": "medium"
+  },
+  {
+    "id": "eclectic-shape-variety-low",
+    "category": "violation",
+    "template": "Добавьте форму с более мягким или округлым силуэтом для контролируемого эклектичного разнообразия (минимум {threshold}, у вас {value}).",
+    "severity": "low"
+  },
+  {
+    "id": "priority-host-guests",
+    "category": "violation",
+    "template": "Соберите полноценную обеденную группу: клиенту важно удобно принимать гостей.",
+    "severity": "high"
+  },
+  {
+    "id": "priority-keep-circulation",
+    "category": "violation",
+    "template": "Сохраните больше свободного пространства у входа, чтобы комната оставалась удобной для движения.",
+    "severity": "medium"
+  },
+  {
+    "id": "priority-media-comfort",
+    "category": "violation",
+    "template": "Завершите медиа-зону: для клиента важны место отдыха, экран и удобная поверхность рядом.",
+    "severity": "high"
+  },
+  {
+    "id": "priority-warm-intimacy",
+    "category": "violation",
+    "template": "Сделайте пространство более собранным: камерная атмосфера клиента теряется при избытке пустой площади.",
+    "severity": "medium"
+  },
+  {
+    "id": "priority-keep-space-open",
+    "category": "violation",
+    "template": "Освободите больше площади: клиенту важно сохранить ощущение воздуха в рабочей студии.",
+    "severity": "high"
+  },
+  {
+    "id": "priority-support-work",
+    "category": "violation",
+    "template": "Соберите рабочий сценарий со столом и подходящим местом для работы.",
+    "severity": "high"
   }
 ]
