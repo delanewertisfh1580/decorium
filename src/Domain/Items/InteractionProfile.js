@@ -5,7 +5,13 @@ const SUPPORTED_AFFORDANCES = new Set([
   'coffee-surface',
   'view-target',
   'work-seat',
-  'work-surface'
+  'work-surface',
+  'rest-surface',
+  'storage-volume',
+  'light-source',
+  'floor-decor',
+  'wall-decor',
+  'media-support'
 ]);
 const SUPPORTED_AXES = new Set(['positiveX', 'negativeX', 'positiveZ', 'negativeZ']);
 

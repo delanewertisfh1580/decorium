@@ -17,6 +17,11 @@ function canonicalPairKey(leftItemId, rightItemId) {
   return [leftItemId, rightItemId].sort().join(':');
 }
 
+function participatesInClearance(placedItem) {
+  const behavior = placedItem?.item?.spatialBehavior ?? placedItem?.spatialBehavior;
+  return behavior === undefined ? true : behavior.isFloorObstacle === true;
+}
+
 function footprintGap(left, right) {
   const leftDimensions = dimensionsFor(left);
   const rightDimensions = dimensionsFor(right);
@@ -88,7 +93,7 @@ export class ClearanceEvaluator {
     const excludedPairKeys = new Set(excludedPairs.map(([leftItemId, rightItemId]) => (
       canonicalPairKey(leftItemId, rightItemId)
     )));
-    const placedItems = roomState.getItems();
+    const placedItems = roomState.getItems().filter(participatesInClearance);
     const violations = [];
     for (let leftIndex = 0; leftIndex < placedItems.length; leftIndex += 1) {
       for (let rightIndex = leftIndex + 1; rightIndex < placedItems.length; rightIndex += 1) {

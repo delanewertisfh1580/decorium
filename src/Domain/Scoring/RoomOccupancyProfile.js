@@ -25,6 +25,11 @@ function rounded(value) {
   return Number(value.toFixed(12));
 }
 
+function occupiesFloor(item) {
+  const behavior = item?.item?.spatialBehavior ?? item?.spatialBehavior;
+  return behavior === undefined ? true : behavior.isFloorObstacle === true;
+}
+
 export class RoomOccupancyProfile {
   static evaluate({ roomState, cellSizeMeters } = {}) {
     if (!roomState || typeof roomState.getItems !== 'function') {
@@ -35,6 +40,7 @@ export class RoomOccupancyProfile {
     const cellSize = requirePositiveNumber(cellSizeMeters, 'cellSizeMeters');
     const items = roomState.getItems();
     if (!Array.isArray(items)) throw new Error('RoomOccupancyProfile roomState getItems() must return an array');
+    const floorObstacles = items.filter(occupiesFloor);
 
     let occupiedArea = 0;
     for (let x = 0; x < width; x += cellSize) {
@@ -42,7 +48,7 @@ export class RoomOccupancyProfile {
       for (let z = 0; z < depth; z += cellSize) {
         const cellDepth = Math.min(cellSize, depth - z);
         const point = { x: x + cellWidth / 2, z: z + cellDepth / 2 };
-        if (items.some(item => isCoveredByItem(point, item))) {
+        if (floorObstacles.some(item => isCoveredByItem(point, item))) {
           occupiedArea += cellWidth * cellDepth;
         }
       }

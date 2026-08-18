@@ -1,7 +1,7 @@
 # Content model
 
 **Статус:** Active production reference
-**Обновлено:** 17 августа 2026 г.
+**Обновлено:** 18 августа 2026 г.
 
 Этот документ — единственный current guide для authored JSON Decorium. Content rules не должны копироваться в Presentation и не должны выводиться из display names, visual meshes или UI category labels.
 
@@ -11,7 +11,7 @@
 
 | Область | Current canonical files | Version / validation |
 |---|---|---|
-| Items | `data/items/catalog.v3.json`, `data/items/item.v3.schema.json` | Catalog schema V3 |
+| Items | `data/items/catalog.v4.json`, `data/items/item.v4.schema.json` | Catalog schema V4: complete functional and spatial semantics for every shipped item |
 | Levels | `data/levels/manifest.json`, `data/levels/level-*.json`, `data/schemas/level.schema.json` | Manifest V1 and topology-only level schema, including required ClientBrief and presentation references |
 | Client briefs | `data/briefs/client-briefs.v2.json`, `data/briefs/client-brief.v2.schema.json` | ClientBrief catalog V2: identity, weighted targets, explicit priority rules, spatial preferences and evaluation policy |
 | Style profiles | `data/styles/style-constraint-catalog.v1.json`, `data/styles/style-constraint-catalog.v1.schema.json` | Exact multi-style profile IDs, authored labels and constraints; no fuzzy lookup |
@@ -23,31 +23,42 @@
 
 `src/Infrastructure/DataLoaders/staticDataAssets.js` is the deployment inventory. Every runtime JSON file must be added there and covered by a content test; otherwise Vite may not publish it into `dist/data/`.[3]
 
-## Item catalog V3
+## Item catalog V4
 
-The catalog currently has **34** items. Each item contains a stable `id`, display fields, two-dimensional footprint, price, 16-field `featureVector` and required `interactionProfile` V1. Catalog item `type` is a content/visual grouping; gameplay semantics are carried by interaction affordances.
+The catalog currently has **34** items. Each item contains a stable `id`, display fields, two-dimensional footprint, price, 16-field `featureVector`, required `InteractionProfile v1` and required `SpatialBehavior v1`. Catalog item `type` remains a content/visual grouping; it is never a runtime source of gameplay policy.[10]
 
 ```json
 {
-  "id": "tv-001",
-  "type": "media",
-  "dimensions": { "x": 1.6, "z": 0.3 },
+  "id": "rug-001",
+  "type": "decor",
+  "dimensions": { "x": 2.0, "z": 1.5 },
   "interactionProfile": {
     "schemaVersion": 1,
-    "affordances": ["view-target"],
-    "frontAxis": "negativeZ",
+    "affordances": ["floor-decor"],
+    "frontAxis": null,
     "usableSides": []
+  },
+  "spatialBehavior": {
+    "schemaVersion": 1,
+    "placementKind": "floor-overlay",
+    "occupancyMode": "ignored",
+    "clearanceMode": "ignored",
+    "supportMode": "none"
   }
 }
 ```
 
-| Interaction field | Allowed values | Meaning |
+| Contract field | Allowed values | Meaning |
 |---|---|---|
-| `affordances` | `dining-seat`, `dining-surface`, `lounge-seat`, `coffee-surface`, `view-target`, `work-seat`, `work-surface` | Semantic roles used by functional relationships and required client scenarios. |
-| `frontAxis` | `positiveX`, `negativeX`, `positiveZ`, `negativeZ`, `null` | Local front direction before placed-item rotation. |
-| `usableSides` | Cardinal local axes | Sides on which adjacency partners may satisfy the anchor. |
+| `InteractionProfile.affordances` | Scenario roles plus `rest-surface`, `storage-volume`, `light-source`, `floor-decor`, `wall-decor`, `media-support` | Every V4 item has at least one declared functional or semantic role. |
+| `InteractionProfile.frontAxis` | `positiveX`, `negativeX`, `positiveZ`, `negativeZ`, `null` | Local front direction before placed-item rotation. |
+| `InteractionProfile.usableSides` | Cardinal local axes | Sides on which adjacency partners may satisfy the anchor. |
+| `SpatialBehavior.placementKind` | `floor`, `floor-overlay`, `wall`, `ceiling`, `surface-mounted` | Author-owned placement class, independent of visual mesh. |
+| `SpatialBehavior.occupancyMode` | `occupies`, `ignored` | Only a declared floor obstacle may occupy fixed-grid floor area. |
+| `SpatialBehavior.clearanceMode` | `obstacle`, `ignored` | Only a declared floor obstacle enters generic minimum-clearance pairs. |
+| `SpatialBehavior.supportMode` | `none`, `surface` | Explicit authored support semantics for current/future functional rules. |
 
-Adding a catalog item requires V3 schema validity, a complete feature vector, semantic profile, optional visual profile, catalog content test and level references only after the item is valid. Do not infer semantics from `id` or `name`.
+Schema and Domain reject contradictory combinations: overlay/wall/ceiling/surface-mounted items must ignore occupancy and clearance; floor occupancy requires obstacle clearance. The V4 mapping classifies every ID explicitly: rugs are overlays; shelf/mirror/curtain/clock are wall artifacts; chandelier is ceiling; table lamp is surface-mounted; furniture and free-standing floor objects remain obstacles. Adding an item requires V4 schema validity, non-empty role, complete `SpatialBehavior`, complete feature vector, optional visual profile, catalog content test and only then level references. Do not infer semantics from `id`, `type`, `name` or mesh.[10]
 
 ## ClientBrief v2 and style profiles
 
@@ -96,7 +107,7 @@ The V2 evaluator has three deterministic channels. All numeric policy is version
 | Ergonomics | Clearance, passage, functional relationships and required scenarios. | Existing deterministic ergonomics scorer. |
 | Total | The three channel scores. | `0.5 × style + 0.2 × clientPriorities + 0.3 × ergonomics`. |
 
-`RoomOccupancyProfile` uses the versioned `0.1 m` cell size to mark occupied floor cells once. `SpatialPreferenceEvaluator` applies the authored `intimate`, `balanced` or `open` density profile and empty-space preference. A compact room is therefore valid when the client requests it; no global openness preference exists.[8]
+`RoomOccupancyProfile` uses the versioned `0.1 m` cell size to mark each **declared floor obstacle** once. `ClearanceEvaluator` uses the same authored boundary before generic pair evaluation. `SpatialPreferenceEvaluator` applies the authored `intimate`, `balanced` or `open` density profile and empty-space preference. A compact room is therefore valid when the client requests it; overlays and mounted artifacts cannot artificially make it look occupied.[8] [10]
 
 `EvaluationExplanation v2` is a runtime Application-to-Presentation contract, not persisted JSON. It includes existing stable diagnostic ID, channel, priority identity when applicable, rule description, actual/desired fact, numeric/authored severity, authored remediation, exact counterfactual recovery and current RoomState instance references. Feedback severity uses `low`, `medium` or `high`; Domain `critical: true` remains the authoritative override.[9]
 
@@ -128,3 +139,4 @@ See [Architecture overview](../architecture/overview.md) for layer ownership and
 [7]: ../../src/Application/UseCases/EvaluateRoomUseCase.js "Evaluation application boundary"
 [8]: ../../src/Domain/Scoring/RoomOccupancyProfile.js "Fixed-grid occupancy measurement"
 [9]: ../../src/Application/Services/MultiChannelEvaluationExplanationAssembler.js "Explanation V2 assembly"
+[10]: ../../src/Domain/Items/SpatialBehavior.js "V4 SpatialBehavior Domain contract"

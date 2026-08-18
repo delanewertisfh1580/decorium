@@ -49,6 +49,13 @@ describe('CatalogValidator', () => {
       textileShare: 0.4, lightColorShare: 0.6, darkColorShare: 0.4, warmPaletteShare: 0.7,
       saturationLevel: 0.5, formSimplicity: 0.8, roundnessShare: 0.3, rectilinearShare: 0.7,
       sizeNorm: 0.5, priceNorm: 0.6, lightingFunctionShare: 0.2, storageFunctionShare: 0.4
+    },
+    spatialBehavior: {
+      schemaVersion: 1,
+      placementKind: 'floor',
+      occupancyMode: 'occupies',
+      clearanceMode: 'obstacle',
+      supportMode: 'none'
     }
   });
 

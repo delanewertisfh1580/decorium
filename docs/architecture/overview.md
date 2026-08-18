@@ -1,7 +1,7 @@
 # Architecture overview
 
 **Статус:** Active production reference
-**Обновлено:** 17 августа 2026 г.
+**Обновлено:** 18 августа 2026 г.
 
 Decorium — static Vite web application на JavaScript ES modules с Three.js presentation и Clean Architecture ядром. Проект использует Three.js 0.160, AJV 8 для schema validation, Vitest 4 и versioned JSON content. `src/main.js` — единственный composition root.[1]
 
@@ -21,7 +21,7 @@ Presentation → Application → Domain ← Infrastructure
 | `src/Application` | Use cases, orchestration и immutable DTO boundary. | Load/evaluate room, V2 explanation assembly, profile settings, campaign levels, completion recording. |
 | `src/Infrastructure` | JSON fetch/validation, exact profile catalog, static asset inventory, browser-local persistence, repositories. | `SchemaLoader`, `JsonConstraintCatalog`, JSON catalogs, AJV validators, local profile adapter. |
 | `src/Presentation` | Three.js scene, controller, view models и DOM views. | `GameController`, `RoomView`, `EvaluationView`, item visual factory. |
-| `data` | Versioned authored content and schemas. | Catalog V3, topology-only levels, ClientBrief V2, style profiles, feedback, scoring parameters V2 and visual profiles. |
+| `data` | Versioned authored content and schemas. | Catalog V4 with complete semantic behavior, topology-only levels, ClientBrief V2, style profiles, feedback, scoring parameters V2 and visual profiles. |
 
 ## Runtime flows
 
@@ -32,7 +32,7 @@ Static JSON + schemas → Infrastructure validation/loaders → Domain values
   → LoadLevelUseCase → immutable LevelDTO/evaluationSpec → controller and views
 ```
 
-Static asset inventory ensures Vite publishes every runtime JSON next to the built HTML. Content is validated at the Infrastructure boundary before use cases receive it. Active production bootstrap loads the V2 brief catalog/schema and V1-versioned exact style-profile catalog/schema.[2]
+Static asset inventory ensures Vite publishes every runtime JSON next to the built HTML. Content is validated at the Infrastructure boundary before use cases receive it. Active production bootstrap loads the V4 item catalog/schema, V2 brief catalog/schema and V1-versioned exact style-profile catalog/schema.[2]
 
 ### Authored presentation environment
 
@@ -58,7 +58,7 @@ Explanation focus intent (`instanceId`) → GameController validation → existi
 Calibrated result (`stars`, `completionEligible`) → RecordLevelCompletionUseCase → ProgressionPolicy
 ```
 
-`LoadLevelUseCase` creates V2 evaluation only from authored client policy and exact profile lookups. `MultiStyleEvaluator` independently evaluates targets; `StyleChannelPolicy` blends composition exactly once. `RoomOccupancyProfile` measures floor coverage with versioned fixed grid input, `SpatialPreferenceEvaluator` maps authored density/free-area rules, and `ClientPriorityEvaluator` normalizes `functional-scenario` and `spatial-preferences` satisfaction. `ThreeChannelScoreAggregator` applies authored `0.5/0.2/0.3` weights.[3] [4]
+`LoadLevelUseCase` creates V2 evaluation only from authored client policy and exact profile lookups. `CatalogValidator` hydrates each V4 record into an `Item` with immutable `InteractionProfile` and `SpatialBehavior`; no runtime derives behavior from type or mesh. `MultiStyleEvaluator` independently evaluates targets; `StyleChannelPolicy` blends composition exactly once. `RoomOccupancyProfile` and `ClearanceEvaluator` consider only `SpatialBehavior.isFloorObstacle`, then `SpatialPreferenceEvaluator` maps authored density/free-area rules and `ClientPriorityEvaluator` normalizes `functional-scenario` and `spatial-preferences` satisfaction. `ThreeChannelScoreAggregator` applies authored `0.5/0.2/0.3` weights.[3] [4] [7]
 
 `ScorecardCalibrationPolicy` still owns raw-vs-display stars, critical caps and `completionEligible`. `MultiChannelViolationImpactPolicy` recomputes exact counterfactual impact per V2 diagnostic. `MultiChannelEvaluationExplanationAssembler` produces immutable explanation V2; `EvaluationView` renders supplied channels, labels, facts and remediation only. `GameController` forwards `evaluationSpec` and validated presentation intent, never recreating game policy.[5] [6]
 
@@ -76,10 +76,11 @@ Player settings and completed level progress are persisted in profile schema V3.
 | Contract | Purpose | Owner |
 |---|---|---|
 | `PlayerProfile v3` | Local profile, settings and completed levels. | Domain + Infrastructure persistence boundary |
-| Item catalog V3 | 34 authored items, feature vectors and semantic interaction profiles. | `data/items`, JSON schema, catalog loader |
+| Item catalog V4 | 34 authored items with feature vectors, non-empty semantic roles and required spatial behavior. | `data/items`, JSON schema, catalog loader |
 | Level definition | Bounds, available items, initial placement, ClientBrief and presentation references, prerequisites. | `data/levels`, topology-only level schema |
 | `PresentationEnvironmentProfile v2` | Closed-preset visual scene policy and ambient fixture ownership. | `data/presentation`, JSON schema, Infrastructure repository and Presentation resolver |
-| `InteractionProfile v1` | Affordances, local front axis and usable sides. | Domain item semantics |
+| `InteractionProfile v1` | Functional/semantic affordances, local front axis and usable sides. | Domain item semantics |
+| `SpatialBehavior v1` | Explicit placement kind, occupancy, clearance and support participation. | Domain item semantics, catalog V4, occupancy and clearance consumers |
 | `FunctionalLayoutRule v1` | Adjacency or directional `front-adjacency` functional relationships. | Domain ergonomics |
 | `RequiredFunctionalScenario v1` | Client-required affordance roles/cardinality, independently evaluated when anchors are absent. | ClientBrief policy, Domain ergonomics and LoadLevel hydration |
 | `ClientBrief v2` | Bound client identity, target weights, explicit priority rules, spatial preferences and evaluation policy. | `data/briefs`, schema, validated repository, Domain value and LoadLevel hydration |
@@ -102,6 +103,7 @@ Player settings and completed level progress are persisted in profile schema V3.
 9. Presentation environment and visual style labels are not gameplay evaluator inputs; visual ownership is explicit in versioned authored content.
 10. Completion eligibility is produced by calibrated Domain/Application evaluation and forwarded by UI; it is never inferred from presentation state or a UI-side star comparison.
 11. Per-diagnostic recovery is an exact Domain counterfactual and authored remediation is supplied through Application; Presentation may render or focus an instance but cannot apportion impact.
+12. Floor occupancy and generic clearance are derived only from authored `SpatialBehavior`; visual footprint, item type and mesh cannot create or remove an obstacle.
 
 ## Verification
 
@@ -123,3 +125,4 @@ For detailed content authoring see [Content model](../systems/content-model.md).
 [4]: ../../src/Domain/Scoring/ThreeChannelScoreAggregator.js "Three-channel scoring aggregate"
 [5]: ../../src/Application/UseCases/EvaluateRoomUseCase.js "Evaluation orchestration"
 [6]: ../../src/Application/Services/MultiChannelEvaluationExplanationAssembler.js "Explanation V2 assembly"
+[7]: ../../src/Domain/Items/SpatialBehavior.js "V4 semantic behavior"

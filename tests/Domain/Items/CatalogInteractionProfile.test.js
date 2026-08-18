@@ -17,6 +17,13 @@ describe('CatalogValidator interaction profiles', () => {
         schemaVersion: 1,
         affordances: ['dining-surface'],
         usableSides: ['positiveX', 'negativeX']
+      },
+      spatialBehavior: {
+        schemaVersion: 1,
+        placementKind: 'floor',
+        occupancyMode: 'occupies',
+        clearanceMode: 'obstacle',
+        supportMode: 'surface'
       }
     }]);
 
@@ -26,6 +33,13 @@ describe('CatalogValidator interaction profiles', () => {
       frontAxis: null,
       usableSides: ['positiveX', 'negativeX']
     });
+    expect(table.spatialBehavior.toJSON()).toEqual({
+      schemaVersion: 1,
+      placementKind: 'floor',
+      occupancyMode: 'occupies',
+      clearanceMode: 'obstacle',
+      supportMode: 'surface'
+    });
   });
 
   it('rejects an invalid semantic profile as content invalid instead of silently dropping it', () => {
@@ -34,5 +48,16 @@ describe('CatalogValidator interaction profiles', () => {
       price: 500, featureVector,
       interactionProfile: { schemaVersion: 1, affordances: ['inferred-from-name'] }
     }])).toThrow('InteractionProfile affordance is not supported: inferred-from-name');
+  });
+});
+
+
+describe('CatalogValidator spatial behavior coverage', () => {
+  it('rejects an authored catalog item that omits explicit spatial behavior', () => {
+    expect(() => new CatalogValidator().createItems([{
+      id: 'rug-001', name: 'Rug', type: 'decor', dimensions: { x: 2, z: 1.5 },
+      price: 100, featureVector,
+      interactionProfile: { schemaVersion: 1, affordances: [], frontAxis: null, usableSides: [] }
+    }])).toThrow('Item rug-001: missing spatialBehavior');
   });
 });

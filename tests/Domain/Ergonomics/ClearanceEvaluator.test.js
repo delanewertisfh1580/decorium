@@ -5,6 +5,7 @@ import { RoomBounds } from '../../../src/Domain/Rooms/RoomBounds.js';
 import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
 import MinimumClearanceRule from '../../../src/Domain/Ergonomics/MinimumClearanceRule.js';
 import ClearanceEvaluator from '../../../src/Domain/Ergonomics/ClearanceEvaluator.js';
+import SpatialBehavior from '../../../src/Domain/Items/SpatialBehavior.js';
 
 function createItem(id) {
   return new Item({
@@ -80,6 +81,29 @@ describe('ClearanceEvaluator', () => {
 
     expect(violation.actualValue).toBe(0);
     expect(violation.severity).toBe(1);
+  });
+
+  it('ignores an authored floor overlay rather than applying universal clearance to its footprint', () => {
+    const rug = new Item({
+      id: 'rug-001',
+      name: 'rug',
+      type: 'decor',
+      dimensions: { x: 2, z: 2 },
+      featureVector: createItem('feature-source').featureVector,
+      spatialBehavior: new SpatialBehavior({
+        schemaVersion: 1,
+        placementKind: 'floor-overlay',
+        occupancyMode: 'ignored',
+        clearanceMode: 'ignored',
+        supportMode: 'none'
+      })
+    });
+    const room = createRoom([
+      [createItem('chair-a'), { x: 1, z: 1 }],
+      [rug, { x: 1, z: 1 }]
+    ]);
+
+    expect(new ClearanceEvaluator().evaluate(room, rule)).toEqual([]);
   });
 
   it('uses rotated dimensions when computing the footprint gap', () => {

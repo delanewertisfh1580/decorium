@@ -18,7 +18,7 @@ export class SchemaLoader {
   }
 
   static async loadItemSchema() {
-    return this.load('./data/items/item.v3.schema.json');
+    return this.load('./data/items/item.v4.schema.json');
   }
 
   static async loadPresentationEnvironmentSchema() {

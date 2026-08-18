@@ -7,10 +7,10 @@ const readJson = relativePath => JSON.parse(readFileSync(new URL(relativePath, r
 
 describe('authored view-target lounge scenario', () => {
   it('adds an explicit TV view target and directional sofa/coffee rules to level-002', () => {
-    const catalog = readJson('data/items/catalog.v3.json');
+    const catalog = readJson('data/items/catalog.v4.json');
     const level = readJson('data/levels/level-002.json');
     const schema = readJson('data/schemas/level.schema.json');
-    const briefCatalog = readJson('data/briefs/client-briefs.v1.json');
+    const briefCatalog = readJson('data/briefs/client-briefs.v2.json');
     const brief = briefCatalog.briefs.find(candidate => candidate.id === level.clientBriefId);
     const tv = catalog.items.find(item => item.id === 'tv-001');
 

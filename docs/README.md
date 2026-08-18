@@ -27,7 +27,7 @@
 
 ### Контент и геймплей
 
-[Content model](systems/content-model.md) описывает versioned JSON contracts: item catalog V3, topology-only authored levels, ClientBrief V2, exact style profiles, three-channel scoring, semantic interaction profiles, functional-layout rules и required client scenarios. Он является единственным current reference для content authors.
+[Content model](systems/content-model.md) описывает versioned JSON contracts: item catalog V4 with complete `InteractionProfile` and `SpatialBehavior`, topology-only authored levels, ClientBrief V2, exact style profiles, three-channel scoring, functional-layout rules и required client scenarios. Он является единственным current reference для content authors.
 
 ### Операции
 
@@ -35,7 +35,7 @@
 
 ### Delivery evidence
 
-[Slice reports](slices/) фиксируют завершённые вертикальные поставки: scope, contracts, acceptance evidence и non-goals. Последний отчёт — [PROD-023: Client-priority and multi-style evaluator](slices/PROD-023-client-priority-multi-style-evaluator.md). Эти отчёты являются evidence delivery, но текущие product и technical правила по-прежнему поддерживаются в разделах выше.
+[Slice reports](slices/) фиксируют завершённые вертикальные поставки: scope, contracts, acceptance evidence и non-goals. Последний отчёт — [PROD-024: Semantic catalog coverage](slices/PROD-024-semantic-catalog-coverage.md). Эти отчёты являются evidence delivery, но текущие product и technical правила по-прежнему поддерживаются в разделах выше.
 
 ### ADR
 

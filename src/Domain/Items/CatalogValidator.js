@@ -1,6 +1,7 @@
 import { FeatureVector } from './FeatureVector.js';
 import { Item } from './Item.js';
 import InteractionProfile from './InteractionProfile.js';
+import SpatialBehavior from './SpatialBehavior.js';
 
 export class CatalogValidator {
   validate(items) {
@@ -18,6 +19,8 @@ export class CatalogValidator {
       if (!item.featureVector) throw new Error(`Item ${item.id}: missing featureVector`);
       new FeatureVector(item.featureVector);
       if (item.interactionProfile !== undefined) new InteractionProfile(item.interactionProfile);
+      if (item.spatialBehavior === undefined) throw new Error(`Item ${item.id}: missing spatialBehavior`);
+      new SpatialBehavior(item.spatialBehavior);
     }
   }
 
@@ -32,7 +35,8 @@ export class CatalogValidator {
       featureVector: new FeatureVector(data.featureVector),
       interactionProfile: data.interactionProfile
         ? new InteractionProfile(data.interactionProfile)
-        : InteractionProfile.empty()
+        : InteractionProfile.empty(),
+      spatialBehavior: new SpatialBehavior(data.spatialBehavior)
     }));
   }
 }

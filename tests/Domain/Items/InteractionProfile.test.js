@@ -56,3 +56,19 @@ describe('InteractionProfile', () => {
       .toThrow('InteractionProfile frontAxis is invalid: diagonal');
   });
 });
+
+
+describe('PROD-024 semantic affordance vocabulary', () => {
+  it('accepts explicit rest, storage, lighting, decor and media-support affordances for catalog-wide semantics', () => {
+    const profile = new InteractionProfile({
+      schemaVersion: 1,
+      affordances: ['rest-surface', 'storage-volume', 'light-source', 'floor-decor', 'wall-decor', 'media-support'],
+      frontAxis: null,
+      usableSides: []
+    });
+
+    expect(profile.affordances).toEqual([
+      'rest-surface', 'storage-volume', 'light-source', 'floor-decor', 'wall-decor', 'media-support'
+    ]);
+  });
+});
