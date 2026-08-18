@@ -64,6 +64,29 @@ describe('Documentation requirements', () => {
     expect(contentModel).toContain('style-constraint-catalog.v1');
   });
 
+  it('keeps public entry points aligned with the active V4/V2 runtime and versioned data lifecycle', () => {
+    const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
+    const changelog = readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8');
+    const dataGuidePath = join(ROOT, 'data', 'README.md');
+
+    expect(readme).toContain('ClientBrief v2');
+    expect(readme).toContain('50% style');
+    expect(readme).toContain('20% client priorities');
+    expect(readme).toContain('30% ergonomics');
+    expect(readme).toContain('catalog V4');
+    expect(readme).not.toContain('70% / 30%');
+    expect(readme).not.toContain('Следующий content/scoring foundation');
+    expect(readme).not.toContain('Catalog V3');
+    expect(changelog).toContain('ClientBrief V2');
+    expect(changelog).toContain('catalog V4');
+    expect(existsSync(dataGuidePath)).toBe(true);
+
+    const dataGuide = readFileSync(dataGuidePath, 'utf8');
+    expect(dataGuide).toContain('staticDataAssets.js');
+    expect(dataGuide).toContain('catalog.v4.json');
+    expect(dataGuide).toContain('client-briefs.v2.json');
+  });
+
   it('keeps every local Markdown link resolvable after documentation moves', () => {
     const files = [join(ROOT, 'README.md'), ...markdownFiles(join(ROOT, 'docs'))];
     const unresolved = files.flatMap(file => localMarkdownTargets(file)
