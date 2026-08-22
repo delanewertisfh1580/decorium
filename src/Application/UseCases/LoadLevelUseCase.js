@@ -2,30 +2,24 @@ import LevelDTO from '../DTOs/LevelDTO.js';
 import { RoomState } from '../../Domain/Rooms/RoomState.js';
 import { RoomBounds } from '../../Domain/Rooms/RoomBounds.js';
 import RoomInteriorGenerator from '../../Domain/Rooms/RoomInteriorGenerator.js';
-import MinimumClearanceRule from '../../Domain/Ergonomics/MinimumClearanceRule.js';
-import PassageZone from '../../Domain/Ergonomics/PassageZone.js';
-import FunctionalLayoutRule from '../../Domain/Ergonomics/FunctionalLayoutRule.js';
-import RequiredFunctionalScenario from '../../Domain/Ergonomics/RequiredFunctionalScenario.js';
 import ClientBrief from '../../Domain/Briefs/ClientBrief.js';
 
-function createErgonomicsRules(data = {}, clientMultiplier = 1) {
-  const rules = {};
-  if (data.minimumClearance) rules.minimumClearance = new MinimumClearanceRule({ ...data.minimumClearance, clientMultiplier });
-  if (Array.isArray(data.passageZones)) rules.passageZones = Object.freeze(data.passageZones.map(zone => new PassageZone(zone)));
-  if (Array.isArray(data.functionalLayoutRules)) rules.functionalLayoutRules = Object.freeze(data.functionalLayoutRules.map(rule => new FunctionalLayoutRule(rule)));
-  if (Array.isArray(data.requiredFunctionalScenarios)) rules.requiredFunctionalScenarios = Object.freeze(data.requiredFunctionalScenarios.map(scenario => new RequiredFunctionalScenario(scenario)));
-  return Object.freeze(rules);
-}
-
 function createEvaluationSpec(clientBrief, styleTargets) {
+  const policy = clientBrief.evaluationPolicy;
+  const ergonomics = policy.ergonomicsRules;
   return Object.freeze({
     schemaVersion: 1,
     styleTargets: Object.freeze(styleTargets),
     clientPriorities: Object.freeze([...clientBrief.clientPriorities]),
     spatialPreferences: clientBrief.spatialPreferences,
-    compositionRules: Object.freeze({ ...clientBrief.evaluationPolicy.compositionRules }),
-    ergonomicsRules: createErgonomicsRules(clientBrief.evaluationPolicy.ergonomicsRules, clientBrief.spatialPreferences.clearanceMultiplier),
-    completion: Object.freeze({ ...clientBrief.evaluationPolicy.completion })
+    compositionRules: policy.compositionRules,
+    ergonomicsRules: Object.freeze({
+      minimumClearance: ergonomics.minimumClearance,
+      passageZones: ergonomics.passageZones,
+      functionalLayoutRules: ergonomics.functionalLayoutRules,
+      requiredFunctionalScenarios: ergonomics.requiredFunctionalScenarios
+    }),
+    completion: policy.completion
   });
 }
 
