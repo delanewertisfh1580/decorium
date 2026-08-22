@@ -1,3 +1,5 @@
+import { requireDiagnosticId } from '../Diagnostics/DiagnosticIdentity.js';
+
 const CRITICAL_RULE_MODES = new Set(['block-completion', 'cap-stars', 'informational']);
 
 function positiveInteger(value, label, { min = 0, max = 5 } = {}) {
@@ -24,8 +26,7 @@ function criticalViolationIds(violations) {
   }
   return Object.freeze([...new Set(violations
     .filter(violation => violation?.critical === true)
-    .map(violation => violation.constraintId)
-    .filter(id => typeof id === 'string' && id.trim() !== ''))].sort());
+    .map(requireDiagnosticId))].sort());
 }
 
 export class ScorecardCalibrationPolicy {

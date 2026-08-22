@@ -12,6 +12,7 @@ const ratingPolicy = new StarRatingPolicy({
 });
 
 const criticalScenarioViolation = Object.freeze({
+  diagnosticId: 'required-scenario:evening-media:view-target',
   constraintId: 'required-scenario:evening-media:view-target',
   critical: true,
   type: 'ergonomics'
@@ -39,6 +40,25 @@ describe('ScorecardCalibrationPolicy', () => {
       completionBlockReason: 'critical-rule',
       criticalViolationIds: ['required-scenario:evening-media:view-target']
     });
+  });
+
+  it('preserves distinct critical facts that share one authored constraint', () => {
+    const scorecard = new ScorecardCalibrationPolicy({ schemaVersion: 1, criticalStarCap: 2 });
+
+    const result = scorecard.evaluate({
+      totalScore: 0.91,
+      ratingPolicy,
+      completion: { minimumStars: 3, criticalRuleMode: 'block-completion' },
+      violations: [
+        { ...criticalScenarioViolation, diagnosticId: 'required-scenario:evening-media:view-target:chair-001#1' },
+        { ...criticalScenarioViolation, diagnosticId: 'required-scenario:evening-media:view-target:chair-002#1' }
+      ]
+    });
+
+    expect(result.criticalViolationIds).toEqual([
+      'required-scenario:evening-media:view-target:chair-001#1',
+      'required-scenario:evening-media:view-target:chair-002#1'
+    ]);
   });
 
   it('retains normal star and completion behavior when no critical diagnostics exist', () => {

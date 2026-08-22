@@ -21,7 +21,7 @@ Introduce an immutable `ScorecardCalibrationPolicy` in Domain. It receives a raw
 | Raw facts | Preserve `rawScore` and `rawStars`; calibration must not overwrite analytical channel facts. |
 | Authored parameters | `criticalStarCap` and `scoreEpsilon` are required fields in versioned `scoring-parameters.json` V2 and are validated/frozen by explicit `ScoringPolicy`. |
 | Threshold noise | `StarRatingPolicy` uses `score + epsilon >= threshold`, bounded to `0..0.01`. |
-| Critical identifiers | Include only `critical === true` diagnostic IDs, sorted and deduplicated. |
+| Critical identifiers | Include only `critical === true` concrete `diagnosticId` values, sorted and deduplicated; each authored `constraintId` remains a separate rule reference. |
 | `block-completion` | Cap stars below the brief target and `criticalStarCap`; return `completionEligible: false` and reason `critical-rule`. |
 | `cap-stars` | Cap display stars at `criticalStarCap`; eligibility follows capped rating against `minimumStars`. |
 | `informational` | Preserve raw stars; eligibility follows normal target comparison. |
