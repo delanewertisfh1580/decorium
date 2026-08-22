@@ -54,6 +54,20 @@ describe('PROD-012R FurnitureAssetRepository', () => {
     expect(sofa.userData.assetPath).toBe('/assets/furniture/lounge/sectional-hero-pbr-v1.glb');
   });
 
+  it('clones a secondary UV channel for asset materials that use ambient occlusion or light maps', async () => {
+    const source = sourcePrefab();
+    const sourceMesh = source.getObjectByName('authored-prefab-mesh');
+    sourceMesh.material.aoMap = new THREE.Texture();
+    const repository = new FurnitureAssetRepository({ manifest: assetManifest, loadAsset: async () => source });
+
+    const clone = await repository.createForItemId('chair-001');
+    const mesh = clone.getObjectByName('authored-prefab-mesh');
+
+    expect(mesh.geometry.getAttribute('uv1')).toBeDefined();
+    expect(mesh.geometry.getAttribute('uv1')).not.toBe(sourceMesh.geometry.getAttribute('uv'));
+    expect(mesh.material.aoMap).not.toBeNull();
+  });
+
   it('returns null for non-seating item IDs so the procedural visual stays an explicit compatibility fallback', async () => {
     const repository = new FurnitureAssetRepository({ manifest: assetManifest, loadAsset: async () => sourcePrefab() });
 

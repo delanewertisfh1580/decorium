@@ -12,6 +12,32 @@ function cloneMaterial(material) {
   return material?.clone?.() ?? material;
 }
 
+function materialEntries(material) {
+  return Array.isArray(material) ? material : [material];
+}
+
+function ensureSecondaryUvForLightMaps(mesh) {
+  const materials = materialEntries(mesh.material).filter(Boolean);
+  if (!materials.some(material => material.aoMap || material.lightMap)) return;
+  const geometry = mesh.geometry;
+  if (!geometry) return;
+  if (!geometry.getAttribute('uv1')) {
+    const uv = geometry.getAttribute('uv');
+    if (uv) {
+      mesh.geometry = geometry.clone();
+      mesh.geometry.setAttribute('uv1', uv.clone());
+    } else {
+      for (const material of materials) {
+        material.aoMap = null;
+        material.lightMap = null;
+        material.needsUpdate = true;
+      }
+      return;
+    }
+  }
+  for (const material of materials) material.needsUpdate = true;
+}
+
 function prepareClone(source, asset) {
   const clone = source.clone(true);
   clone.name = `asset:${asset.assetId}`;
@@ -21,11 +47,13 @@ function prepareClone(source, asset) {
   clone.traverse(object => {
     if (!object.isMesh) return;
     object.material = cloneMaterial(object.material);
+    ensureSecondaryUvForLightMaps(object);
     object.castShadow = true;
     object.receiveShadow = true;
     object.userData.kind = 'item-asset-part';
     object.userData.assetId = asset.assetId;
-    if (object.material?.color) object.userData.baseColor = object.material.color.getHex();
+    const primaryMaterial = materialEntries(object.material).find(material => material?.color);
+    if (primaryMaterial) object.userData.baseColor = primaryMaterial.color.getHex();
   });
   return clone;
 }
