@@ -129,9 +129,9 @@
           "type": "object",
           "properties": {
             "minItems": { "type": "integer", "minimum": 1 },
-            "requiredRoles": {
+            "requiredAffordances": {
               "type": "array",
-              "items": { "enum": ["seating", "surface", "lighting", "storage", "decor"] },
+              "items": { "$ref": "#/definitions/affordance" },
               "uniqueItems": true
             }
           },
@@ -239,14 +239,14 @@
       "additionalProperties": false
     },
     "affordance": {
-      "enum": ["dining-seat", "dining-surface", "lounge-seat", "coffee-surface", "view-target", "work-seat", "work-surface"]
+      "enum": ["dining-seat", "dining-surface", "lounge-seat", "coffee-surface", "view-target", "work-seat", "work-surface", "rest-surface", "storage-volume", "light-source", "floor-decor", "wall-decor", "media-support"]
     },
     "affordanceSelector": {
       "type": "object",
       "required": ["affordance"],
       "properties": {
         "affordance": {
-          "enum": ["dining-seat", "dining-surface", "lounge-seat", "coffee-surface", "view-target", "work-seat", "work-surface"]
+          "enum": ["dining-seat", "dining-surface", "lounge-seat", "coffee-surface", "view-target", "work-seat", "work-surface", "rest-surface", "storage-volume", "light-source", "floor-decor", "wall-decor", "media-support"]
         }
       },
       "additionalProperties": false

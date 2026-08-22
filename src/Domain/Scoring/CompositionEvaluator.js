@@ -1,16 +1,7 @@
 import { createDiagnosticId } from '../Diagnostics/DiagnosticIdentity.js';
 
-const ROLE_BY_TYPE = Object.freeze({
-  sofa: 'seating',
-  chair: 'seating',
-  table: 'surface',
-  lighting: 'lighting',
-  storage: 'storage',
-  decor: 'decor'
-});
-
 function requirementViolation({ id, messageKey, threshold, actualValue, severity, weight = 1, description }) {
-  return {
+  return Object.freeze({
     diagnosticId: createDiagnosticId(id),
     constraintId: id,
     featureName: 'composition',
@@ -19,25 +10,39 @@ function requirementViolation({ id, messageKey, threshold, actualValue, severity
     actualValue,
     severity: Math.max(0, Math.min(1, severity)),
     messageKey,
-    constraint: {
-      id,
-      weight,
-      description
-    }
-  };
+    constraint: Object.freeze({ id, weight, description })
+  });
+}
+
+function requiredAffordancesFor(rules) {
+  const value = rules.requiredAffordances ?? [];
+  if (!Array.isArray(value) || !value.every(affordance => typeof affordance === 'string' && affordance.trim() !== '')) {
+    throw new Error('Composition requiredAffordances must be an array of non-empty strings');
+  }
+  if (new Set(value).size !== value.length) {
+    throw new Error('Composition requiredAffordances must be unique');
+  }
+  return value;
+}
+
+function authoredAffordancesFor(item) {
+  const profile = item?.item?.interactionProfile ?? item?.interactionProfile;
+  if (!profile || !Array.isArray(profile.affordances)) {
+    throw new Error('Composition items must provide an authored InteractionProfile');
+  }
+  return profile.affordances;
 }
 
 /**
- * Evaluates whether a room contains enough varied furniture to be considered
- * a designed composition. This is intentionally separate from style vectors:
- * a single stylish object may match the palette without solving the brief.
+ * Evaluates whether a room contains the explicit authored capabilities required
+ * by a client brief. Display type and visual category are intentionally ignored.
  */
 export function evaluateComposition(items = [], rules = {}) {
   if (!Array.isArray(items)) throw new Error('Composition items must be an array');
 
   const minItems = Number.isInteger(rules.minItems) && rules.minItems > 0 ? rules.minItems : 0;
-  const requiredRoles = Array.isArray(rules.requiredRoles) ? rules.requiredRoles : [];
-  const roles = new Set(items.map(item => ROLE_BY_TYPE[item?.type ?? item?.item?.type]).filter(Boolean));
+  const requiredAffordances = requiredAffordancesFor(rules);
+  const affordances = new Set(items.flatMap(authoredAffordancesFor));
   const violations = [];
 
   if (items.length < minItems) {
@@ -52,16 +57,17 @@ export function evaluateComposition(items = [], rules = {}) {
     }));
   }
 
-  for (const role of requiredRoles) {
-    if (roles.has(role)) continue;
+  for (const affordance of requiredAffordances) {
+    if (affordances.has(affordance)) continue;
+    const id = `composition-affordance-${affordance}`;
     violations.push(requirementViolation({
-      id: `composition-role-${role}`,
-      messageKey: `composition-missing-${role}`,
+      id,
+      messageKey: `composition-missing-${affordance}`,
       threshold: 1,
       actualValue: 0,
       severity: 0.2,
       weight: 1,
-      description: `composition role '${role}' is required`
+      description: `composition affordance '${affordance}' is required`
     }));
   }
 
@@ -72,10 +78,9 @@ export function evaluateComposition(items = [], rules = {}) {
   return Object.freeze({
     complete: violations.length === 0,
     penalty,
-    roles: [...roles],
-    violations
+    affordances: Object.freeze([...affordances].sort()),
+    violations: Object.freeze(violations)
   });
 }
 
-export { ROLE_BY_TYPE };
 export default evaluateComposition;

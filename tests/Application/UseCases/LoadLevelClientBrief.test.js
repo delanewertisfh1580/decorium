@@ -36,7 +36,7 @@ const rawBrief = {
   evaluationPolicy: {
     styleMode: 'weighted-targets-v1',
     completion: { minimumStars: 4, criticalRuleMode: 'block-completion' },
-    compositionRules: { minItems: 4, requiredRoles: ['seating', 'lighting'] },
+    compositionRules: { minItems: 4, requiredAffordances: ['dining-seat', 'light-source'] },
     ergonomicsRules: {
       minimumClearance: { minimumDistance: 0.9, weight: 1 },
       passageZones: [],

@@ -133,6 +133,36 @@ function normalizeSpatialPreferences(value) {
   });
 }
 
+function normalizeCompositionRules(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('ClientBrief evaluationPolicy compositionRules must be an object');
+  }
+  const supportedKeys = new Set(['minItems', 'requiredAffordances']);
+  const unexpectedKey = Object.keys(value).find(key => !supportedKeys.has(key));
+  if (unexpectedKey) {
+    throw new Error(`ClientBrief evaluationPolicy compositionRules.${unexpectedKey} is not supported`);
+  }
+  const normalized = {};
+  if (value.minItems !== undefined) {
+    if (!Number.isInteger(value.minItems) || value.minItems < 1) {
+      throw new Error('ClientBrief evaluationPolicy compositionRules.minItems must be a positive integer');
+    }
+    normalized.minItems = value.minItems;
+  }
+  if (value.requiredAffordances !== undefined) {
+    if (!Array.isArray(value.requiredAffordances)
+      || !value.requiredAffordances.every(affordance => typeof affordance === 'string' && affordance.trim() !== '')) {
+      throw new Error('ClientBrief evaluationPolicy compositionRules.requiredAffordances must be an array of non-empty strings');
+    }
+    const affordances = value.requiredAffordances.map(affordance => affordance.trim());
+    if (new Set(affordances).size !== affordances.length) {
+      throw new Error('ClientBrief evaluationPolicy compositionRules.requiredAffordances must be unique');
+    }
+    normalized.requiredAffordances = Object.freeze(affordances);
+  }
+  return Object.freeze(normalized);
+}
+
 function normalizeEvaluationPolicy(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error('ClientBrief evaluationPolicy must be an object');
@@ -156,7 +186,7 @@ function normalizeEvaluationPolicy(value) {
       minimumStars: finiteNumber(completion.minimumStars, 'evaluationPolicy completion.minimumStars', { min: 1, max: 5 }),
       criticalRuleMode: completion.criticalRuleMode
     },
-    compositionRules: { ...(value.compositionRules ?? {}) },
+    compositionRules: normalizeCompositionRules(value.compositionRules ?? {}),
     ergonomicsRules: {
       ...ergonomicsRules,
       requiredFunctionalScenarios: requiredFunctionalScenarios.map(scenario => (

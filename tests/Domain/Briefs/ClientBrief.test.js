@@ -51,7 +51,7 @@ const validBrief = {
   evaluationPolicy: {
     styleMode: 'weighted-targets-v1',
     completion: { minimumStars: 3, criticalRuleMode: 'block-completion' },
-    compositionRules: { minItems: 4, requiredRoles: ['seating', 'surface', 'lighting'] },
+    compositionRules: { minItems: 4, requiredAffordances: ['lounge-seat', 'coffee-surface', 'light-source'] },
     ergonomicsRules: {
       minimumClearance: { minimumDistance: 0.9, weight: 1 },
       passageZones: [],
@@ -138,6 +138,16 @@ describe('ClientBrief', () => {
       schemaVersion: 2,
       clientPriorities: [{ ...priorityRules[0], rule: undefined }, priorityRules[1]]
     })).toThrow('ClientBrief clientPriorities[0].rule must be an object');
+  });
+
+  it('rejects retired display-role composition rules instead of inferring gameplay semantics from type', () => {
+    expect(() => new ClientBrief({
+      ...validBrief,
+      evaluationPolicy: {
+        ...validBrief.evaluationPolicy,
+        compositionRules: { minItems: 4, requiredRoles: ['seating'] }
+      }
+    })).toThrow('ClientBrief evaluationPolicy compositionRules.requiredRoles is not supported');
   });
 
   it('rejects a brief without one normalized primary style target or valid client-specific spatial policy', () => {

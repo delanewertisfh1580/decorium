@@ -85,7 +85,7 @@ Presentation resolver output is immutable and is consumed only by Three.js scene
 
 ## Levels and functional layout
 
-A level definition declares geometry, available items, initial placement and `presentationProfileId`; it references exactly one `clientBriefId`. ClientBrief owns style targets, priority rules, spatial preferences, completion, composition and ergonomics policy. Evaluators are generic Domain code: they consume hydrated policy and must never recover an evaluation rule from level topology or UI state.
+A level definition declares geometry, available items, initial placement and `presentationProfileId`; it references exactly one `clientBriefId`. ClientBrief owns style targets, priority rules, spatial preferences, completion, composition and ergonomics policy. Composition rules declare `minItems` and exact `requiredAffordances`; `Item.type` is a visual/content grouping and is never a composition or gameplay policy input. Evaluators are generic Domain code: they consume hydrated policy and must never recover an evaluation rule from level topology or UI state.
 
 | Rule kind | Required extra field | Use case |
 |---|---|---|
