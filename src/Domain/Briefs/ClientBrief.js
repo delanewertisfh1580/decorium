@@ -119,8 +119,7 @@ function normalizeSpatialPreferences(value) {
     clearanceMultiplier: finiteNumber(value.clearanceMultiplier, 'spatialPreferences clearanceMultiplier', { min: 0.25, max: 2 }),
     emptySpacePreference: Object.freeze({
       mode: empty.mode,
-      targetFreeAreaRatio: finiteNumber(empty.targetFreeAreaRatio, 'spatialPreferences emptySpacePreference.targetFreeAreaRatio', { min: 0, max: 1 }),
-      weight: finiteNumber(empty.weight, 'spatialPreferences emptySpacePreference.weight', { min: 0, max: 5, exclusiveMin: true })
+      targetFreeAreaRatio: finiteNumber(empty.targetFreeAreaRatio, 'spatialPreferences emptySpacePreference.targetFreeAreaRatio', { min: 0, max: 1 })
     })
   });
 }

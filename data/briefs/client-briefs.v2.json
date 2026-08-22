@@ -46,8 +46,7 @@
         "clearanceMultiplier": 1,
         "emptySpacePreference": {
           "mode": "allow",
-          "targetFreeAreaRatio": 0.45,
-          "weight": 0.7
+          "targetFreeAreaRatio": 0.45
         }
       },
       "evaluationPolicy": {
@@ -178,8 +177,7 @@
         "clearanceMultiplier": 0.75,
         "emptySpacePreference": {
           "mode": "discourage-excess",
-          "targetFreeAreaRatio": 0.42,
-          "weight": 0.8
+          "targetFreeAreaRatio": 0.42
         }
       },
       "evaluationPolicy": {
@@ -324,8 +322,7 @@
         "clearanceMultiplier": 1.15,
         "emptySpacePreference": {
           "mode": "require-open",
-          "targetFreeAreaRatio": 0.58,
-          "weight": 1.1
+          "targetFreeAreaRatio": 0.58
         }
       },
       "evaluationPolicy": {

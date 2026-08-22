@@ -72,7 +72,7 @@ Schema and Domain reject contradictory combinations and missing semantics: overl
 | Client priorities | Stable ID, label, positive weight and required explicit rule. | Independently evaluated and normalized into client-priority channel. |
 | `functional-scenario` rule | Scenario ID plus message key. | Satisfaction comes from the matching hydrated required scenario. |
 | `spatial-preferences` rule | Priority references authored spatial preferences. | Satisfaction comes from fixed-grid occupancy and density/free-area rules. |
-| Spatial preferences | Density, clearance multiplier and empty-space target/mode/weight. | Clearance multiplier, density and empty-space policy are active. |
+| Spatial preferences | Density, clearance multiplier and empty-space target/mode. | Clearance multiplier, density range and explicit empty-space direction are active; priority importance belongs only to `clientPriorities[].weight`. |
 | Evaluation policy | Completion target, `criticalRuleMode`, composition and ergonomics rules. | Active source of evaluation inputs; critical results calibrate completion. |
 
 Style profile IDs must resolve exactly. `JsonConstraintCatalog.getStyleProfileById()` returns an immutable profile `{ id, label, constraints }`, and unknown IDs resolve to `null`; application treats a referenced unknown/empty profile as a deterministic content error. The style profile schema is versioned separately because profile content evolves independently of ClientBrief records.[2] [5]
@@ -109,7 +109,7 @@ The V2 evaluator has three deterministic channels. All numeric policy is version
 | Ergonomics | Clearance, passage, functional relationships and required scenarios. | Existing deterministic ergonomics scorer. |
 | Total | The three channel scores. | `0.5 × style + 0.2 × clientPriorities + 0.3 × ergonomics`. |
 
-`RoomOccupancyProfile` uses the versioned `0.1 m` cell size to mark each **declared floor obstacle** once. `ClearanceEvaluator` uses the same authored boundary before generic pair evaluation. `SpatialPreferenceEvaluator` applies the authored `intimate`, `balanced` or `open` density profile and empty-space preference. A compact room is therefore valid when the client requests it; overlays and mounted artifacts cannot artificially make it look occupied.[8] [10]
+`RoomOccupancyProfile` uses the versioned `0.1 m` cell size to mark each **declared floor obstacle** once. `ClearanceEvaluator` uses the same authored boundary before generic pair evaluation. `SpatialPreferenceEvaluator` makes the authored `intimate`, `balanced` or `open` density range an active satisfaction baseline; `discourage-excess` narrows its upper bound and `require-open` raises its lower bound. A compact room is therefore valid when the client requests it; overlays and mounted artifacts cannot artificially make it look occupied.[8] [10]
 
 `EvaluationExplanation v2` is a runtime Application-to-Presentation contract, not persisted JSON. Each card carries a unique `diagnosticId` for one concrete fact and its separate rule-level `constraintId`, plus channel, priority identity when applicable, rule description, actual/desired fact, numeric/authored severity, authored remediation, exact counterfactual recovery and current RoomState instance references. Feedback severity uses `low`, `medium` or `high`; Domain `critical: true` remains the authoritative override.[9]
 

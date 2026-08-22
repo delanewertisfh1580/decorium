@@ -42,7 +42,7 @@ describe('ClientPriorityEvaluator', () => {
       scenarios,
       roomState,
       occupancyProfile: { freeAreaRatio: 0.7 },
-      spatialPreferences: { density: 'intimate', emptySpacePreference: { mode: 'discourage-excess', targetFreeAreaRatio: 0.42, weight: 0.8 } }
+      spatialPreferences: { density: 'intimate', emptySpacePreference: { mode: 'discourage-excess', targetFreeAreaRatio: 0.42 } }
     });
 
     expect(result.score).toBeCloseTo(1 / 6, 12);

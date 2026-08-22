@@ -15,7 +15,7 @@ describe('SpatialPreferenceEvaluator', () => {
       occupancyProfile: { freeAreaRatio: 0.7 },
       spatialPreferences: {
         density: 'intimate',
-        emptySpacePreference: { mode: 'discourage-excess', targetFreeAreaRatio: 0.42, weight: 0.8 }
+        emptySpacePreference: { mode: 'discourage-excess', targetFreeAreaRatio: 0.42 }
       }
     });
 
@@ -32,7 +32,7 @@ describe('SpatialPreferenceEvaluator', () => {
       occupancyProfile: { freeAreaRatio: 0.4 },
       spatialPreferences: {
         density: 'open',
-        emptySpacePreference: { mode: 'require-open', targetFreeAreaRatio: 0.58, weight: 1.1 }
+        emptySpacePreference: { mode: 'require-open', targetFreeAreaRatio: 0.58 }
       }
     });
 
@@ -42,5 +42,37 @@ describe('SpatialPreferenceEvaluator', () => {
       minimumFreeAreaRatio: 0.58,
       maximumFreeAreaRatio: 0.7
     });
+  });
+
+  it('uses density bounds as the active baseline when the client allows any empty-space preference', () => {
+    const result = evaluator.evaluate({
+      occupancyProfile: { freeAreaRatio: 0.75 },
+      spatialPreferences: {
+        density: 'balanced',
+        emptySpacePreference: { mode: 'allow', targetFreeAreaRatio: 0.45 }
+      }
+    });
+
+    expect(result).toEqual({
+      satisfaction: 0.625,
+      actualFreeAreaRatio: 0.75,
+      minimumFreeAreaRatio: 0.4,
+      maximumFreeAreaRatio: 0.6
+    });
+  });
+
+  it('changes satisfaction when density changes even if the explicit empty-space preference is unchanged', () => {
+    const preference = { mode: 'allow', targetFreeAreaRatio: 0.45 };
+    const intimate = evaluator.evaluate({
+      occupancyProfile: { freeAreaRatio: 0.55 },
+      spatialPreferences: { density: 'intimate', emptySpacePreference: preference }
+    });
+    const balanced = evaluator.evaluate({
+      occupancyProfile: { freeAreaRatio: 0.55 },
+      spatialPreferences: { density: 'balanced', emptySpacePreference: preference }
+    });
+
+    expect(intimate.satisfaction).toBe(0.9);
+    expect(balanced.satisfaction).toBe(1);
   });
 });

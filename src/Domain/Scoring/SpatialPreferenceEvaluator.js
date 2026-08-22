@@ -26,6 +26,12 @@ function rounded(value) {
   return Number(value.toFixed(12));
 }
 
+function boundedRangeSatisfaction(actual, minimum, maximum) {
+  if (actual < minimum) return minimum === 0 ? 1 : Math.max(0, actual / minimum);
+  if (actual > maximum) return maximum === 1 ? 1 : Math.max(0, 1 - (actual - maximum) / (1 - maximum));
+  return 1;
+}
+
 export class SpatialPreferenceEvaluator {
   constructor({ densityProfiles } = {}) {
     this._densityProfiles = requireDensityProfiles(densityProfiles);
@@ -48,23 +54,16 @@ export class SpatialPreferenceEvaluator {
 
     let minimumFreeAreaRatio = densityMinimum;
     let maximumFreeAreaRatio = densityMaximum;
-    let satisfaction = 1;
     if (mode === 'discourage-excess') {
-      maximumFreeAreaRatio = target;
-      satisfaction = actualFreeAreaRatio <= maximumFreeAreaRatio
-        ? 1
-        : Math.max(0, 1 - (actualFreeAreaRatio - maximumFreeAreaRatio) / (1 - maximumFreeAreaRatio));
+      maximumFreeAreaRatio = Math.min(densityMaximum, target);
     } else if (mode === 'require-open') {
-      minimumFreeAreaRatio = target;
-      satisfaction = actualFreeAreaRatio >= minimumFreeAreaRatio
-        ? 1
-        : Math.max(0, actualFreeAreaRatio / minimumFreeAreaRatio);
+      minimumFreeAreaRatio = Math.max(densityMinimum, target);
     } else if (mode !== 'allow') {
       throw new Error(`SpatialPreferenceEvaluator emptySpacePreference mode is not supported: ${mode}`);
     }
 
     return Object.freeze({
-      satisfaction: rounded(satisfaction),
+      satisfaction: rounded(boundedRangeSatisfaction(actualFreeAreaRatio, minimumFreeAreaRatio, maximumFreeAreaRatio)),
       actualFreeAreaRatio: rounded(actualFreeAreaRatio),
       minimumFreeAreaRatio: rounded(minimumFreeAreaRatio),
       maximumFreeAreaRatio: rounded(maximumFreeAreaRatio)

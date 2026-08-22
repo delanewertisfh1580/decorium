@@ -46,8 +46,7 @@ const validBrief = {
     clearanceMultiplier: 0.75,
     emptySpacePreference: {
       mode: 'discourage-excess',
-      targetFreeAreaRatio: 0.42,
-      weight: 0.8
+      targetFreeAreaRatio: 0.42
     }
   },
   evaluationPolicy: {

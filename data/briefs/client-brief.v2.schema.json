@@ -80,11 +80,10 @@
             "clearanceMultiplier": { "type": "number", "minimum": 0.25, "maximum": 2 },
             "emptySpacePreference": {
               "type": "object",
-              "required": ["mode", "targetFreeAreaRatio", "weight"],
+              "required": ["mode", "targetFreeAreaRatio"],
               "properties": {
                 "mode": { "enum": ["allow", "discourage-excess", "require-open"] },
-                "targetFreeAreaRatio": { "type": "number", "minimum": 0, "maximum": 1 },
-                "weight": { "type": "number", "exclusiveMinimum": 0, "maximum": 5 }
+                "targetFreeAreaRatio": { "type": "number", "minimum": 0, "maximum": 1 }
               },
               "additionalProperties": false
             }

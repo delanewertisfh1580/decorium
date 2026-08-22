@@ -30,7 +30,7 @@ const catalog = {
     spatialPreferences: {
       density: 'intimate',
       clearanceMultiplier: 0.75,
-      emptySpacePreference: { mode: 'discourage-excess', targetFreeAreaRatio: 0.42, weight: 0.8 }
+      emptySpacePreference: { mode: 'discourage-excess', targetFreeAreaRatio: 0.42 }
     },
     evaluationPolicy: {
       styleMode: 'weighted-targets-v1',

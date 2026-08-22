@@ -20,7 +20,7 @@
 | Composition | `StyleChannelPolicy` blends weighted target fit with composition exactly once: `0.75 × targetFit + 0.25 × composition`. Composition is not reapplied per target. |
 | Client priorities | `ClientPriorityEvaluator` evaluates `functional-scenario` and `spatial-preferences` rule kinds, normalizes positive priority weights and returns stable diagnostics. |
 | Spatial facts | `RoomOccupancyProfile` measures occupancy using a fixed `0.1 m` grid, counts overlapping floor cells once and exposes reproducible free-area ratio. |
-| Density semantics | `SpatialPreferenceEvaluator` maps authored `intimate`/`balanced`/`open` profiles and empty-space modes to satisfaction bounds; a client can value compactness or openness without a global aesthetic assumption. |
+| Density semantics | `SpatialPreferenceEvaluator` makes authored `intimate`/`balanced`/`open` bounds the active satisfaction baseline; `discourage-excess` narrows the upper bound and `require-open` raises the lower bound. Priority importance is expressed only by `clientPriorities[].weight`. |
 | Aggregate | `ThreeChannelScoreAggregator` uses the authored weights `style: 0.5`, `clientPriorities: 0.2`, `ergonomics: 0.3`; values are strictly validated and normalized. |
 | Calibration | Existing `ScorecardCalibrationPolicy` remains the sole owner of display-star caps and completion eligibility after the three-channel raw score is calculated. |
 | Explainability | `MultiChannelViolationImpactPolicy` recomputes the exact V2 counterfactual per style, priority or ergonomics diagnostic. `MultiChannelEvaluationExplanationAssembler` returns `explanation.schemaVersion: 2`. |

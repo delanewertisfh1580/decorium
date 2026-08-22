@@ -31,7 +31,7 @@ const rawBrief = {
   spatialPreferences: {
     density: 'balanced',
     clearanceMultiplier: 1,
-    emptySpacePreference: { mode: 'allow', targetFreeAreaRatio: 0.45, weight: 0.7 }
+    emptySpacePreference: { mode: 'allow', targetFreeAreaRatio: 0.45 }
   },
   evaluationPolicy: {
     styleMode: 'weighted-targets-v1',
