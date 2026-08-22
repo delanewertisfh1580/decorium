@@ -167,6 +167,44 @@ export class FeatureVector {
   }
 
   /**
+   * Calculate a weighted average vector from parallel vector and positive-weight arrays.
+   * @param {FeatureVector[]} vectors - Array of FeatureVectors
+   * @param {number[]} weights - Positive finite weights in the same order
+   * @returns {FeatureVector} New weighted FeatureVector
+   */
+  static weightedAverage(vectors, weights) {
+    if (!Array.isArray(vectors) || vectors.length === 0) {
+      throw new Error('Cannot calculate weighted average of empty array');
+    }
+    if (!Array.isArray(weights) || weights.length !== vectors.length) {
+      throw new Error('Weighted average requires one weight for every vector');
+    }
+
+    const sum = Object.fromEntries(FeatureVector.REQUIRED_FIELDS.map(field => [field, 0]));
+    let totalWeight = 0;
+    for (let index = 0; index < vectors.length; index += 1) {
+      const vector = vectors[index];
+      const weight = weights[index];
+      if (!(vector instanceof FeatureVector)) {
+        throw new Error('All items must be FeatureVector instances');
+      }
+      if (!Number.isFinite(weight) || weight <= 0) {
+        throw new Error('All weights must be positive finite numbers');
+      }
+      totalWeight += weight;
+      for (const field of FeatureVector.REQUIRED_FIELDS) {
+        sum[field] += vector.getField(field) * weight;
+      }
+    }
+
+    const weightedAverage = {};
+    for (const field of FeatureVector.REQUIRED_FIELDS) {
+      weightedAverage[field] = sum[field] / totalWeight;
+    }
+    return new FeatureVector(weightedAverage);
+  }
+
+  /**
    * Calculate dot product with another vector
    * @param {FeatureVector} other - Another FeatureVector
    * @returns {number} Scalar product

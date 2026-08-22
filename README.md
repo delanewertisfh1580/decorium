@@ -11,7 +11,7 @@ Decorium — браузерная 3D-игра о проектировании и
 | Кампания и профиль | Три authored levels, local `PlayerProfile v3`, persisted completion и prerequisite-based unlocks. |
 | Управление комнатой | Floor placement, move, 90° rotate, remove и undo; keyboard и touch intent paths. |
 | Client brief | Три `ClientBrief v3` records определяют style targets, personal priorities, spatial preferences, functional scenarios, ergonomics и completion. |
-| Оценка | Three-channel aggregate: **50% style**, **20% client priorities**, **30% ergonomics**; style channel blends target fit/composition as `75% / 25%`. |
+| Оценка | Three-channel aggregate: **50% style**, **20% client priorities**, **30% ergonomics**; style channel blends target fit/composition as `75% / 25%` and uses capped square-root footprint influence (`sqrt(area / 1 m²)`, clamped `0.5–2.0`) for all placed visual instances. |
 | Функциональная планировка | Dining seats/table, sofa-to-TV и coffee-table relationships используют explicit semantic rules; valid functional pairs не получают ложный generic clearance penalty. |
 | Semantic catalog | `catalog V4` содержит 34 предмета с explicit `InteractionProfile` и `SpatialBehavior`; только declared floor obstacles участвуют в generic occupancy и clearance. |
 | Presentation | Three.js scene, authored room profiles, data-driven visual families и selected asset-backed PBR/GLB packs с safe fallback. |

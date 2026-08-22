@@ -26,6 +26,25 @@ describe('FeatureVector v2', () => {
     expect(() => new FeatureVector(incompleteData)).toThrow('Missing required field');
   });
 
+  it('должен вычислять strict weighted average и отклонять некорректные веса', () => {
+    const low = new FeatureVector({
+      woodShare: 0, metalShare: 0, glassShare: 0, plasticShare: 0,
+      textileShare: 0, lightColorShare: 0, darkColorShare: 0, warmPaletteShare: 0,
+      saturationLevel: 0, formSimplicity: 0, roundnessShare: 0, rectilinearShare: 0,
+      sizeNorm: 0, priceNorm: 0, lightingFunctionShare: 0, storageFunctionShare: 0
+    });
+    const high = new FeatureVector({
+      woodShare: 1, metalShare: 1, glassShare: 1, plasticShare: 1,
+      textileShare: 1, lightColorShare: 1, darkColorShare: 1, warmPaletteShare: 1,
+      saturationLevel: 1, formSimplicity: 1, roundnessShare: 1, rectilinearShare: 1,
+      sizeNorm: 1, priceNorm: 1, lightingFunctionShare: 1, storageFunctionShare: 1
+    });
+
+    expect(FeatureVector.weightedAverage([low, high], [0.5, 2]).woodShare).toBeCloseTo(0.8, 12);
+    expect(() => FeatureVector.weightedAverage([low], [0.5, 1])).toThrow('one weight for every vector');
+    expect(() => FeatureVector.weightedAverage([low], [0])).toThrow('positive finite numbers');
+  });
+
   it('должен отклонять вектор со значениями вне 0..1', () => {
     const invalidData = {
       woodShare: 1.5, metalShare: 0.3, glassShare: 0.2, plasticShare: 0.1,

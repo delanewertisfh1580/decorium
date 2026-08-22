@@ -8,11 +8,14 @@ const schemaLoaderSource = readFileSync(join(root, 'src/Infrastructure/DataLoade
 const evaluationCoordinatorSource = readFileSync(join(root, 'src/Presentation/Controllers/EvaluationCoordinator.js'), 'utf8');
 
 describe('PROD-023 production evaluation wiring', () => {
-  it('constructs V2 style, spatial and client-priority scoring collaborators from versioned content', () => {
+  it('constructs V3 style, spatial and client-priority scoring collaborators from versioned content', () => {
     expect(schemaLoaderSource).toContain('loadStyleConstraintCatalogSchema');
     expect(mainSource).toContain("'./data/styles/style-constraint-catalog.v1.json'");
     expect(mainSource).toContain('MultiStyleEvaluator');
     expect(mainSource).toContain('StyleChannelPolicy');
+    expect(mainSource).toContain('StyleInfluenceProfile');
+    expect(mainSource).toContain('styleInfluenceProfile');
+    expect(mainSource).toContain('styleInfluence: scoring.styleInfluence');
     expect(mainSource).toContain('RoomOccupancyProfile');
     expect(mainSource).toContain('SpatialPreferenceEvaluator');
     expect(mainSource).toContain('ClientPriorityEvaluator');

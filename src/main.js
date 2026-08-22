@@ -34,6 +34,7 @@ import ClientPriorityEvaluator from './Domain/Scoring/ClientPriorityEvaluator.js
 import ThreeChannelScoreAggregator from './Domain/Scoring/ThreeChannelScoreAggregator.js';
 import MultiChannelViolationImpactPolicy from './Domain/Scoring/MultiChannelViolationImpactPolicy.js';
 import ScoringPolicy from './Domain/Scoring/ScoringPolicy.js';
+import StyleInfluenceProfile from './Domain/Scoring/StyleInfluenceProfile.js';
 import EvaluateRoomUseCase from './Application/UseCases/EvaluateRoomUseCase.js';
 import LoadLevelUseCase from './Application/UseCases/LoadLevelUseCase.js';
 import PlaceItemUseCase from './Application/UseCases/PlaceItemUseCase.js';
@@ -207,6 +208,13 @@ async function bootstrap() {
       clientPriorityWeight: scoring.channelWeights.clientPriorities,
       ergonomicsWeight: scoring.channelWeights.ergonomics
     });
+    const styleInfluenceProfile = Object.freeze({
+      policy: scoring.styleInfluence,
+      evaluate: ({ placedItems }) => StyleInfluenceProfile.fromPlacedItems({
+        placedItems,
+        styleInfluence: scoring.styleInfluence
+      })
+    });
     const multiChannelViolationImpactPolicy = new MultiChannelViolationImpactPolicy({
       styleScorer,
       ergonomicsScorer,
@@ -217,6 +225,7 @@ async function bootstrap() {
     const multiStyleDependencies = {
       multiStyleEvaluator,
       styleChannelPolicy,
+      styleInfluenceProfile,
       roomOccupancyProfile,
       clientPriorityEvaluator,
       threeChannelScoreAggregator,

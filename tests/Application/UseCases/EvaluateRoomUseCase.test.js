@@ -5,6 +5,37 @@ import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
 import { StyleScorer } from '../../../src/Domain/Scoring/StyleScorer.js';
 import { StarRatingPolicy } from '../../../src/Domain/Scoring/StarRatingPolicy.js';
 import ScorecardCalibrationPolicy from '../../../src/Domain/Scoring/ScorecardCalibrationPolicy.js';
+import { FeatureVector } from '../../../src/Domain/Items/FeatureVector.js';
+import StyleInfluenceProfile from '../../../src/Domain/Scoring/StyleInfluenceProfile.js';
+
+const styleInfluencePolicy = Object.freeze({
+  schemaVersion: 1,
+  mode: 'capped-square-root-footprint',
+  referenceAreaM2: 1,
+  minimumWeight: 0.5,
+  maximumWeight: 2
+});
+
+function featureVector(woodShare) {
+  return new FeatureVector({
+    woodShare,
+    metalShare: 0,
+    glassShare: 0,
+    plasticShare: 0,
+    textileShare: 0,
+    lightColorShare: 0,
+    darkColorShare: 0,
+    warmPaletteShare: 0,
+    saturationLevel: 0,
+    formSimplicity: 0,
+    roundnessShare: 0,
+    rectilinearShare: 0,
+    sizeNorm: 0,
+    priceNorm: 0,
+    lightingFunctionShare: 0,
+    storageFunctionShare: 0
+  });
+}
 
 const evaluationSpec = Object.freeze({
   schemaVersion: 1,
@@ -27,6 +58,13 @@ function createUseCase(roomState = null) {
   const multiStyleDependencies = {
     multiStyleEvaluator: { evaluate: vi.fn(() => ({ weightedTargetFit: 0.9, targets: [] })) },
     styleChannelPolicy: { evaluate: vi.fn(() => ({ score: 0.8 })) },
+    styleInfluenceProfile: {
+      policy: styleInfluencePolicy,
+      evaluate: vi.fn(({ placedItems }) => StyleInfluenceProfile.fromPlacedItems({
+        placedItems,
+        styleInfluence: styleInfluencePolicy
+      }))
+    },
     roomOccupancyProfile: { evaluate: vi.fn(() => ({ schemaVersion: 1, freeAreaRatio: 1 })) },
     clientPriorityEvaluator: { evaluate: vi.fn(() => ({ score: 0.7, results: [], violations: [] })) },
     threeChannelScoreAggregator: { aggregate: vi.fn(() => ({ totalScore: 0.81, styleWeight: 0.5, clientPriorityWeight: 0.2, ergonomicsWeight: 0.3 })) },
@@ -95,11 +133,43 @@ describe('EvaluateRoomUseCase V2', () => {
         ergonomics: { score: 0.9, weight: 0.3 }
       }
     });
+    expect(result.evaluationData.styleInfluence).toEqual({
+      policy: styleInfluencePolicy,
+      totalWeight: 0,
+      contributions: []
+    });
     expect(multiStyleDependencies.multiStyleEvaluator.evaluate).not.toHaveBeenCalled();
     expect(multiStyleDependencies.threeChannelScoreAggregator.aggregate).toHaveBeenCalledWith({
       styleScore: 0.8,
       clientPriorityScore: 0.7,
       ergonomicsScore: 0.9
     });
+  });
+
+  it('builds the style vector from every placed visual instance and exposes capped footprint contribution facts', async () => {
+    const placedItems = [
+      Object.freeze({ id: 'wall-art#1', itemId: 'wall-art', dimensions: { x: 0.02, z: 1 }, featureVector: featureVector(0), interactionProfile: { affordances: [] } }),
+      Object.freeze({ id: 'sofa#1', itemId: 'sofa', dimensions: { x: 4.5, z: 1 }, featureVector: featureVector(1), interactionProfile: { affordances: [] } })
+    ];
+    const roomState = Object.freeze({ getItems: () => placedItems, getItem: () => null });
+    const { useCase, multiStyleDependencies } = createUseCase(roomState);
+
+    const result = await useCase.execute({ roomId: 'room-001', evaluationSpec });
+
+    expect(result.success).toBe(true);
+    expect(multiStyleDependencies.styleInfluenceProfile.evaluate).toHaveBeenCalledWith({ placedItems });
+    expect(multiStyleDependencies.multiStyleEvaluator.evaluate).toHaveBeenCalledWith(expect.objectContaining({
+      roomVector: expect.any(FeatureVector)
+    }));
+    expect(result.evaluationData.roomVector.woodShare).toBeCloseTo(0.8, 12);
+    expect(result.evaluationData.styleInfluence).toEqual(expect.objectContaining({
+      policy: styleInfluencePolicy,
+      totalWeight: 2.5,
+      contributions: expect.arrayContaining([
+        expect.objectContaining({ instanceId: 'wall-art#1', influenceWeight: 0.5, influenceShare: 0.2 }),
+        expect.objectContaining({ instanceId: 'sofa#1', influenceWeight: 2, influenceShare: 0.8 })
+      ])
+    }));
+    expect(result.evaluationData.scoreBreakdown.style.influence).toBe(result.evaluationData.styleInfluence);
   });
 });

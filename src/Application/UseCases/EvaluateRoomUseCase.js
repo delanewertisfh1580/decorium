@@ -1,5 +1,4 @@
 import EvaluationResultDTO from '../DTOs/EvaluationResultDTO.js';
-import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
 import { evaluateComposition } from '../../Domain/Scoring/CompositionEvaluator.js';
 import MultiChannelEvaluationExplanationAssembler from '../Services/MultiChannelEvaluationExplanationAssembler.js';
 
@@ -23,6 +22,14 @@ function serializeViolation(violation, type = null) {
 function requireMethod(value, label, method) {
   if (!value || typeof value[method] !== 'function') {
     throw new Error(`EvaluateRoomUseCase: ${label} must provide ${method}.`);
+  }
+  return value;
+}
+
+function requireStyleInfluenceProfile(value) {
+  requireMethod(value, 'multiStyleDependencies.styleInfluenceProfile', 'evaluate');
+  if (!value.policy || typeof value.policy !== 'object') {
+    throw new Error('EvaluateRoomUseCase: multiStyleDependencies.styleInfluenceProfile must provide policy.');
   }
   return value;
 }
@@ -57,6 +64,7 @@ export class EvaluateRoomUseCase {
     for (const [dependency, method] of requiredV2Dependencies) {
       requireMethod(multiStyleDependencies?.[dependency], `multiStyleDependencies.${dependency}`, method);
     }
+    requireStyleInfluenceProfile(multiStyleDependencies?.styleInfluenceProfile);
 
     this.roomRepository = roomRepository;
     this.styleScorer = styleScorer;
@@ -96,11 +104,18 @@ export class EvaluateRoomUseCase {
       styleChannelPolicy,
       roomOccupancyProfile,
       clientPriorityEvaluator,
-      threeChannelScoreAggregator
+      threeChannelScoreAggregator,
+      styleInfluenceProfile
     } = this.multiStyleDependencies;
-    const roomVector = placedItems.length > 0
-      ? FeatureVector.average(placedItems.map(placed => placed.featureVector))
+    const styleInfluence = placedItems.length > 0
+      ? styleInfluenceProfile.evaluate({ placedItems })
       : null;
+    const appliedStyleInfluence = Object.freeze({
+      policy: styleInfluenceProfile.policy,
+      totalWeight: styleInfluence?.totalWeight ?? 0,
+      contributions: styleInfluence?.contributions ?? Object.freeze([])
+    });
+    const roomVector = styleInfluence?.roomVector ?? null;
     const multiStyle = roomVector
       ? multiStyleEvaluator.evaluate({ roomVector, targets: evaluationSpec.styleTargets })
       : {
@@ -180,6 +195,7 @@ export class EvaluateRoomUseCase {
       ],
       itemCount: placedItems.length,
       roomVector: roomVector?.toArray() ?? null,
+      styleInfluence: appliedStyleInfluence,
       feedback,
       styleScore: styleChannel.score,
       clientPriorityScore: priority.score,
@@ -200,6 +216,7 @@ export class EvaluateRoomUseCase {
           compositionScore: compositionScoring.score,
           compositionPenalty,
           channelPenalty: styleChannelPenalty,
+          influence: appliedStyleInfluence,
           targets: multiStyle.targets
         },
         clientPriorities: {
