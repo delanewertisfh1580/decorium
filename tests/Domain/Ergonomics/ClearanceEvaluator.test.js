@@ -137,4 +137,25 @@ describe('ClearanceEvaluator', () => {
       ['cabinet', 'dining-chair']
     ]);
   });
+
+  it('assigns distinct diagnostic IDs to distinct pairs under one clearance rule', () => {
+    const room = createRoom([
+      [createItem('chair-a'), { x: 1, z: 1 }],
+      [createItem('chair-b'), { x: 2.3, z: 1 }],
+      [createItem('chair-c'), { x: 5, z: 1 }],
+      [createItem('chair-d'), { x: 6.3, z: 1 }]
+    ]);
+
+    const violations = new ClearanceEvaluator().evaluate(room, rule);
+
+    expect(violations).toHaveLength(2);
+    expect(violations.map(violation => violation.constraintId)).toEqual([
+      'ergonomics-minimum-clearance',
+      'ergonomics-minimum-clearance'
+    ]);
+    expect(violations.map(violation => violation.diagnosticId)).toEqual([
+      'ergonomics-minimum-clearance:chair-a:chair-b',
+      'ergonomics-minimum-clearance:chair-c:chair-d'
+    ]);
+  });
 });

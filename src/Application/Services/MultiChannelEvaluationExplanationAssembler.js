@@ -46,7 +46,7 @@ export class MultiChannelEvaluationExplanationAssembler {
       ratingPolicy,
       completion
     });
-    const impactById = new Map(impactResult.impacts.map(impact => [impact.violationId, impact]));
+    const impactById = new Map(impactResult.impacts.map(impact => [impact.diagnosticId, impact]));
     const sourceViolations = [
       ...targetResults.flatMap(target => (target.violations ?? []).map(violation => ({ violation, channel: 'style', priority: null }))),
       ...compositionViolations.map(violation => ({ violation, channel: 'style', priority: null })),
@@ -81,13 +81,14 @@ export class MultiChannelEvaluationExplanationAssembler {
     if (!feedback) {
       throw new Error(`MultiChannelEvaluationExplanationAssembler missing authored feedback for violation ${violation.messageKey}`);
     }
-    const impact = impactById.get(violation.constraintId);
+    const impact = impactById.get(violation.diagnosticId);
     if (!impact) {
-      throw new Error(`MultiChannelEvaluationExplanationAssembler missing impact for violation ${violation.constraintId}`);
+      throw new Error(`MultiChannelEvaluationExplanationAssembler missing impact for diagnostic ${violation.diagnosticId}`);
     }
     const instances = resolveInstances(roomState, violation.itemIds);
     return freeze({
-      id: violation.constraintId,
+      id: violation.diagnosticId,
+      constraintId: violation.constraintId,
       channel,
       scope: instances.length > 0 ? 'instances' : 'room',
       ...(priority ? { priority } : {}),

@@ -1,4 +1,5 @@
 import MinimumClearanceRule from './MinimumClearanceRule.js';
+import { createDiagnosticId } from '../Diagnostics/DiagnosticIdentity.js';
 
 function dimensionsFor(placedItem) {
   const dimensions = placedItem.dimensions ?? { x: 1, z: 1 };
@@ -59,6 +60,7 @@ class ClearanceViolation {
   }
 
   get constraintId() { return this._rule.id; }
+  get diagnosticId() { return createDiagnosticId(this.constraintId, this.itemIds); }
   get featureName() { return 'minimumClearance'; }
   get operator() { return '>='; }
   get threshold() { return this._threshold; }
@@ -69,7 +71,8 @@ class ClearanceViolation {
 
   toJSON() {
     return {
-      id: `${this.constraintId}:${this.itemIds.join(':')}`,
+      id: this.diagnosticId,
+      constraintId: this.constraintId,
       feature: this.featureName,
       operator: this.operator,
       threshold: this.threshold,

@@ -1,3 +1,5 @@
+import { requireDiagnosticId } from '../Diagnostics/DiagnosticIdentity.js';
+
 function requireMethod(value, name, method = 'evaluate') {
   if (!value || typeof value[method] !== 'function') {
     throw new Error(`MultiChannelViolationImpactPolicy ${name} must provide ${method}()`);
@@ -73,7 +75,7 @@ export class MultiChannelViolationImpactPolicy {
       });
       const channelKey = candidate.channel === 'client-priority' ? 'clientPriorityScore' : `${candidate.channel}Score`;
       return Object.freeze({
-        violationId: candidate.violation.constraintId,
+        diagnosticId: requireDiagnosticId(candidate.violation),
         channel: candidate.channel,
         channelScoreDelta: fixed(counterfactual[channelKey] - current[channelKey]),
         totalScoreDelta: fixed(counterfactual.totalScore - current.totalScore),

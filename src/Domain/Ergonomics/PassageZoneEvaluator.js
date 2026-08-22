@@ -1,4 +1,5 @@
 import PassageZone from './PassageZone.js';
+import { createDiagnosticId } from '../Diagnostics/DiagnosticIdentity.js';
 
 function dimensionsFor(placedItem) {
   const dimensions = placedItem.dimensions ?? { x: 1, z: 1 };
@@ -48,6 +49,7 @@ class PassageZoneViolation {
   }
 
   get constraintId() { return 'ergonomics-passage-zone-free'; }
+  get diagnosticId() { return createDiagnosticId(this.constraintId, [this.zoneId, ...this.itemIds]); }
   get featureName() { return 'passageZone'; }
   get operator() { return 'disjoint'; }
   get threshold() { return 0; }

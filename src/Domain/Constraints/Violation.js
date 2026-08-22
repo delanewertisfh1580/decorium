@@ -1,3 +1,5 @@
+import { createDiagnosticId } from '../Diagnostics/DiagnosticIdentity.js';
+
 export class Violation {
   constructor(constraint, actualValue, severity) {
     if (!constraint) throw new Error('Violation requires a constraint');
@@ -17,6 +19,7 @@ export class Violation {
   get severity() { return this._severity; }
   get featureName() { return this._constraint.featureKey; }
   get constraintId() { return this._constraint.id || this._constraint.featureKey; }
+  get diagnosticId() { return createDiagnosticId(this.constraintId); }
   get operator() { return this._constraint.operator; }
   get threshold() { return this._constraint.threshold; }
   get messageKey() { return this._constraint.messageKey; }
@@ -29,6 +32,8 @@ export class Violation {
 
   toJSON() {
     return {
+      id: this.diagnosticId,
+      constraintId: this.constraintId,
       featureName: this.featureName,
       operator: this.operator,
       threshold: this.threshold,

@@ -1,4 +1,5 @@
 import FunctionalLayoutRule from './FunctionalLayoutRule.js';
+import { createDiagnosticId } from '../Diagnostics/DiagnosticIdentity.js';
 
 function canonicalPair(itemIdA, itemIdB) {
   return [itemIdA, itemIdB].sort();
@@ -98,6 +99,7 @@ class FunctionalLayoutViolation {
   }
 
   get constraintId() { return this._rule.id; }
+  get diagnosticId() { return createDiagnosticId(this.constraintId, this.itemIds); }
   get featureName() { return 'functionalLayout'; }
   get operator() { return '>='; }
   get threshold() { return this._rule.minPartners; }
@@ -108,7 +110,8 @@ class FunctionalLayoutViolation {
 
   toJSON() {
     return {
-      id: `${this.constraintId}:${this.itemIds.join(':')}`,
+      id: this.diagnosticId,
+      constraintId: this.constraintId,
       feature: this.featureName,
       operator: this.operator,
       threshold: this.threshold,

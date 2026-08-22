@@ -8,6 +8,7 @@ import StyleChannelPolicy from '../../../src/Domain/Scoring/StyleChannelPolicy.j
 import ThreeChannelScoreAggregator from '../../../src/Domain/Scoring/ThreeChannelScoreAggregator.js';
 
 const priorityViolation = {
+  diagnosticId: 'client-priority:warm-intimacy',
   constraintId: 'client-priority:warm-intimacy',
   severity: 0.5,
   constraint: { weight: 1 },
@@ -36,7 +37,7 @@ describe('MultiChannelViolationImpactPolicy', () => {
 
     expect(result.current).toMatchObject({ styleScore: 1, clientPriorityScore: 0.5, ergonomicsScore: 1, totalScore: 0.9, stars: 5 });
     expect(result.impacts).toEqual([{
-      violationId: 'client-priority:warm-intimacy',
+      diagnosticId: 'client-priority:warm-intimacy',
       channel: 'client-priority',
       channelScoreDelta: 0.5,
       totalScoreDelta: 0.1,

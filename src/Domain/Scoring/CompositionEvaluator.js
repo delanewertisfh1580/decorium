@@ -1,3 +1,5 @@
+import { createDiagnosticId } from '../Diagnostics/DiagnosticIdentity.js';
+
 const ROLE_BY_TYPE = Object.freeze({
   sofa: 'seating',
   chair: 'seating',
@@ -9,6 +11,7 @@ const ROLE_BY_TYPE = Object.freeze({
 
 function requirementViolation({ id, messageKey, threshold, actualValue, severity, weight = 1, description }) {
   return {
+    diagnosticId: createDiagnosticId(id),
     constraintId: id,
     featureName: 'composition',
     operator: 'required',

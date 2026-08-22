@@ -1,4 +1,5 @@
 import RequiredFunctionalScenario from './RequiredFunctionalScenario.js';
+import { createDiagnosticId } from '../Diagnostics/DiagnosticIdentity.js';
 
 function matchesAffordance(placedItem, affordance) {
   return placedItem.item.interactionProfile.hasAffordance(affordance);
@@ -23,6 +24,7 @@ class RequiredFunctionalScenarioViolation {
   }
 
   get constraintId() { return `required-scenario:${this._scenario.id}:${this._role.affordance}`; }
+  get diagnosticId() { return createDiagnosticId(this.constraintId); }
   get featureName() { return 'requiredFunctionalScenario'; }
   get operator() { return '>='; }
   get threshold() { return this._role.minCount; }
@@ -34,7 +36,8 @@ class RequiredFunctionalScenarioViolation {
 
   toJSON() {
     return {
-      id: this.constraintId,
+      id: this.diagnosticId,
+      constraintId: this.constraintId,
       feature: this.featureName,
       operator: this.operator,
       threshold: this.threshold,

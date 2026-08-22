@@ -60,7 +60,7 @@ Calibrated result (`stars`, `completionEligible`) → RecordLevelCompletionUseCa
 
 `LoadLevelUseCase` creates V2 evaluation only from authored client policy and exact profile lookups. `CatalogValidator` hydrates each V4 record into an `Item` with immutable `InteractionProfile` and `SpatialBehavior`; no runtime derives behavior from type or mesh. `MultiStyleEvaluator` independently evaluates targets; `StyleChannelPolicy` blends composition exactly once. `RoomOccupancyProfile` and `ClearanceEvaluator` consider only `SpatialBehavior.isFloorObstacle`, then `SpatialPreferenceEvaluator` maps authored density/free-area rules and `ClientPriorityEvaluator` normalizes `functional-scenario` and `spatial-preferences` satisfaction. `ThreeChannelScoreAggregator` applies authored `0.5/0.2/0.3` weights.[3] [4] [7]
 
-`ScorecardCalibrationPolicy` still owns raw-vs-display stars, critical caps and `completionEligible`. `MultiChannelViolationImpactPolicy` recomputes exact counterfactual impact per V2 diagnostic. `MultiChannelEvaluationExplanationAssembler` produces immutable explanation V2; `EvaluationView` renders supplied channels, labels, facts and remediation only. `GameController` forwards `evaluationSpec` and validated presentation intent, never recreating game policy.[5] [6]
+`ScorecardCalibrationPolicy` still owns raw-vs-display stars, critical caps and `completionEligible`. `MultiChannelViolationImpactPolicy` recomputes exact counterfactual impact per unique V2 `diagnosticId`; the rule-level `constraintId` remains a separate reference. `MultiChannelEvaluationExplanationAssembler` produces immutable explanation V2; `EvaluationView` renders supplied channels, labels, facts and remediation only. `GameController` forwards `evaluationSpec` and validated presentation intent, never recreating game policy.[5] [6]
 
 ### Profile and campaign
 
@@ -87,7 +87,7 @@ Player settings and completed level progress are persisted in profile schema V3.
 | `StyleConstraintCatalog v1` | Exact style profile ID, label and constraints. | `data/styles`, schema, Infrastructure adapter and V2 hydration |
 | `ScoringParameters v2` | Channel weights, style blend, grid size, density profiles, star thresholds and critical cap. | `data/scoring`, schema, runtime validation and Domain policies |
 | `EvaluationSpec v1` | Frozen V2 evaluation inputs reproducible from a loaded level/brief/profile catalog. | Application DTO boundary |
-| `EvaluationExplanation v2` | Immutable causal rule/fact/priority/remediation/impact/instance snapshot for result panel. | Domain impact policy, Application assembly, feedback adapter and Presentation rendering |
+| `EvaluationExplanation v2` | Immutable causal `diagnosticId`/rule/fact/priority/remediation/impact/instance snapshot for result panel. | Domain impact policy, Application assembly, feedback adapter and Presentation rendering |
 | BuildInfo / release manifest | Build identity for release verification. | Release pipeline |
 
 ## Non-negotiable invariants

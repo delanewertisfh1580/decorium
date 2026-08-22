@@ -5,7 +5,8 @@ import MultiChannelEvaluationExplanationAssembler from '../Services/MultiChannel
 
 function serializeViolation(violation, type = null) {
   return {
-    id: violation.constraintId,
+    id: violation.diagnosticId,
+    constraintId: violation.constraintId,
     feature: violation.featureName,
     operator: violation.operator,
     threshold: violation.threshold,

@@ -1,3 +1,5 @@
+import { createDiagnosticId } from '../Diagnostics/DiagnosticIdentity.js';
+
 function requireMethod(value, name, method) {
   if (!value || typeof value[method] !== 'function') {
     throw new Error(`ClientPriorityEvaluator ${name} must provide ${method}()`);
@@ -21,8 +23,10 @@ function matchingItems(roomState, affordance) {
 }
 
 function priorityViolation({ priority, satisfaction, actualValue, itemIds, featureName }) {
+  const constraintId = `client-priority:${priority.id}`;
   return Object.freeze({
-    constraintId: `client-priority:${priority.id}`,
+    diagnosticId: createDiagnosticId(constraintId),
+    constraintId,
     constraint: Object.freeze({
       id: `client-priority:${priority.id}`,
       weight: priority.weight,
