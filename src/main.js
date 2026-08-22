@@ -41,6 +41,9 @@ import GetCampaignLevelsUseCase from './Application/UseCases/GetCampaignLevelsUs
 import RecordLevelCompletionUseCase from './Application/UseCases/RecordLevelCompletionUseCase.js';
 import UpdatePlayerSettingsUseCase from './Application/UseCases/UpdatePlayerSettingsUseCase.js';
 import GetBuildInfoUseCase from './Application/UseCases/GetBuildInfoUseCase.js';
+import StartLevelSessionUseCase from './Application/UseCases/StartLevelSessionUseCase.js';
+import ReadRoomStateUseCase from './Application/UseCases/ReadRoomStateUseCase.js';
+import ResetRoomAttemptUseCase from './Application/UseCases/ResetRoomAttemptUseCase.js';
 import ProgressionPolicy from './Domain/Progression/ProgressionPolicy.js';
 import { GameController } from './Presentation/Controllers/GameController.js';
 import FurnitureAssetRepository from './Presentation/Scene/FurnitureAssetRepository.js';
@@ -141,6 +144,9 @@ async function bootstrap() {
       presentationEnvironmentRepository,
       clientBriefRepository
     );
+    const startLevelSessionUseCase = new StartLevelSessionUseCase(loadLevelUseCase, roomRepository);
+    const readRoomStateUseCase = new ReadRoomStateUseCase(roomRepository);
+    const resetRoomAttemptUseCase = new ResetRoomAttemptUseCase(roomRepository);
     const placeItemUseCase = new PlaceItemUseCase(roomRepository);
     const moveItemUseCase = new MoveItemUseCase(roomRepository);
     const rotateItemUseCase = new RotateItemUseCase(roomRepository);
@@ -214,6 +220,9 @@ async function bootstrap() {
       removeItemUseCase,
       evaluateRoomUseCase,
       recordLevelCompletionUseCase,
+      startLevelSessionUseCase,
+      readRoomStateUseCase,
+      resetRoomAttemptUseCase,
       playerProfile,
       roomRepository,
       furnitureAssetRepository,
@@ -223,7 +232,9 @@ async function bootstrap() {
       document.getElementById('room-canvas'),
       document.getElementById('catalog-container'),
       document.getElementById('toolbar-container'),
-      document.getElementById('evaluation-container')
+      document.getElementById('evaluation-container'),
+      document.getElementById('dashboard-container'),
+      document.getElementById('boot-status')
     );
     const settingsInitialization = await initializePlayerSettingsForApp({
       updatePlayerSettingsUseCase,

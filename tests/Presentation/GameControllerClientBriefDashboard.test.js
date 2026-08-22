@@ -1,22 +1,21 @@
-// @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { GameController } from '../../src/Presentation/Controllers/GameController.js';
 
 describe('GameController ClientBrief dashboard context', () => {
-  it('renders the client, authored brief and client priorities without calculating or rewriting policy', () => {
-    document.body.innerHTML = '<div id="dashboard-container"></div>';
+  it('forwards the authored client brief and presentation state to the dashboard without calculating or rewriting policy', () => {
     const controller = new GameController({});
+    const dashboardView = { render: vi.fn() };
+    controller.dashboardView = dashboardView;
     controller.toolbarView = {
-      renderContextActions: () => {},
-      setSelectionState: () => {},
-      setUndoState: () => {}
+      setSelectionState: vi.fn(),
+      setUndoState: vi.fn()
     };
     controller.roomViewModel = {
+      name: 'Уютный уголок',
       placedItems: [],
       selectedItemId: null
     };
     controller.level = {
-      name: 'Уютный уголок',
       clientBrief: {
         client: { displayName: 'Денис' },
         title: 'Уютный вечерний уголок',
@@ -31,12 +30,13 @@ describe('GameController ClientBrief dashboard context', () => {
 
     controller._renderDashboard();
 
-    const dashboard = document.getElementById('dashboard-container');
-    expect(dashboard.textContent).toContain('Денис');
-    expect(dashboard.textContent).toContain('Уютный вечерний уголок');
-    expect(dashboard.textContent).toContain('Клиент любит собранные, камерные пространства.');
-    expect(dashboard.textContent).toContain('Комфортный просмотр');
-    expect(dashboard.querySelectorAll('[data-client-priority]').length).toBe(2);
-    expect(dashboard.textContent).not.toContain('Старый presentation subtitle');
+    expect(dashboardView.render).toHaveBeenCalledWith({
+      roomName: 'Уютный уголок',
+      placedCount: 0,
+      evaluation: null,
+      clientBrief: controller.level.clientBrief
+    });
+    expect(dashboardView.render.mock.calls[0][0].clientBrief.clientPriorities).toHaveLength(2);
+    expect(controller.toolbarView.setSelectionState).toHaveBeenCalledWith(false);
   });
 });

@@ -1,57 +1,88 @@
-import { RoomState } from '../../Domain/Rooms/RoomState.js';
-import { RoomViewModel } from '../ViewModels/RoomViewModel.js';
-import { EvaluationViewModel } from '../ViewModels/EvaluationViewModel.js';
 import { RoomView } from '../Views/RoomView.js';
 import { ItemCatalogView } from '../Views/ItemCatalogView.js';
 import { ToolbarView } from '../Views/ToolbarView.js';
 import { EvaluationView } from '../Views/EvaluationView.js';
+import { GameDashboardView } from '../Views/GameDashboardView.js';
+import { TransientStatusView } from '../Views/TransientStatusView.js';
 import { INPUT_INTENTS } from './InputIntent.js';
-import { getKeyboardAction, isEditableKeyboardTarget } from './KeyboardShortcuts.js';
-import UndoBuffer from './UndoBuffer.js';
+import KeyboardIntentRouter from './KeyboardIntentRouter.js';
+import EvaluationCoordinator from './EvaluationCoordinator.js';
+import RoomInteractionCoordinator from './RoomInteractionCoordinator.js';
+import LevelSessionCoordinator from './LevelSessionCoordinator.js';
 
 export class GameController {
   constructor({
-    loadLevelUseCase,
     placeItemUseCase,
     moveItemUseCase,
     rotateItemUseCase,
     removeItemUseCase,
     evaluateRoomUseCase,
     recordLevelCompletionUseCase,
+    startLevelSessionUseCase = null,
+    readRoomStateUseCase = null,
+    resetRoomAttemptUseCase = null,
     playerProfile = null,
-    roomRepository,
     furnitureAssetRepository = null,
     roomCompositionAssetRepository = null
   }) {
-    this.loadLevelUseCase = loadLevelUseCase;
     this.placeItemUseCase = placeItemUseCase;
     this.moveItemUseCase = moveItemUseCase;
     this.rotateItemUseCase = rotateItemUseCase;
     this.removeItemUseCase = removeItemUseCase;
     this.evaluateRoomUseCase = evaluateRoomUseCase;
     this.recordLevelCompletionUseCase = recordLevelCompletionUseCase;
+    this.startLevelSessionUseCase = startLevelSessionUseCase;
+    this.readRoomStateUseCase = readRoomStateUseCase;
+    this.resetRoomAttemptUseCase = resetRoomAttemptUseCase;
     this.playerProfile = playerProfile;
     this.playerSettings = playerProfile?.settings ?? null;
-    this.roomRepository = roomRepository;
     this.furnitureAssetRepository = furnitureAssetRepository;
     this.roomCompositionAssetRepository = roomCompositionAssetRepository;
     this.roomView = null;
-    this.roomViewModel = null;
-    this.evaluationViewModel = new EvaluationViewModel();
-    this.pendingItemId = null;
-    this._lastEvaluation = null;
-    this.undoBuffer = new UndoBuffer();
-    this._dashboardOpen = false;
+    this.sessionCoordinator = new LevelSessionCoordinator({
+      startLevelSessionUseCase: this.startLevelSessionUseCase,
+      readRoomStateUseCase: this.readRoomStateUseCase,
+      resetRoomAttemptUseCase: this.resetRoomAttemptUseCase,
+      getRoomView: () => this.roomView
+    });
+    this.roomInteraction = new RoomInteractionCoordinator({
+      getRoomView: () => this.roomView,
+      getCatalogView: () => this.catalogView,
+      getRoomViewModel: () => this.sessionCoordinator.roomViewModel,
+      getLevel: () => this.sessionCoordinator.level,
+      placeItemUseCase: this.placeItemUseCase,
+      moveItemUseCase: this.moveItemUseCase,
+      rotateItemUseCase: this.rotateItemUseCase,
+      removeItemUseCase: this.removeItemUseCase,
+      refreshRoomState: () => this._refreshRoomState(),
+      onEvaluationInvalidated: () => this._invalidateEvaluation(),
+      onStatus: message => this._showStatus(message),
+      onRequestRender: () => this._render()
+    });
+    this.evaluationCoordinator = new EvaluationCoordinator({
+      evaluateRoomUseCase: this.evaluateRoomUseCase,
+      recordLevelCompletionUseCase: this.recordLevelCompletionUseCase,
+      getEvaluationView: () => this.evaluationView,
+      onProfileUpdated: profile => this.setPlayerProfile(profile),
+      onCompleted: async profile => this.completionProfileListener?.(profile),
+      onStatus: message => this._showStatus(message),
+      onRequestDashboardRender: () => this._renderDashboard(),
+      onRequestRoomRender: () => this._render(),
+      onFocusItem: instanceId => this.roomInteraction.focusExistingItem(instanceId)
+    });
+    this.dashboardView = null;
+    this.statusView = null;
+    this.keyboardRouter = null;
     this.completionProfileListener = null;
   }
 
-  async init(canvas, catalogContainer, toolbarContainer, evaluationContainer) {
+  async init(canvas, catalogContainer, toolbarContainer, evaluationContainer, dashboardContainer = null, statusContainer = null) {
     this.roomView = new RoomView(canvas, {
       furnitureAssetRepository: this.furnitureAssetRepository,
       roomCompositionAssetRepository: this.roomCompositionAssetRepository
     });
     if (this.playerSettings) this.roomView.setRenderSettings(this.playerSettings);
-    this.catalogView = new ItemCatalogView(catalogContainer, itemId => this._onCatalogSelect(itemId));
+    this.catalogView = new ItemCatalogView(catalogContainer, itemId => this.roomInteraction.beginCatalogPlacement(itemId));
     this.toolbarView = new ToolbarView(toolbarContainer, {
       onRotate: () => this._dispatchIntent(INPUT_INTENTS.ROTATE),
       onDelete: () => this._dispatchIntent(INPUT_INTENTS.DELETE),
@@ -65,25 +96,32 @@ export class GameController {
     this.evaluationView = new EvaluationView(evaluationContainer, {
       onFocusInstance: instanceId => this._onExplainabilityFocus(instanceId)
     });
+    this.dashboardView = new GameDashboardView(dashboardContainer, {
+      renderContextActions: container => this.toolbarView?.renderContextActions(container)
+    });
+    this.statusView = new TransientStatusView(statusContainer);
 
     await this.roomView.init();
     await this.catalogView.init();
     await this.toolbarView.init();
     await this.evaluationView.init();
     this.roomView.setInteractionHandlers({
-      onSelect: itemId => this._onRoomItemSelect(itemId),
+      onSelect: itemId => this.roomInteraction.selectRoomItem(itemId),
       onPlace: (itemId, position, rotation) => this._onPlace(itemId, position, rotation),
       onMove: (itemId, position) => this._onMove(itemId, position),
       onCancelMove: () => this._render(),
-      onDeselect: () => this._onDeselect(),
-      onFloorClick: position => this._onFloorClick(position),
-      onFixtureSelect: fixtureId => this._showStatus(fixtureId === 'ambient-mirror' ? 'Зеркало выбрано · перетащите по стене' : 'Полка выбрана · перетащите по стене'),
-      onFixtureMove: fixtureId => this._showStatus(fixtureId === 'ambient-mirror' ? 'Зеркало перемещено' : 'Полка перемещена'),
-      onPreview: (itemId, position, mode, rotation) => this._previewPlacement(itemId, position, mode, rotation)
+      onDeselect: () => this.roomInteraction.cancelSelection(),
+      onFloorClick: position => this.roomInteraction.handleFloorClick(position),
+      onFixtureSelect: fixtureId => this.roomInteraction.handleFixtureSelect(fixtureId),
+      onFixtureMove: fixtureId => this.roomInteraction.handleFixtureMove(fixtureId),
+      onPreview: (itemId, position, mode, rotation) => this.roomInteraction.preview(itemId, position, mode, rotation)
     });
     // Capture phase keeps shortcuts active even when a catalog/toolbar control owns focus.
-    // event.code (handled by getKeyboardAction) makes R/E work on Cyrillic layouts too.
-    document.addEventListener('keydown', this._onKeyDown, true);
+    // event.code (handled by InputIntent) makes R/E work on Cyrillic layouts too.
+    this.keyboardRouter = new KeyboardIntentRouter({
+      dispatch: intent => this._dispatchIntent(intent)
+    });
+    this.keyboardRouter.start();
   }
 
   setCompletionProfileListener(listener) {
@@ -104,13 +142,7 @@ export class GameController {
   }
 
   async loadLevel(levelId) {
-    const result = await this.loadLevelUseCase.execute(levelId);
-    if (!result.success) throw new Error(result.error);
-
-    this.level = result.data;
-    this.roomView.setPresentationEnvironment(this.level.presentationEnvironment);
-    this.roomViewModel = new RoomViewModel(this.level);
-    await this.roomRepository.saveState(this.level.roomId, this.level.roomState);
+    await this.sessionCoordinator.load(levelId);
     this._render();
   }
 
@@ -123,328 +155,76 @@ export class GameController {
   }
 
   _invalidateEvaluation() {
-    if (!this.evaluationViewModel.isVisible) return;
-    this.evaluationViewModel.reset();
-    this.evaluationView.hide();
-    this._lastEvaluation = null;
+    this.evaluationCoordinator.invalidate();
   }
 
   _renderDashboard() {
-    const dashboard = document.getElementById('dashboard-container');
-    if (!dashboard || !this.roomViewModel) return;
-    const existingSpoiler = dashboard.querySelector('[data-dashboard-spoiler]');
-    if (existingSpoiler) this._dashboardOpen = existingSpoiler.open;
-    const placedCount = this.roomViewModel.placedItems.length;
-    const result = this.evaluationViewModel.isVisible ? this.evaluationViewModel : null;
-    const clientBrief = this.level?.clientBrief ?? null;
-    const clientContext = clientBrief ? `
-      <section class="client-brief-context" aria-label="Бриф клиента">
-        <span class="eyebrow">Клиент · ${clientBrief.client.displayName}</span>
-        <strong>${clientBrief.title}</strong>
-        <p>${clientBrief.summary}</p>
-        <ul class="client-priorities">${clientBrief.clientPriorities.map(priority => (
-          `<li data-client-priority="${priority.id}">${priority.label}</li>`
-        )).join('')}</ul>
-      </section>
-    ` : '';
-    dashboard.innerHTML = `
-      <details class="dashboard-spoiler" data-dashboard-spoiler${this._dashboardOpen ? ' open' : ''}>
-        <summary class="dashboard-toggle" aria-label="Открыть сводку оценки">
-          <span class="dashboard-toggle-icon" aria-hidden="true">✦</span>
-          <span class="dashboard-toggle-copy"><b>Сводка</b><small>${placedCount} предметов</small></span>
-          <span class="dashboard-toggle-chevron" aria-hidden="true">⌄</span>
-        </summary>
-        <div class="dashboard-content">
-          <span class="eyebrow">${this.roomViewModel.name}</span>
-          ${clientContext}
-          <div class="summary-main">
-            <div class="summary-score">
-              <span class="score-label">Оценка</span>
-              <strong class="score-value">${result ? Math.round(result.score * 100) : '—'}</strong>
-            </div>
-            <div class="stars" aria-label="${result ? result.stars : 0} из 5 звёзд">${result ? '★'.repeat(result.stars) + '☆'.repeat(5 - result.stars) : '☆☆☆☆☆'}</div>
-          </div>
-          <div class="summary-meta">
-            <span><b>${placedCount}</b> предметов</span>
-          </div>
-      <details class="summary-actions">
-        <summary>Действия предмета</summary>
-            <div class="context-actions" data-context-actions></div>
-          </details>
-        </div>
-      </details>
-    `;
-    dashboard.querySelector('[data-dashboard-spoiler]').addEventListener('toggle', event => {
-      this._dashboardOpen = event.currentTarget.open;
+    if (!this.roomViewModel) return;
+    this.dashboardView?.render({
+      roomName: this.roomViewModel.name,
+      placedCount: this.roomViewModel.placedItems.length,
+      evaluation: this.evaluationViewModel.isVisible ? this.evaluationViewModel : null,
+      clientBrief: this.level?.clientBrief ?? null
     });
-    this.toolbarView?.renderContextActions(dashboard.querySelector('[data-context-actions]'));
     this.toolbarView?.setSelectionState(Boolean(this.roomViewModel.selectedItemId));
     this.toolbarView?.setUndoState(this.undoBuffer.canUndo, this.undoBuffer.nextLabel);
   }
 
-  _onCatalogSelect(itemId) {
-    const item = this.roomViewModel.getItemById(itemId);
-    if (!item) return;
-    this.pendingItemId = itemId;
-    this.catalogView.close();
-    this.roomViewModel.clearSelection();
-    this.roomView.beginPlacement(item);
-    this._showStatus('Размещение доступно: кликните в комнате · R/Q — повернуть · ПКМ — отмена');
-    this._render();
-  }
-
-  _onRoomItemSelect(itemId) {
-    this.pendingItemId = null;
-    this.roomView.cancelPlacement();
-    this.roomViewModel.selectItem(itemId);
-    this._showStatus('Перетащите предмет или кликните по полу для перемещения');
-    this._render();
-  }
-
   _onExplainabilityFocus(instanceId) {
-    const placed = this.roomViewModel?.roomState?.getItem(instanceId);
-    if (!placed) {
-      this._showStatus('Предмет из результата оценки больше не находится в комнате. Оцените комнату повторно.');
-      return;
-    }
-    this.pendingItemId = null;
-    this.roomView.cancelPlacement();
-    this.roomViewModel.selectItem(instanceId);
-    this._showStatus(`Выбран предмет из объяснения: ${placed.item.name}`);
-    this._render();
+    return this.evaluationCoordinator.focusExplanation(instanceId, {
+      roomViewModel: this.roomViewModel
+    });
   }
 
   async _refreshRoomState() {
-    const state = await this.roomRepository.getState(this.level.roomId);
-    if (state) this.level.roomState = state;
+    return this.sessionCoordinator.refreshRoomState();
   }
 
   async _onPlace(itemId, position, rotation = 0) {
-    const item = this.roomViewModel.getItemById(itemId);
-    if (!item) return;
-    const result = await this.placeItemUseCase.execute(
-      this.level.roomId,
-      item,
-      position,
-      { x: 0, y: rotation, z: 0 }
-    );
-    if (!result.success) {
-      this._showStatus(result.error);
-      this._render();
-      return;
-    }
-    await this._refreshRoomState();
-    this._invalidateEvaluation();
-    this.roomView.cancelPlacement();
-    this.pendingItemId = null;
-    const placedInstanceId = result.instanceId ?? item.id;
-    this.roomViewModel.selectItem(placedInstanceId);
-    this.undoBuffer.push({
-      label: `Отменить размещение: ${item.name}`,
-      undo: async () => {
-        const undoResult = await this.removeItemUseCase.execute(this.level.roomId, placedInstanceId);
-        if (!undoResult.success) throw new Error(undoResult.error);
-      }
-    });
-    this._showStatus(`${item.name} размещён · Z — отменить`);
-    this._render();
+    return this.roomInteraction.place(itemId, position, rotation);
   }
 
   async _onMove(itemId, position) {
-    const placedBefore = this.roomViewModel.roomState.getItem(itemId);
-    const previousPosition = placedBefore ? { ...placedBefore.position } : null;
-    const result = await this.moveItemUseCase.execute(this.level.roomId, itemId, position);
-    if (result.success) {
-      if (previousPosition) {
-        this.undoBuffer.push({
-          label: 'Отменить перемещение',
-          undo: async () => {
-            const undoResult = await this.moveItemUseCase.execute(this.level.roomId, itemId, previousPosition);
-            if (!undoResult.success) throw new Error(undoResult.error);
-          }
-        });
-      }
-      await this._refreshRoomState();
-      this._invalidateEvaluation();
-    }
-    this._showStatus(result.success ? 'Предмет перемещён · Z — отменить' : result.error);
-    this._render();
-  }
-
-  _previewPlacement(itemId, position, mode = 'place', rotation = 0) {
-    const roomState = this.roomViewModel?.roomState;
-    const item = this.roomViewModel?.getItemById(itemId);
-    if (!roomState || !item) return false;
-    // Geometry overlaps are intentional creative choices in this game. The
-    // preview only rejects positions that cannot exist inside the room.
-    return mode === 'move'
-      ? roomState.validateMove(itemId, position).success
-      : roomState.validatePlacement(item, position, rotation).success;
-  }
-
-  async _onFloorClick(position) {
-    if (this.roomViewModel.selectedItemId) {
-      await this._onMove(this.roomViewModel.selectedItemId, position);
-    }
+    return this.roomInteraction.move(itemId, position);
   }
 
   async _onVerticalMove(delta) {
-    const itemId = this.roomViewModel.selectedItemId;
-    if (!itemId) return;
-    const placed = this.roomViewModel.roomState.getItem(itemId);
-    if (!placed) return;
-    const position = placed.position;
-    position.y = Math.max(0, position.y + delta);
-    await this._onMove(itemId, position);
-    this._showStatus(delta > 0 ? 'Предмет поднят · PageDown опустить' : 'Предмет опущен · PageUp поднять');
+    return this.roomInteraction.moveVertically(delta);
   }
 
   async _onRotate() {
-    if (this.roomView.ghostItem) {
-      if (this.roomView.rotateGhost()) this._showStatus('Ghost повернут · R/Q — ещё раз · ПКМ — отмена');
-      return;
-    }
-    const itemId = this.roomViewModel.selectedItemId;
-    if (!itemId) return;
-    const result = await this.rotateItemUseCase.execute(this.level.roomId, itemId, { y: 90 });
-    if (result.success) {
-      this.undoBuffer.push({
-        label: 'Отменить поворот',
-        undo: async () => {
-          const undoResult = await this.rotateItemUseCase.execute(this.level.roomId, itemId, { y: -90 });
-          if (!undoResult.success) throw new Error(undoResult.error);
-        }
-      });
-    }
-    this._showStatus(result.success ? 'Предмет повернут · Z — отменить' : result.error);
-    if (result.success) {
-      await this._refreshRoomState();
-      this._invalidateEvaluation();
-      this._render();
-    }
-  }
-
-  _onDeselect() {
-    this.pendingItemId = null;
-    this.roomView?.cancelPlacement();
-    this.roomViewModel?.clearSelection();
-    this._showStatus('Выделение отменено');
-    if (this.roomViewModel) this._render();
+    return this.roomInteraction.rotate();
   }
 
   async _onDelete() {
-    const itemId = this.roomViewModel.selectedItemId;
-    if (!itemId) return;
-    const placedBefore = this.roomViewModel.roomState.getItem(itemId);
-    const restoreData = placedBefore ? {
-      item: placedBefore.item,
-      position: { ...placedBefore.position },
-      rotation: { x: 0, y: placedBefore.rotation, z: 0 }
-    } : null;
-    const result = await this.removeItemUseCase.execute(this.level.roomId, itemId);
-    this._showStatus(result.success ? 'Предмет удалён · Z — отменить' : result.error);
-    if (result.success) {
-      if (restoreData) {
-        this.undoBuffer.push({
-          label: 'Отменить удаление',
-          undo: async () => {
-            const undoResult = await this.placeItemUseCase.execute(
-              this.level.roomId,
-              restoreData.item,
-              restoreData.position,
-              restoreData.rotation
-            );
-            if (!undoResult.success) throw new Error(undoResult.error);
-            return undoResult;
-          }
-        });
-      }
-      await this._refreshRoomState();
-      this._invalidateEvaluation();
-      this.roomViewModel.clearSelection();
-      this._render();
-    }
+    return this.roomInteraction.removeSelected();
   }
 
   async _onClear() {
-    this.roomView.cancelPlacement();
-    this.level.roomState = RoomState.createEmpty(this.level.roomState.bounds);
-    this.roomViewModel = new RoomViewModel(this.level);
-    this.pendingItemId = null;
-    this.undoBuffer.clear();
-    await this.roomRepository.saveState(this.level.roomId, this.level.roomState);
-    this.evaluationViewModel.reset();
-    this.evaluationView.hide();
+    const result = await this.sessionCoordinator.resetAttempt();
+    if (!result.success) {
+      this._showStatus(result.error);
+      return result;
+    }
+    this.roomInteraction.resetTransientState();
+    this.evaluationCoordinator.reset();
     this._showStatus('Новая попытка начата');
     this._render();
+    return { success: true };
   }
 
   async _onUndo() {
-    if (!this.undoBuffer.canUndo) return;
-
-    try {
-      const result = await this.undoBuffer.undo();
-      if (!result.success) return;
-      await this._refreshRoomState();
-      this._invalidateEvaluation();
-      const restoredInstanceId = result.value?.instanceId;
-      if (restoredInstanceId) this.roomViewModel.selectItem(restoredInstanceId);
-      else if (this.roomViewModel.selectedItemId && !this.roomViewModel.roomState.getItem(this.roomViewModel.selectedItemId)) {
-        this.roomViewModel.clearSelection();
-      }
-      this._showStatus(`${result.label} отменено`);
-      this._render();
-    } catch (error) {
-      this._showStatus(`Не удалось отменить действие: ${error.message}`);
-      this._render();
-    }
+    return this.roomInteraction.undo();
   }
 
   async _onEvaluate() {
-    const result = await this.evaluateRoomUseCase.execute({
-      roomId: this.level.roomId,
-      evaluationSpec: this.level.evaluationSpec
+    return this.evaluationCoordinator.evaluate({
+      level: this.level,
+      roomViewModel: this.roomViewModel,
+      profile: this.playerProfile
     });
-    if (!result.success) {
-      this._showStatus(result.error);
-      return;
-    }
-    if (this.recordLevelCompletionUseCase && this.playerProfile) {
-      const completion = await this.recordLevelCompletionUseCase.execute({
-        levelId: this.level.levelId,
-        stars: result.evaluationData.stars,
-        targetScore: this.level.targetScore,
-        ...(typeof result.evaluationData.completionEligible === 'boolean'
-          ? { completionEligible: result.evaluationData.completionEligible }
-          : {}),
-        profile: this.playerProfile
-      });
-      if (completion.success) {
-        this.setPlayerProfile(completion.data);
-        if (completion.didComplete && this.completionProfileListener) {
-          await this.completionProfileListener(completion.data);
-        }
-      } else this._showStatus(`Оценка рассчитана, но прогресс не сохранён: ${completion.error}`);
-    }
-
-    this._lastEvaluation = result.evaluationData;
-    this.evaluationViewModel.update(result.evaluationData);
-    this.evaluationView.render(result.evaluationData);
-    this._renderDashboard();
   }
 
-  _onKeyDown = event => {
-    if (isEditableKeyboardTarget(event.target)) return;
-
-    const action = getKeyboardAction(event);
-    if (!action) return;
-
-    // Prevent browser scrolling/navigation for game controls such as Home and PageUp.
-    event.preventDefault();
-    if (!this.roomViewModel || !this.roomView) return;
-
-    this._dispatchIntent(action);
-  };
 
   _dispatchIntent(intent) {
     if (!this.roomViewModel || !this.roomView) return;
@@ -471,30 +251,56 @@ export class GameController {
         this._onUndo();
         break;
       case INPUT_INTENTS.CANCEL:
-        this.pendingItemId = null;
-        this.roomView.cancelPlacement();
-        this.roomViewModel.clearSelection();
-        this._render();
+        this.roomInteraction.cancelSelection({ announce: false });
         break;
       default:
         break;
     }
   }
 
+  get level() {
+    return this.sessionCoordinator.level;
+  }
+
+  set level(level) {
+    this.sessionCoordinator.setCompatibilityContext({ level });
+  }
+
+  get roomViewModel() {
+    return this.sessionCoordinator.roomViewModel;
+  }
+
+  set roomViewModel(roomViewModel) {
+    this.sessionCoordinator.setCompatibilityContext({ roomViewModel });
+  }
+
+  get evaluationViewModel() {
+    return this.evaluationCoordinator.viewModel;
+  }
+
+  get undoBuffer() {
+    return this.roomInteraction.undoBuffer;
+  }
+
+  get pendingItemId() {
+    return this.roomInteraction?.pendingItemId ?? null;
+  }
+
+  set pendingItemId(itemId) {
+    if (this.roomInteraction) this.roomInteraction.pendingItemId = itemId;
+  }
+
   _showStatus(message) {
-    const status = document.getElementById('boot-status');
-    if (!status) return;
-    status.textContent = message;
-    status.classList.remove('hidden');
-    clearTimeout(this._statusTimer);
-    this._statusTimer = setTimeout(() => status.classList.add('hidden'), 2600);
+    this.statusView?.show(message);
   }
 
   destroy() {
-    document.removeEventListener('keydown', this._onKeyDown, true);
+    this.keyboardRouter?.destroy();
     this.roomView?.destroy();
     this.catalogView?.destroy();
     this.toolbarView?.destroy();
     this.evaluationView?.destroy();
+    this.dashboardView?.destroy();
+    this.statusView?.destroy();
   }
 }

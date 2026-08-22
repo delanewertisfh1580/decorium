@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 const root = process.cwd();
 const mainSource = readFileSync(join(root, 'src/main.js'), 'utf8');
 const schemaLoaderSource = readFileSync(join(root, 'src/Infrastructure/DataLoaders/SchemaLoader.js'), 'utf8');
-const controllerSource = readFileSync(join(root, 'src/Presentation/Controllers/GameController.js'), 'utf8');
+const evaluationCoordinatorSource = readFileSync(join(root, 'src/Presentation/Controllers/EvaluationCoordinator.js'), 'utf8');
 
 describe('PROD-023 production evaluation wiring', () => {
   it('constructs V2 style, spatial and client-priority scoring collaborators from versioned content', () => {
@@ -23,7 +23,7 @@ describe('PROD-023 production evaluation wiring', () => {
     expect(mainSource).toContain('schemaVersion: 1,');
   });
 
-  it('forwards the immutable level evaluationSpec as a controller payload without deriving scoring inputs in Presentation', () => {
-    expect(controllerSource).toContain('this.level.evaluationSpec');
+  it('forwards the immutable level evaluationSpec through the evaluation coordinator without deriving scoring inputs in Presentation', () => {
+    expect(evaluationCoordinatorSource).toContain('level.evaluationSpec');
   });
 });
