@@ -1,19 +1,5 @@
 import PlacementResultDTO from '../DTOs/PlacementResultDTO.js';
 import { Item } from '../../Domain/Items/Item.js';
-import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
-
-function toDomainItem(itemData) {
-  if (itemData instanceof Item) return itemData;
-  const features = itemData.featureVector ?? itemData.features ?? {};
-  return new Item({
-    id: itemData.id,
-    name: itemData.name ?? 'Unknown item',
-    type: itemData.type ?? itemData.category ?? 'decor',
-    dimensions: itemData.dimensions,
-    price: itemData.price ?? 0,
-    featureVector: new FeatureVector(features)
-  });
-}
 
 function getState(repository, roomId) {
   return repository.getState ? repository.getState(roomId) : repository.loadRoomState(roomId);
@@ -29,9 +15,9 @@ export class PlaceItemUseCase {
     this.roomRepository = roomRepository;
   }
 
-  async execute(roomId, itemData, position, rotation) {
+  async execute(roomId, item, position, rotation) {
     if (!roomId || typeof roomId !== 'string') return PlacementResultDTO.failure('INVALID_INPUT: RoomID is required.');
-    if (!itemData || !itemData.id) return PlacementResultDTO.failure('INVALID_INPUT: Item data with ID is required.');
+    if (!(item instanceof Item)) return PlacementResultDTO.failure('INVALID_INPUT: A validated catalog Item is required.');
     if (!position || ['x', 'y', 'z'].some(key => typeof position[key] !== 'number')) {
       return PlacementResultDTO.failure('INVALID_INPUT: Valid position {x,y,z} is required.');
     }
@@ -43,10 +29,9 @@ export class PlaceItemUseCase {
       const roomState = await getState(this.roomRepository, roomId);
       if (!roomState) return PlacementResultDTO.failure(`ROOM_NOT_FOUND: Room ${roomId} not found.`);
 
-      const item = toDomainItem(itemData);
-      let placement = roomState.placeItem(item, {
+      const placement = roomState.placeItem(item, {
         x: position.x,
-        y: typeof position.y === 'number' ? position.y : 0,
+        y: position.y,
         z: position.z
       }, rotation.y);
       if (!placement.success) return PlacementResultDTO.failure(`PLACEMENT_REJECTED: ${placement.error}`);
@@ -58,7 +43,7 @@ export class PlaceItemUseCase {
       const placedInstance = placedItems[placedItems.length - 1];
       return PlacementResultDTO.success(placedInstance?.id ?? item.id, position, rotation);
     } catch (error) {
-      console.error(`PlaceItemUseCase: Error placing item ${itemData?.id ?? 'unknown'}:`, error);
+      console.error(`PlaceItemUseCase: Error placing item ${item.id}:`, error);
       return PlacementResultDTO.failure(`UNEXPECTED_ERROR: ${error.message}`);
     }
   }

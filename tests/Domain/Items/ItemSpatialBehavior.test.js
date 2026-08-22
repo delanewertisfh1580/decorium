@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { FeatureVector } from '../../../src/Domain/Items/FeatureVector.js';
 import { Item } from '../../../src/Domain/Items/Item.js';
 import SpatialBehavior from '../../../src/Domain/Items/SpatialBehavior.js';
+import InteractionProfile from '../../../src/Domain/Items/InteractionProfile.js';
 
 const featureVector = new FeatureVector({
   woodShare: 0.5,
@@ -38,6 +39,7 @@ describe('Item spatial behavior', () => {
       dimensions: { x: 2, z: 1.5 },
       price: 100,
       featureVector,
+      interactionProfile: new InteractionProfile({ schemaVersion: 1, affordances: ['floor-decor'] }),
       spatialBehavior
     });
 

@@ -6,6 +6,7 @@ import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
 import MinimumClearanceRule from '../../../src/Domain/Ergonomics/MinimumClearanceRule.js';
 import ClearanceEvaluator from '../../../src/Domain/Ergonomics/ClearanceEvaluator.js';
 import SpatialBehavior from '../../../src/Domain/Items/SpatialBehavior.js';
+import InteractionProfile from '../../../src/Domain/Items/InteractionProfile.js';
 
 function createItem(id) {
   return new Item({
@@ -13,8 +14,8 @@ function createItem(id) {
     name: id,
     type: 'seating',
     dimensions: { x: 1, z: 1 },
-    featureVector: new FeatureVector({
-      woodShare: 0.7,
+      featureVector: new FeatureVector({
+        woodShare: 0.7,
       metalShare: 0.1,
       glassShare: 0.05,
       plasticShare: 0.05,
@@ -30,6 +31,10 @@ function createItem(id) {
       priceNorm: 0.5,
       lightingFunctionShare: 0,
       storageFunctionShare: 0
+    }),
+    interactionProfile: new InteractionProfile({ schemaVersion: 1, affordances: ['lounge-seat'] }),
+    spatialBehavior: new SpatialBehavior({
+      schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
     })
   });
 }
@@ -90,6 +95,7 @@ describe('ClearanceEvaluator', () => {
       type: 'decor',
       dimensions: { x: 2, z: 2 },
       featureVector: createItem('feature-source').featureVector,
+      interactionProfile: new InteractionProfile({ schemaVersion: 1, affordances: ['floor-decor'] }),
       spatialBehavior: new SpatialBehavior({
         schemaVersion: 1,
         placementKind: 'floor-overlay',
@@ -112,7 +118,11 @@ describe('ClearanceEvaluator', () => {
       name: 'wide',
       type: 'surface',
       dimensions: { x: 2, z: 0.5 },
-      featureVector: createItem('feature-source').featureVector
+      featureVector: createItem('feature-source').featureVector,
+      interactionProfile: new InteractionProfile({ schemaVersion: 1, affordances: ['work-surface'] }),
+      spatialBehavior: new SpatialBehavior({
+        schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
+      })
     });
     const room = createRoom([
       [wideItem, { x: 2, z: 2 }, 90],

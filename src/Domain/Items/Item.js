@@ -10,8 +10,8 @@ export class Item {
     featureVector,
     dimensions,
     price = 0,
-    interactionProfile = InteractionProfile.empty(),
-    spatialBehavior = SpatialBehavior.defaultFloorObstacle()
+    interactionProfile,
+    spatialBehavior
   }) {
     if (id === undefined || id === null) throw new Error('Item ID is required');
     if (typeof id !== 'string' || id.trim() === '') throw new Error('Item ID cannot be empty');

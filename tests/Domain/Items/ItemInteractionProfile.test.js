@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { FeatureVector } from '../../../src/Domain/Items/FeatureVector.js';
 import InteractionProfile from '../../../src/Domain/Items/InteractionProfile.js';
+import SpatialBehavior from '../../../src/Domain/Items/SpatialBehavior.js';
 import Item from '../../../src/Domain/Items/Item.js';
 
 const featureVector = new FeatureVector({
@@ -19,21 +20,20 @@ describe('Item interaction profile', () => {
     });
     const item = new Item({
       id: 'table-001', name: 'Dining table', type: 'table', featureVector,
-      dimensions: { x: 1.8, z: 0.9 }, interactionProfile
+      dimensions: { x: 1.8, z: 0.9 }, interactionProfile,
+      spatialBehavior: new SpatialBehavior({
+        schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
+      })
     });
 
     expect(item.interactionProfile).toBe(interactionProfile);
     expect(item.interactionProfile.hasAffordance('dining-surface')).toBe(true);
   });
 
-  it('uses explicit empty interaction semantics for existing legacy item construction', () => {
-    const item = new Item({
+  it('rejects construction without an authored interaction profile', () => {
+    expect(() => new Item({
       id: 'decor-001', name: 'Vase', type: 'decor', featureVector,
       dimensions: { x: 0.3, z: 0.3 }
-    });
-
-    expect(item.interactionProfile.toJSON()).toEqual({
-      schemaVersion: 1, affordances: [], frontAxis: null, usableSides: []
-    });
+    })).toThrow('Item interactionProfile must be an instance of InteractionProfile');
   });
 });

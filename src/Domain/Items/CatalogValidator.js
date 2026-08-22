@@ -18,7 +18,8 @@ export class CatalogValidator {
       if (typeof item.price !== 'number' || item.price < 0) throw new Error(`Item ${item.id}: price must be non-negative`);
       if (!item.featureVector) throw new Error(`Item ${item.id}: missing featureVector`);
       new FeatureVector(item.featureVector);
-      if (item.interactionProfile !== undefined) new InteractionProfile(item.interactionProfile);
+      if (item.interactionProfile === undefined) throw new Error(`Item ${item.id}: missing interactionProfile`);
+      new InteractionProfile(item.interactionProfile);
       if (item.spatialBehavior === undefined) throw new Error(`Item ${item.id}: missing spatialBehavior`);
       new SpatialBehavior(item.spatialBehavior);
     }
@@ -33,9 +34,7 @@ export class CatalogValidator {
       dimensions: data.dimensions,
       price: data.price,
       featureVector: new FeatureVector(data.featureVector),
-      interactionProfile: data.interactionProfile
-        ? new InteractionProfile(data.interactionProfile)
-        : InteractionProfile.empty(),
+      interactionProfile: new InteractionProfile(data.interactionProfile),
       spatialBehavior: new SpatialBehavior(data.spatialBehavior)
     }));
   }

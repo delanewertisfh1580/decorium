@@ -50,6 +50,12 @@ describe('CatalogValidator', () => {
       saturationLevel: 0.5, formSimplicity: 0.8, roundnessShare: 0.3, rectilinearShare: 0.7,
       sizeNorm: 0.5, priceNorm: 0.6, lightingFunctionShare: 0.2, storageFunctionShare: 0.4
     },
+    interactionProfile: {
+      schemaVersion: 1,
+      affordances: ['lounge-seat'],
+      frontAxis: null,
+      usableSides: []
+    },
     spatialBehavior: {
       schemaVersion: 1,
       placementKind: 'floor',

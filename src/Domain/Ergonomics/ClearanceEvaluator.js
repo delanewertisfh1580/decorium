@@ -20,7 +20,7 @@ function canonicalPairKey(leftItemId, rightItemId) {
 
 function participatesInClearance(placedItem) {
   const behavior = placedItem?.item?.spatialBehavior ?? placedItem?.spatialBehavior;
-  return behavior === undefined ? true : behavior.isFloorObstacle === true;
+  return behavior?.isFloorObstacle === true;
 }
 
 function footprintGap(left, right) {

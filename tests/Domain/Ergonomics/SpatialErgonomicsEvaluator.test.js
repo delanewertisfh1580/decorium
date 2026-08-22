@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Item } from '../../../src/Domain/Items/Item.js';
 import { FeatureVector } from '../../../src/Domain/Items/FeatureVector.js';
 import InteractionProfile from '../../../src/Domain/Items/InteractionProfile.js';
+import SpatialBehavior from '../../../src/Domain/Items/SpatialBehavior.js';
 import { RoomBounds } from '../../../src/Domain/Rooms/RoomBounds.js';
 import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
 import MinimumClearanceRule from '../../../src/Domain/Ergonomics/MinimumClearanceRule.js';
@@ -17,13 +18,22 @@ const vector = new FeatureVector({
 });
 
 function chair(id) {
-  return new Item({ id, name: id, type: 'seating', dimensions: { x: 1, z: 1 }, featureVector: vector });
+  return new Item({
+    id, name: id, type: 'seating', dimensions: { x: 1, z: 1 }, featureVector: vector,
+    interactionProfile: new InteractionProfile({ schemaVersion: 1, affordances: ['lounge-seat'] }),
+    spatialBehavior: new SpatialBehavior({
+      schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
+    })
+  });
 }
 
 function semanticItem(id, affordance, dimensions, usableSides = []) {
   return new Item({
     id, name: id, type: 'surface', dimensions, featureVector: vector,
-    interactionProfile: new InteractionProfile({ schemaVersion: 1, affordances: [affordance], usableSides })
+    interactionProfile: new InteractionProfile({ schemaVersion: 1, affordances: [affordance], usableSides }),
+    spatialBehavior: new SpatialBehavior({
+      schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
+    })
   });
 }
 

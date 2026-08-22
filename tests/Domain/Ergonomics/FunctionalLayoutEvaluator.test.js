@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { FeatureVector } from '../../../src/Domain/Items/FeatureVector.js';
 import InteractionProfile from '../../../src/Domain/Items/InteractionProfile.js';
+import SpatialBehavior from '../../../src/Domain/Items/SpatialBehavior.js';
 import { Item } from '../../../src/Domain/Items/Item.js';
 import { RoomBounds } from '../../../src/Domain/Rooms/RoomBounds.js';
 import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
@@ -22,12 +23,16 @@ function item(id, affordance, { dimensions, frontAxis = null, usableSides = [] }
     type: 'surface',
     dimensions: dimensions ?? { x: 0.5, z: 0.5 },
     featureVector: vector,
-    interactionProfile: new InteractionProfile({
-      schemaVersion: 1,
-      affordances: [affordance],
-      frontAxis,
-      usableSides
-    })
+          interactionProfile: new InteractionProfile({
+        schemaVersion: 1,
+        affordances: [affordance],
+        frontAxis,
+        usableSides
+      }),
+      spatialBehavior: new SpatialBehavior({
+        schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
+      })
+
   });
 }
 

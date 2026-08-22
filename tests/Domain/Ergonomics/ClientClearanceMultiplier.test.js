@@ -5,6 +5,8 @@ import { RoomBounds } from '../../../src/Domain/Rooms/RoomBounds.js';
 import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
 import MinimumClearanceRule from '../../../src/Domain/Ergonomics/MinimumClearanceRule.js';
 import ClearanceEvaluator from '../../../src/Domain/Ergonomics/ClearanceEvaluator.js';
+import InteractionProfile from '../../../src/Domain/Items/InteractionProfile.js';
+import SpatialBehavior from '../../../src/Domain/Items/SpatialBehavior.js';
 
 function createItem(id) {
   return new Item({
@@ -29,6 +31,10 @@ function createItem(id) {
       priceNorm: 0.5,
       lightingFunctionShare: 0,
       storageFunctionShare: 0
+    }),
+    interactionProfile: new InteractionProfile({ schemaVersion: 1, affordances: ['coffee-surface'] }),
+    spatialBehavior: new SpatialBehavior({
+      schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
     })
   });
 }

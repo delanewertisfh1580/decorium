@@ -8,8 +8,22 @@ describe('RoomOccupancyProfile', () => {
       width: 2,
       depth: 2,
       getItems: () => [
-        { id: 'table-001', position: { x: 0.5, z: 0.5 }, dimensions: { x: 1, z: 1 }, rotation: 0 },
-        { id: 'rug-001', position: { x: 0.5, z: 0.5 }, dimensions: { x: 1, z: 1 }, rotation: 0 }
+        {
+          id: 'table-001', position: { x: 0.5, z: 0.5 }, dimensions: { x: 1, z: 1 }, rotation: 0,
+          item: {
+            spatialBehavior: new SpatialBehavior({
+              schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
+            })
+          }
+        },
+        {
+          id: 'rug-001', position: { x: 0.5, z: 0.5 }, dimensions: { x: 1, z: 1 }, rotation: 0,
+          item: {
+            spatialBehavior: new SpatialBehavior({
+              schemaVersion: 1, placementKind: 'floor-overlay', occupancyMode: 'ignored', clearanceMode: 'ignored', supportMode: 'none'
+            })
+          }
+        }
       ]
     };
 

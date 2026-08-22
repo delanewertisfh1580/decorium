@@ -3,26 +3,38 @@ import PlaceItemUseCase from '../../../src/Application/UseCases/PlaceItemUseCase
 import PlacementResultDTO from '../../../src/Application/DTOs/PlacementResultDTO.js';
 import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
 import { RoomBounds } from '../../../src/Domain/Rooms/RoomBounds.js';
+import { Item } from '../../../src/Domain/Items/Item.js';
+import { FeatureVector } from '../../../src/Domain/Items/FeatureVector.js';
+import InteractionProfile from '../../../src/Domain/Items/InteractionProfile.js';
+import SpatialBehavior from '../../../src/Domain/Items/SpatialBehavior.js';
 
-// Mock Repository Implementation for Tests
 class MockRoomRepository {
-  constructor() {
-    this.storage = new Map();
-  }
-
-  async saveState(roomId, roomState) {
-    this.storage.set(roomId, roomState);
-    return true;
-  }
-
-  async getState(roomId) {
-    return this.storage.get(roomId) || null;
-  }
+  constructor() { this.storage = new Map(); }
+  async saveState(roomId, roomState) { this.storage.set(roomId, roomState); return true; }
+  async getState(roomId) { return this.storage.get(roomId) || null; }
 }
 
 const createTestBounds = () => new RoomBounds(5, 5);
+const featureVector = new FeatureVector({
+  woodShare: 0.8, metalShare: 0.1, glassShare: 0, plasticShare: 0.05, textileShare: 0,
+  lightColorShare: 0.7, darkColorShare: 0.3, warmPaletteShare: 0.6, saturationLevel: 0.3,
+  formSimplicity: 0.8, roundnessShare: 0.2, rectilinearShare: 0.8, sizeNorm: 0.5,
+  priceNorm: 0.4, lightingFunctionShare: 0, storageFunctionShare: 0
+});
+function createCatalogItem({ id, name = id, type = 'seating', affordances = ['lounge-seat'] }) {
+  return new Item({
+    id, name, type, dimensions: { x: 0.5, z: 0.5 }, price: 100, featureVector,
+    interactionProfile: new InteractionProfile({ schemaVersion: 1, affordances }),
+    spatialBehavior: new SpatialBehavior({
+      schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
+    })
+  });
+}
 
-describe('Slice A-002: PlaceItemUseCase', () => {
+const position = { x: 1, y: 0, z: 2 };
+const rotation = { x: 0, y: 0, z: 0, w: 1 };
+
+describe('PlaceItemUseCase', () => {
   let repository;
   let useCase;
 
@@ -31,144 +43,43 @@ describe('Slice A-002: PlaceItemUseCase', () => {
     useCase = new PlaceItemUseCase(repository);
   });
 
-  describe('Input Validation', () => {
-    it('should fail if roomId is missing', async () => {
-      const result = await useCase.execute('', { id: 'item-1' }, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0, w: 1 });
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('INVALID_INPUT');
-    });
-
-    it('should fail if itemData is missing', async () => {
-      const result = await useCase.execute('room-1', null, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0, w: 1 });
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('INVALID_INPUT');
-    });
-
-    it('should fail if position is invalid', async () => {
-      const result = await useCase.execute('room-1', { id: 'item-1' }, null, { x: 0, y: 0, z: 0, w: 1 });
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('INVALID_INPUT');
-    });
-
-    it('should fail if rotation is invalid', async () => {
-      const result = await useCase.execute('room-1', { id: 'item-1' }, { x: 0, y: 0, z: 0 }, null);
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('INVALID_INPUT');
-    });
+  it('rejects missing room IDs, non-catalog items, invalid positions and invalid rotations', async () => {
+    await expect(useCase.execute('', createCatalogItem({ id: 'item-1' }), position, rotation))
+      .resolves.toMatchObject({ success: false, error: expect.stringContaining('INVALID_INPUT') });
+    await expect(useCase.execute('room-1', { id: 'raw-item' }, position, rotation))
+      .resolves.toMatchObject({ success: false, error: 'INVALID_INPUT: A validated catalog Item is required.' });
+    await expect(useCase.execute('room-1', createCatalogItem({ id: 'item-1' }), null, rotation))
+      .resolves.toMatchObject({ success: false, error: expect.stringContaining('INVALID_INPUT') });
+    await expect(useCase.execute('room-1', createCatalogItem({ id: 'item-1' }), position, null))
+      .resolves.toMatchObject({ success: false, error: expect.stringContaining('INVALID_INPUT') });
   });
 
-  describe('Successful Placement', () => {
-    it('should place an item in a loaded room', async () => {
-      const itemData = {
-        id: 'chair-01',
-        name: 'Wooden Chair',
-        type: 'seating',
-        features: {
-          woodShare: 0.8,
-          metalShare: 0.1,
-          glassShare: 0.0,
-          plasticShare: 0.05,
-          textileShare: 0.0,
-          lightColorShare: 0.7,
-          darkColorShare: 0.3,
-          warmPaletteShare: 0.6,
-          coolPaletteShare: 0.4,
-          saturationLevel: 0.3,
-          formSimplicity: 0.8,
-          roundnessShare: 0.2,
-          rectilinearShare: 0.8,
-          sizeNorm: 0.5,
-          priceNorm: 0.4,
-          lightingFunctionShare: 0.0,
-          storageFunctionShare: 0.0
-        }
-      };
-      const position = { x: 1, y: 0, z: 2 };
-      const rotation = { x: 0, y: 0, z: 0, w: 1 };
-      await repository.saveState('room-loaded', RoomState.createEmpty(createTestBounds()));
+  it('places a validated catalog item in a loaded room and persists its instance state', async () => {
+    const item = createCatalogItem({ id: 'chair-01', name: 'Wooden Chair' });
+    await repository.saveState('room-loaded', RoomState.createEmpty(createTestBounds()));
 
-      const result = await useCase.execute('room-loaded', itemData, position, rotation);
+    const result = await useCase.execute('room-loaded', item, position, rotation);
 
-      expect(result.success).toBe(true);
-      expect(result.itemId).toBe('chair-01');
-      expect(result.position).toEqual(position);
-      
-      // Verify state was saved
-      const savedState = await repository.getState('room-loaded');
-      expect(savedState).toBeInstanceOf(RoomState);
-    });
-
-    it('should add an item to an existing room', async () => {
-      // Pre-populate room
-      const initialState = RoomState.createEmpty(createTestBounds());
-      await repository.saveState('room-existing', initialState);
-
-      const itemData = {
-        id: 'table-01',
-        name: 'Table',
-        type: 'surface',
-        features: {
-          woodShare: 0.6,
-          metalShare: 0.2,
-          glassShare: 0.1,
-          plasticShare: 0.1,
-          textileShare: 0.0,
-          lightColorShare: 0.5,
-          darkColorShare: 0.5,
-          warmPaletteShare: 0.5,
-          coolPaletteShare: 0.5,
-          saturationLevel: 0.4,
-          formSimplicity: 0.7,
-          roundnessShare: 0.3,
-          rectilinearShare: 0.7,
-          sizeNorm: 0.5,
-          priceNorm: 0.5,
-          lightingFunctionShare: 0.0,
-          storageFunctionShare: 0.0
-        }
-      };
-      const result = await useCase.execute('room-existing', itemData, { x: 1, y: 0, z: 1 }, { x: 0, y: 0, z: 0, w: 1 });
-
-      expect(result.success).toBe(true);
-      
-      const savedState = await repository.getState('room-existing');
-      expect(savedState).toBeInstanceOf(RoomState);
-    });
+    expect(result.success).toBe(true);
+    expect(result.itemId).toBe('chair-01');
+    expect(result.position).toEqual(position);
+    expect((await repository.getState('room-loaded')).getItem('chair-01').item).toBe(item);
   });
 
-  describe('Error Handling', () => {
-    it('returns a typed failure for a room that was not loaded', async () => {
-      const itemData = {
-        id: 'big-item',
-        name: 'Big Item',
-        type: 'generic',
-        features: {
-          woodShare: 0.5,
-          metalShare: 0.3,
-          glassShare: 0.1,
-          plasticShare: 0.1,
-          textileShare: 0.0,
-          lightColorShare: 0.4,
-          darkColorShare: 0.6,
-          warmPaletteShare: 0.4,
-          coolPaletteShare: 0.6,
-          saturationLevel: 0.5,
-          formSimplicity: 0.6,
-          roundnessShare: 0.4,
-          rectilinearShare: 0.6,
-          sizeNorm: 0.5,
-          priceNorm: 0.5,
-          lightingFunctionShare: 0.0,
-          storageFunctionShare: 0.0
-        }
-      };
-      
-      const result = await useCase.execute('room-1', itemData, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0, w: 1 });
-      
-      expect(result).toMatchObject({
-        success: false,
-        error: 'ROOM_NOT_FOUND: Room room-1 not found.'
-      });
-    });
+  it('adds a validated catalog item to an existing room', async () => {
+    await repository.saveState('room-existing', RoomState.createEmpty(createTestBounds()));
+    const item = createCatalogItem({ id: 'table-01', name: 'Table', type: 'surface', affordances: ['coffee-surface'] });
+
+    const result = await useCase.execute('room-existing', item, { x: 1, y: 0, z: 1 }, rotation);
+
+    expect(result.success).toBe(true);
+    expect((await repository.getState('room-existing')).getItem('table-01').item).toBe(item);
+  });
+
+  it('returns a typed failure for a room that was not loaded', async () => {
+    const result = await useCase.execute('room-1', createCatalogItem({ id: 'big-item' }), position, rotation);
+
+    expect(result).toMatchObject({ success: false, error: 'ROOM_NOT_FOUND: Room room-1 not found.' });
+    expect(result).toBeInstanceOf(PlacementResultDTO);
   });
 });

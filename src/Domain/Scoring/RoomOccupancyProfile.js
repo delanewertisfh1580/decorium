@@ -27,7 +27,7 @@ function rounded(value) {
 
 function occupiesFloor(item) {
   const behavior = item?.item?.spatialBehavior ?? item?.spatialBehavior;
-  return behavior === undefined ? true : behavior.isFloorObstacle === true;
+  return behavior?.isFloorObstacle === true;
 }
 
 export class RoomOccupancyProfile {

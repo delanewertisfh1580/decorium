@@ -1,10 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { RoomBounds } from '../../../src/Domain/Rooms/RoomBounds.js';
 import MoveItemUseCase from '../../../src/Application/UseCases/MoveItemUseCase.js';
 import MoveResultDTO from '../../../src/Application/DTOs/MoveResultDTO.js';
-import RoomState from '../../../src/Domain/Rooms/RoomState.js';
-import Item from '../../../src/Domain/Items/Item.js';
-import FeatureVector from '../../../src/Domain/Items/FeatureVector.js';
 
 class MockRoomRepository {
   constructor(scenario) {
@@ -15,17 +11,10 @@ class MockRoomRepository {
   async loadRoomState(roomId) {
     if (this.scenario === 'room_not_found') return null;
     
-    // Создаем комнату с одним предметом для тестов
-    const roomState = new RoomState(new RoomBounds(5, 5));
-    const vector = new FeatureVector({ wood_share: 0.8 });
-    const item = new Item('item-1', 'Chair', 'seating', vector, {});
-    
-    // Симулируем размещение предмета (в реальном домене это делается через addItem)
-    // Для теста добавим моковый метод getItem и moveItem в roomState, если их нет
-    roomState.getItem = (id) => id === 'item-1' ? item : null;
-    roomState.moveItem = (id, pos) => id === 'item-1' && pos.x >= 0; // Простая логика: x >= 0
-    
-    return roomState;
+    return {
+      getItem: id => id === 'item-1' ? { id: 'item-1' } : null,
+      moveItem: (id, pos) => id === 'item-1' && pos.x >= 0
+    };
   }
 
   async saveRoomState(roomId, roomState) {

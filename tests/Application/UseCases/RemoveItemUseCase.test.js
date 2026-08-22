@@ -5,6 +5,8 @@ import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
 import { RoomBounds } from '../../../src/Domain/Rooms/RoomBounds.js';
 import { Item } from '../../../src/Domain/Items/Item.js';
 import { FeatureVector } from '../../../src/Domain/Items/FeatureVector.js';
+import InteractionProfile from '../../../src/Domain/Items/InteractionProfile.js';
+import SpatialBehavior from '../../../src/Domain/Items/SpatialBehavior.js';
 
 // Mock Repository Implementation for Tests
 class MockRoomRepository {
@@ -23,6 +25,13 @@ class MockRoomRepository {
 }
 
 const createTestBounds = () => new RoomBounds(5, 5);
+const createTestItem = itemData => new Item({
+  ...itemData,
+  interactionProfile: new InteractionProfile({ schemaVersion: 1, affordances: ['lounge-seat'] }),
+  spatialBehavior: new SpatialBehavior({
+    schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
+  })
+});
 
 describe('Slice A-005: RemoveItemUseCase', () => {
   let repository;
@@ -89,7 +98,7 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         lightingFunctionShare: 0.0,
         storageFunctionShare: 0.0
       });
-      const existingItem = new Item({
+      const existingItem = createTestItem({
         id: 'existing-item',
         name: 'Existing Item',
         type: 'seating',
@@ -146,13 +155,13 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         lightingFunctionShare: 0.1,
         storageFunctionShare: 0.2
       });
-      const item1 = new Item({
+      const item1 = createTestItem({
         id: 'item-1',
         name: 'First Item',
         type: 'seating',
         featureVector: featureVector1
       });
-      const item2 = new Item({
+      const item2 = createTestItem({
         id: 'item-2',
         name: 'Second Item',
         type: 'surface',
@@ -201,7 +210,7 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         lightingFunctionShare: 0.0,
         storageFunctionShare: 0.0
       });
-      const singleItem = new Item({
+      const singleItem = createTestItem({
         id: 'only-item',
         name: 'Only Item',
         type: 'seating',
@@ -246,7 +255,7 @@ describe('Slice A-005: RemoveItemUseCase', () => {
           lightingFunctionShare: 0.2,
           storageFunctionShare: 0.3
         });
-        items.push(new Item({
+        items.push(createTestItem({
           id: `item-${i}`,
           name: `Item ${i}`,
           type: 'generic',
@@ -337,7 +346,7 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         lightingFunctionShare: 0.0,
         storageFunctionShare: 0.0
       });
-      const item = new Item({
+      const item = createTestItem({
         id: 'test-item',
         name: 'Test Item',
         type: 'seating',

@@ -58,7 +58,7 @@ Explanation focus intent (`instanceId`) → GameController validation → existi
 Calibrated result (`stars`, `completionEligible`) → RecordLevelCompletionUseCase → ProgressionPolicy
 ```
 
-`LoadLevelUseCase` creates V2 evaluation only from authored client policy and exact profile lookups. `CatalogValidator` hydrates each V4 record into an `Item` with immutable `InteractionProfile` and `SpatialBehavior`; no runtime derives behavior, composition capability or other gameplay policy from type or mesh. `CompositionEvaluator` evaluates only authored `requiredAffordances`; `MultiStyleEvaluator` independently evaluates targets; `StyleChannelPolicy` blends composition exactly once. `RoomOccupancyProfile` and `ClearanceEvaluator` consider only `SpatialBehavior.isFloorObstacle`, then `SpatialPreferenceEvaluator` maps authored density/free-area rules and `ClientPriorityEvaluator` normalizes `functional-scenario` and `spatial-preferences` satisfaction. `ThreeChannelScoreAggregator` applies authored `0.5/0.2/0.3` weights.[3] [4] [7]
+`LoadLevelUseCase` creates V2 evaluation only from authored client policy and exact profile lookups. `CatalogValidator` and `Item` reject any record without immutable `InteractionProfile` and `SpatialBehavior`; no runtime creates default semantics or derives behavior, composition capability or other gameplay policy from type or mesh. `CompositionEvaluator` evaluates only authored `requiredAffordances`; `MultiStyleEvaluator` independently evaluates targets; `StyleChannelPolicy` blends composition exactly once. `RoomOccupancyProfile` and `ClearanceEvaluator` consider only `SpatialBehavior.isFloorObstacle`, then `SpatialPreferenceEvaluator` maps authored density/free-area rules and `ClientPriorityEvaluator` normalizes `functional-scenario` and `spatial-preferences` satisfaction. `ThreeChannelScoreAggregator` applies authored `0.5/0.2/0.3` weights.[3] [4] [7]
 
 `ScorecardCalibrationPolicy` still owns raw-vs-display stars, critical caps and `completionEligible`. `MultiChannelViolationImpactPolicy` recomputes exact counterfactual impact per unique V2 `diagnosticId`; the rule-level `constraintId` remains a separate reference. `MultiChannelEvaluationExplanationAssembler` produces immutable explanation V2; `EvaluationView` renders supplied channels, labels, facts and remediation only. `GameController` forwards `evaluationSpec` and validated presentation intent, never recreating game policy.[5] [6]
 
@@ -103,7 +103,7 @@ Player settings and completed level progress are persisted in profile schema V3.
 9. Presentation environment and visual style labels are not gameplay evaluator inputs; visual ownership is explicit in versioned authored content.
 10. Completion eligibility is produced by calibrated Domain/Application evaluation and forwarded by UI; it is never inferred from presentation state or a UI-side star comparison.
 11. Per-diagnostic recovery is an exact Domain counterfactual and authored remediation is supplied through Application; Presentation may render or focus an instance but cannot apportion impact.
-12. Floor occupancy and generic clearance are derived only from authored `SpatialBehavior`; visual footprint, item type and mesh cannot create or remove an obstacle.
+12. Floor occupancy and generic clearance are derived only from authored `SpatialBehavior`; an item without the explicit contract does not participate, while V4 catalog hydration rejects it. Visual footprint, item type and mesh cannot create or remove an obstacle.
 
 ## Verification
 

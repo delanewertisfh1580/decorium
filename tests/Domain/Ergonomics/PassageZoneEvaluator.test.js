@@ -5,6 +5,8 @@ import { RoomBounds } from '../../../src/Domain/Rooms/RoomBounds.js';
 import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
 import PassageZone from '../../../src/Domain/Ergonomics/PassageZone.js';
 import PassageZoneEvaluator from '../../../src/Domain/Ergonomics/PassageZoneEvaluator.js';
+import InteractionProfile from '../../../src/Domain/Items/InteractionProfile.js';
+import SpatialBehavior from '../../../src/Domain/Items/SpatialBehavior.js';
 
 const featureVector = new FeatureVector({
   woodShare: 0.7, metalShare: 0.1, glassShare: 0.05, plasticShare: 0.05, textileShare: 0.1,
@@ -14,7 +16,13 @@ const featureVector = new FeatureVector({
 });
 
 function createItem(id, dimensions = { x: 1, z: 1 }) {
-  return new Item({ id, name: id, type: 'seating', dimensions, featureVector });
+  return new Item({
+    id, name: id, type: 'seating', dimensions, featureVector,
+    interactionProfile: new InteractionProfile({ schemaVersion: 1, affordances: ['lounge-seat'] }),
+    spatialBehavior: new SpatialBehavior({
+      schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
+    })
+  });
 }
 
 function roomWith(...placements) {
