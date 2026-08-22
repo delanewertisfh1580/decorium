@@ -14,12 +14,12 @@ A direct UI-side comparison (`stars >= targetScore`) cannot safely encode this p
 
 ## Решение
 
-Introduce an immutable `ScorecardCalibrationPolicy` in Domain. It receives a raw aggregate score, a `StarRatingPolicy`, a `ClientBrief.evaluationPolicy.completion` object and all evaluation violations. It returns a deterministic scorecard containing raw facts, calibrated display stars and a separate completion decision.
+Introduce an immutable `ScorecardCalibrationPolicy` in Domain. It receives a raw aggregate score, a `StarRatingPolicy`, a typed `ClientBrief.evaluationPolicy.completion` value and all evaluation violations. It returns a deterministic scorecard containing raw facts, calibrated display stars and a separate completion decision.
 
 | Decision | Adopted policy |
 |---|---|
 | Raw facts | Preserve `rawScore` and `rawStars`; calibration must not overwrite analytical channel facts. |
-| Authored parameters | `criticalStarCap` and `scoreEpsilon` are required fields in versioned `scoring-parameters.json` V1. |
+| Authored parameters | `criticalStarCap` and `scoreEpsilon` are required fields in versioned `scoring-parameters.json` V2 and are validated/frozen by explicit `ScoringPolicy`. |
 | Threshold noise | `StarRatingPolicy` uses `score + epsilon >= threshold`, bounded to `0..0.01`. |
 | Critical identifiers | Include only `critical === true` diagnostic IDs, sorted and deduplicated. |
 | `block-completion` | Cap stars below the brief target and `criticalStarCap`; return `completionEligible: false` and reason `critical-rule`. |
@@ -48,7 +48,7 @@ All currently shipped briefs use `block-completion`, but `cap-stars` and `inform
 ## References
 
 [1]: ../../data/scoring/scoring-parameters.json "Versioned scoring parameters"
-[2]: ../../data/schemas/scoring-parameters.schema.json "Scoring parameters V1 schema"
+[2]: ../../src/Domain/Scoring/ScoringPolicy.js "Immutable scoring-policy validation"
 [3]: ../../src/Domain/Scoring/ScorecardCalibrationPolicy.js "Scorecard calibration policy"
 [4]: ../../src/Domain/Scoring/StarRatingPolicy.js "Star threshold policy"
 [5]: ../../src/Application/UseCases/EvaluateRoomUseCase.js "Evaluation application boundary"

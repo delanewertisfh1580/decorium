@@ -16,7 +16,7 @@
 | Client briefs | `data/briefs/client-briefs.v2.json`, `data/briefs/client-brief.v2.schema.json` | ClientBrief catalog V2: identity, weighted targets, explicit priority rules, spatial preferences and evaluation policy |
 | Style profiles | `data/styles/style-constraint-catalog.v1.json`, `data/styles/style-constraint-catalog.v1.schema.json` | Exact multi-style profile IDs, authored labels and constraints; no fuzzy lookup |
 | Presentation environments | `data/presentation/environment-profiles.v2.json`, `data/presentation/environment-profile.v2.schema.json` | Profile catalog V2 and strict closed-vocabulary schema |
-| Scoring | `data/scoring/scoring-parameters.json`, `data/schemas/scoring-parameters.schema.json` | Scoring parameters V2: channels, style blend, occupancy and density profiles |
+| Scoring | `data/scoring/scoring-parameters.json` | `ScoringPolicy` V2 validates and freezes channels, style blend, occupancy, density profiles and calibration before explicit bootstrap injection |
 | Feedback | `data/feedback/scandinavian-feedback.json` | Versioned authored remediation for style, ergonomics and client-priority diagnostics |
 | Visuals | `data/visuals/item-visuals.json` | Presentation-only visual profile |
 | Release | `public/release-manifest.json` | Generated from BuildInfo during dev/build |
@@ -62,7 +62,7 @@ Schema and Domain reject contradictory combinations and missing semantics: overl
 
 ## ClientBrief v2 and style profiles
 
-`ClientBrief v2` is the runtime-loaded, versioned contract for every shipped design order. It is validated in Infrastructure, normalized by the Domain value object and hydrated into immutable `LevelDTO.evaluationSpec` before V2 evaluation. It makes requirements reviewable, deterministic and replayable.[1] [4]
+`ClientBrief v2` is the runtime-loaded, versioned contract for every shipped design order. It is validated in Infrastructure, normalized by the Domain value object and owns a typed immutable `EvaluationPolicy` graph that is forwarded into `LevelDTO.evaluationSpec` before V2 evaluation. It makes requirements reviewable, deterministic and replayable.[1] [4]
 
 | Field group | Shipped V2 policy | Active behavior |
 |---|---|---|
@@ -100,7 +100,7 @@ A required functional scenario is separate policy: it declares one or more affor
 
 ## Scoring, explanations and feedback
 
-The V2 evaluator has three deterministic channels. All numeric policy is versioned content, validated before bootstrap and consumed outside Presentation.[6] [7]
+The V2 evaluator has three deterministic channels. All numeric policy is versioned content, validated and frozen by the explicit `ScoringPolicy` dependency before bootstrap, then consumed outside Presentation; no mutable module-level scoring singleton exists.[6] [7]
 
 | Channel | Input | Authoritative calculation |
 |---|---|---|

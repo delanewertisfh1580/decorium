@@ -55,7 +55,7 @@ Raw и calibrated поля возвращаются в `evaluationData`. Это 
 |---|---|---|
 | Domain scorecard calibration | Perfect raw rating with critical media diagnostic wrongly remained eligible. | `ScorecardCalibrationPolicy.test.js`: block cap, no-critical normal path и informational path. |
 | Numerical boundary | Score just below threshold did not receive authored epsilon tolerance. | `StarRatingPolicy.test.js`: tolerance promotes only sub-epsilon noise, not material gap. |
-| Versioned scoring content | Parameters had no schema version, cap or epsilon at runtime. | `scoringParameters.test.js`: validates retained values and rejects unsupported/out-of-range inputs. |
+| Versioned scoring content | Parameters had no schema version, cap or epsilon at runtime. | `ScoringPolicy.test.js`: validates retained values and rejects unsupported/out-of-range inputs without global initialization. |
 | Completion persistence | A high star value was persisted despite an explicit `completionEligible: false`. | `RecordLevelCompletionUseCase.test.js`: explicit gate blocks persistence and omitted flag preserves legacy fallback. |
 | Evaluation composition | Evaluation lacked raw/calibrated facts and critical block result. | `EvaluateRoomUseCase.test.js`: returns capped stars, raw facts, reason and critical IDs. |
 | Presentation handoff | Controller omitted brief policy and calibrated eligibility. | `GameControllerCompletion.test.js`: forwards both verbatim while keeping policy outside UI. |
@@ -72,7 +72,7 @@ Focused verification passed: **6 files / 29 tests**. Full release gates passed b
 ## References
 
 [1]: ../../data/scoring/scoring-parameters.json "Versioned scoring parameters"
-[2]: ../../data/schemas/scoring-parameters.schema.json "Scoring parameters schema"
+[2]: ../../src/Domain/Scoring/ScoringPolicy.js "Immutable scoring-policy validation"
 [3]: ../../src/Domain/Scoring/ScorecardCalibrationPolicy.js "Domain calibration policy"
 [4]: ../../src/Domain/Scoring/StarRatingPolicy.js "Numerically calibrated rating policy"
 [5]: ../../src/Application/UseCases/EvaluateRoomUseCase.js "Evaluation composition"

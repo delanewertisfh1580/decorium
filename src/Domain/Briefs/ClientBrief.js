@@ -1,9 +1,8 @@
+import EvaluationPolicy from './EvaluationPolicy.js';
+
 const STYLE_ROLES = new Set(['primary', 'secondary', 'accent']);
 const DENSITY_VALUES = new Set(['intimate', 'balanced', 'open']);
 const EMPTY_SPACE_MODES = new Set(['allow', 'discourage-excess', 'require-open']);
-const CRITICAL_RULE_MODES = new Set(['block-completion', 'cap-stars', 'informational']);
-
-import RequiredFunctionalScenario from '../Ergonomics/RequiredFunctionalScenario.js';
 
 function requiredString(value, label) {
   if (typeof value !== 'string' || value.trim() === '') {
@@ -18,12 +17,6 @@ function finiteNumber(value, label, { min = -Infinity, max = Infinity, exclusive
     throw new Error(`ClientBrief ${label} must be between ${min} and ${max}`);
   }
   return value;
-}
-
-function freezeDeep(value) {
-  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
-  for (const nested of Object.values(value)) freezeDeep(nested);
-  return Object.freeze(value);
 }
 
 function normalizeStyleTargets(value) {
@@ -101,13 +94,12 @@ function normalizePriorities(value) {
     const id = requiredString(priority.id, `clientPriorities[${index}].id`);
     if (ids.has(id)) throw new Error(`ClientBrief clientPriorities duplicate id: ${id}`);
     ids.add(id);
-    const normalized = {
+    return Object.freeze({
       id,
       label: requiredString(priority.label, `clientPriorities[${index}].label`),
-      weight: finiteNumber(priority.weight, `clientPriorities[${index}].weight`, { min: 0, max: 5, exclusiveMin: true })
-    };
-    normalized.rule = normalizePriorityRule(priority.rule, index);
-    return Object.freeze(normalized);
+      weight: finiteNumber(priority.weight, `clientPriorities[${index}].weight`, { min: 0, max: 5, exclusiveMin: true }),
+      rule: normalizePriorityRule(priority.rule, index)
+    });
   }));
 }
 
@@ -133,69 +125,6 @@ function normalizeSpatialPreferences(value) {
   });
 }
 
-function normalizeCompositionRules(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error('ClientBrief evaluationPolicy compositionRules must be an object');
-  }
-  const supportedKeys = new Set(['minItems', 'requiredAffordances']);
-  const unexpectedKey = Object.keys(value).find(key => !supportedKeys.has(key));
-  if (unexpectedKey) {
-    throw new Error(`ClientBrief evaluationPolicy compositionRules.${unexpectedKey} is not supported`);
-  }
-  const normalized = {};
-  if (value.minItems !== undefined) {
-    if (!Number.isInteger(value.minItems) || value.minItems < 1) {
-      throw new Error('ClientBrief evaluationPolicy compositionRules.minItems must be a positive integer');
-    }
-    normalized.minItems = value.minItems;
-  }
-  if (value.requiredAffordances !== undefined) {
-    if (!Array.isArray(value.requiredAffordances)
-      || !value.requiredAffordances.every(affordance => typeof affordance === 'string' && affordance.trim() !== '')) {
-      throw new Error('ClientBrief evaluationPolicy compositionRules.requiredAffordances must be an array of non-empty strings');
-    }
-    const affordances = value.requiredAffordances.map(affordance => affordance.trim());
-    if (new Set(affordances).size !== affordances.length) {
-      throw new Error('ClientBrief evaluationPolicy compositionRules.requiredAffordances must be unique');
-    }
-    normalized.requiredAffordances = Object.freeze(affordances);
-  }
-  return Object.freeze(normalized);
-}
-
-function normalizeEvaluationPolicy(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error('ClientBrief evaluationPolicy must be an object');
-  }
-  if (value.styleMode !== 'weighted-targets-v1') {
-    throw new Error(`ClientBrief evaluationPolicy styleMode is not supported: ${value.styleMode}`);
-  }
-  const completion = value.completion;
-  if (!completion || typeof completion !== 'object' || Array.isArray(completion)
-    || !CRITICAL_RULE_MODES.has(completion.criticalRuleMode)) {
-    throw new Error('ClientBrief evaluationPolicy completion must contain a supported criticalRuleMode');
-  }
-  const ergonomicsRules = value.ergonomicsRules ?? {};
-  const requiredFunctionalScenarios = ergonomicsRules.requiredFunctionalScenarios;
-  if (!Array.isArray(requiredFunctionalScenarios)) {
-    throw new Error('ClientBrief evaluationPolicy ergonomicsRules.requiredFunctionalScenarios must be an array');
-  }
-  return freezeDeep({
-    styleMode: value.styleMode,
-    completion: {
-      minimumStars: finiteNumber(completion.minimumStars, 'evaluationPolicy completion.minimumStars', { min: 1, max: 5 }),
-      criticalRuleMode: completion.criticalRuleMode
-    },
-    compositionRules: normalizeCompositionRules(value.compositionRules ?? {}),
-    ergonomicsRules: {
-      ...ergonomicsRules,
-      requiredFunctionalScenarios: requiredFunctionalScenarios.map(scenario => (
-        new RequiredFunctionalScenario(scenario).toJSON()
-      ))
-    }
-  });
-}
-
 export class ClientBrief {
   constructor({ schemaVersion, id, levelId, client, title, summary, styleTargets, clientPriorities, spatialPreferences, evaluationPolicy } = {}) {
     if (schemaVersion !== 2) throw new Error('ClientBrief schemaVersion must be 2');
@@ -208,7 +137,9 @@ export class ClientBrief {
     this._styleTargets = normalizeStyleTargets(styleTargets);
     this._clientPriorities = normalizePriorities(clientPriorities);
     this._spatialPreferences = normalizeSpatialPreferences(spatialPreferences);
-    this._evaluationPolicy = normalizeEvaluationPolicy(evaluationPolicy);
+    this._evaluationPolicy = new EvaluationPolicy(evaluationPolicy, {
+      clearanceMultiplier: this._spatialPreferences.clearanceMultiplier
+    });
     Object.freeze(this);
   }
 
@@ -239,7 +170,7 @@ export class ClientBrief {
         clearanceMultiplier: this.spatialPreferences.clearanceMultiplier,
         emptySpacePreference: { ...this.spatialPreferences.emptySpacePreference }
       },
-      evaluationPolicy: structuredClone(this.evaluationPolicy)
+      evaluationPolicy: this.evaluationPolicy.toJSON()
     };
   }
 }

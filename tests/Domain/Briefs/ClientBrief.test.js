@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import ClientBrief from '../../../src/Domain/Briefs/ClientBrief.js';
+import RequiredFunctionalScenario from '../../../src/Domain/Ergonomics/RequiredFunctionalScenario.js';
+import EvaluationPolicy, { CompletionPolicy, CompositionRules, ErgonomicsPolicy } from '../../../src/Domain/Briefs/EvaluationPolicy.js';
 
 const validBrief = {
   schemaVersion: 2,
@@ -84,10 +86,15 @@ describe('ClientBrief', () => {
     expect(brief.styleTargets).toHaveLength(3);
     expect(brief.clientPriorities).toEqual(validBrief.clientPriorities);
     expect(brief.spatialPreferences.clearanceMultiplier).toBe(0.75);
+    expect(brief.evaluationPolicy).toBeInstanceOf(EvaluationPolicy);
+    expect(brief.evaluationPolicy.completion).toBeInstanceOf(CompletionPolicy);
+    expect(brief.evaluationPolicy.compositionRules).toBeInstanceOf(CompositionRules);
+    expect(brief.evaluationPolicy.ergonomicsRules).toBeInstanceOf(ErgonomicsPolicy);
     expect(brief.evaluationPolicy.completion.criticalRuleMode).toBe('block-completion');
-    expect(brief.evaluationPolicy.ergonomicsRules.requiredFunctionalScenarios).toEqual(
-      validBrief.evaluationPolicy.ergonomicsRules.requiredFunctionalScenarios
-    );
+    expect(brief.evaluationPolicy.toJSON()).toEqual(validBrief.evaluationPolicy);
+    const [scenario] = brief.evaluationPolicy.ergonomicsRules.requiredFunctionalScenarios;
+    expect(scenario).toBeInstanceOf(RequiredFunctionalScenario);
+    expect(scenario.toJSON()).toEqual(validBrief.evaluationPolicy.ergonomicsRules.requiredFunctionalScenarios[0]);
     expect(Object.isFrozen(brief.evaluationPolicy.ergonomicsRules.requiredFunctionalScenarios)).toBe(true);
     expect(Object.isFrozen(brief)).toBe(true);
     expect(Object.isFrozen(brief.styleTargets)).toBe(true);

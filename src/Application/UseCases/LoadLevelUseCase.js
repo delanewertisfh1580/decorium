@@ -1,35 +1,7 @@
 import LevelDTO from '../DTOs/LevelDTO.js';
 import { RoomState } from '../../Domain/Rooms/RoomState.js';
 import { RoomBounds } from '../../Domain/Rooms/RoomBounds.js';
-import MinimumClearanceRule from '../../Domain/Ergonomics/MinimumClearanceRule.js';
-import PassageZone from '../../Domain/Ergonomics/PassageZone.js';
-import FunctionalLayoutRule from '../../Domain/Ergonomics/FunctionalLayoutRule.js';
-import RequiredFunctionalScenario from '../../Domain/Ergonomics/RequiredFunctionalScenario.js';
 import ClientBrief from '../../Domain/Briefs/ClientBrief.js';
-
-function createErgonomicsRules(data = {}, clientMultiplier = 1) {
-  const rules = {};
-  if (data.minimumClearance) {
-    rules.minimumClearance = new MinimumClearanceRule({
-      ...data.minimumClearance,
-      clientMultiplier
-    });
-  }
-  if (Array.isArray(data.passageZones)) {
-    rules.passageZones = Object.freeze(data.passageZones.map(zone => new PassageZone(zone)));
-  }
-  if (Array.isArray(data.functionalLayoutRules)) {
-    rules.functionalLayoutRules = Object.freeze(
-      data.functionalLayoutRules.map(rule => new FunctionalLayoutRule(rule))
-    );
-  }
-  if (Array.isArray(data.requiredFunctionalScenarios)) {
-    rules.requiredFunctionalScenarios = Object.freeze(
-      data.requiredFunctionalScenarios.map(scenario => new RequiredFunctionalScenario(scenario))
-    );
-  }
-  return Object.freeze(rules);
-}
 
 export class LoadLevelUseCase {
   constructor(levelRepository, itemCatalog, constraintCatalog, presentationEnvironmentRepository, clientBriefRepository) {
@@ -84,11 +56,7 @@ export class LoadLevelUseCase {
         return { success: false, error: `INVALID_LEVEL_DATA: Unknown presentation profile ${raw.presentationProfileId}` };
       }
 
-      const compositionRules = clientBrief.evaluationPolicy.compositionRules;
-      const ergonomicsRules = createErgonomicsRules(
-        clientBrief.evaluationPolicy.ergonomicsRules,
-        clientBrief.spatialPreferences.clearanceMultiplier
-      );
+      const evaluationPolicy = clientBrief.evaluationPolicy;
       const styleTargets = await Promise.all(clientBrief.styleTargets.map(async target => {
         const profile = await this.constraintCatalog.getStyleProfileById(target.styleId);
         if (!profile || !Array.isArray(profile.constraints) || profile.constraints.length === 0) {
@@ -107,9 +75,10 @@ export class LoadLevelUseCase {
         styleTargets: Object.freeze(styleTargets),
         clientPriorities: Object.freeze([...clientBrief.clientPriorities]),
         spatialPreferences: clientBrief.spatialPreferences,
-        compositionRules: Object.freeze({ ...compositionRules }),
-        ergonomicsRules,
-        completion: Object.freeze({ ...clientBrief.evaluationPolicy.completion })
+        evaluationPolicy,
+        compositionRules: evaluationPolicy.compositionRules,
+        ergonomicsRules: evaluationPolicy.ergonomicsRules,
+        completion: evaluationPolicy.completion
       });
 
       const itemsById = new Map(availableItems.map(item => [item.id, item]));

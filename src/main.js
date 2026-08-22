@@ -28,7 +28,7 @@ import SpatialPreferenceEvaluator from './Domain/Scoring/SpatialPreferenceEvalua
 import ClientPriorityEvaluator from './Domain/Scoring/ClientPriorityEvaluator.js';
 import ThreeChannelScoreAggregator from './Domain/Scoring/ThreeChannelScoreAggregator.js';
 import MultiChannelViolationImpactPolicy from './Domain/Scoring/MultiChannelViolationImpactPolicy.js';
-import { initializeScoringParameters, getScoringParameters } from './Domain/Scoring/scoringParameters.js';
+import ScoringPolicy from './Domain/Scoring/ScoringPolicy.js';
 import EvaluateRoomUseCase from './Application/UseCases/EvaluateRoomUseCase.js';
 import LoadLevelUseCase from './Application/UseCases/LoadLevelUseCase.js';
 import PlaceItemUseCase from './Application/UseCases/PlaceItemUseCase.js';
@@ -92,7 +92,7 @@ async function bootstrap() {
       appRoot: document.getElementById('app')
     });
 
-    const [levelSchema, itemSchema, presentationEnvironmentSchema, clientBriefSchema, styleConstraintCatalogSchema, scoringParameters] = await Promise.all([
+    const [levelSchema, itemSchema, presentationEnvironmentSchema, clientBriefSchema, styleConstraintCatalogSchema, authoredScoringPolicy] = await Promise.all([
       SchemaLoader.loadLevelSchema(),
       SchemaLoader.loadItemSchema(),
       SchemaLoader.loadPresentationEnvironmentSchema(),
@@ -100,7 +100,7 @@ async function bootstrap() {
       SchemaLoader.loadStyleConstraintCatalogSchema(),
       loadJson('./data/scoring/scoring-parameters.json')
     ]);
-    initializeScoringParameters(scoringParameters);
+    const scoringPolicy = new ScoringPolicy(authoredScoringPolicy);
 
     const levelRepository = new JsonLevelRepository('./data/levels', levelSchema);
     const presentationEnvironmentRepository = new JsonPresentationEnvironmentRepository(
@@ -151,7 +151,7 @@ async function bootstrap() {
     const moveItemUseCase = new MoveItemUseCase(roomRepository);
     const rotateItemUseCase = new RotateItemUseCase(roomRepository);
     const removeItemUseCase = new RemoveItemUseCase(roomRepository);
-    const scoring = getScoringParameters();
+    const scoring = scoringPolicy;
     const styleScorer = new StyleScorer(scoring);
     const starRatingPolicy = new StarRatingPolicy(scoring.starRatingThresholds, { epsilon: scoring.scoreEpsilon });
     const ergonomicsScorer = new ErgonomicsScorer(scoring);
