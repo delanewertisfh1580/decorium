@@ -11,12 +11,12 @@ Decorium — браузерная Three.js-игра о проектирован�
 
 | Шаг | Действие игрока | Результат системы |
 |---|---|---|
-| 1 | Открывает профиль и выбирает заказ/уровень кампании. | Восстанавливаются settings, completed levels и session context. |
-| 2 | Читает brief: стили, запросы клиента, сценарии и ограничения. | Hydrated `ClientBrief v3` supplies versioned authored policy; UI displays it without interpretation. |
-| 3 | Выбирает, размещает, поворачивает и настраивает предметы/поверхности в 3D-комнате. | `RoomState` создаёт canonical stable instance IDs вида `catalogItemId#n`; move, rotate, remove, variant configuration и feedback focus принимают только этот ID. Color/material/size выбираются только из unlocked authored V5 variants. |
-| 4 | Нажимает «Оценить». | Application вычисляет multi-style fit, composition, client-priority satisfaction и spatial ergonomics, затем калибрует scorecard. |
-| 5 | Читает результат и уточняет композицию. | UI показывает total score, calibrated stars, три канала, style targets и actionable explanation. |
-| 6 | Выполняет условия заказа. | Profile records completion только при `completionEligible`, идемпотентно получает authored rewards и открывает следующие brief/variants/finishes. |
+| 1 | Открывает главное меню и выбирает продолжение, authored campaign или endless order. | Campaign cards получают unlock/completion status из Application; endless открывает явный seed flow. |
+| 2 | В кампании выбирает доступный authored brief; в endless запускает новый или повторяемый unsigned seed. | Campaign восстанавливает profile+level design. Endless детерминированно создаёт версию комнаты, brief и baseline из V1 blueprint + seed. |
+| 3 | Читает brief: стили, запросы клиента, сценарии и ограничения. | Hydrated `ClientBrief v3` supplies versioned authored policy; UI displays it without interpretation. |
+| 4 | Выбирает, размещает, поворачивает и настраивает предметы/поверхности в 3D-комнате. | `RoomState` создаёт canonical stable instance IDs вида `catalogItemId#n`; move, rotate, remove, variant configuration и feedback focus принимают только этот ID. Color/material/size выбираются только из unlocked authored V5 variants. |
+| 5 | Нажимает «Оценить», читает результат и уточняет композицию. | Application вычисляет multi-style fit, composition, client-priority satisfaction и spatial ergonomics; UI показывает calibrated scorecard и actionable explanation. |
+| 6 | Выполняет кампанийный заказ либо продолжает endless challenge. | Только eligible **campaign** completion идемпотентно выдаёт authored rewards и открывает следующий content. Endless results ничего не меняют в progression или campaign persistence. |
 
 ## Production vision: styles and client briefs
 
@@ -50,7 +50,9 @@ Semantic catalog contract отделяет visual footprint от gameplay obstac
 
 Decorium является static web-приложением: ему не требуются backend, пользовательский аккаунт, environment variables или внешние API. Контент загружается вместе с приложением, а игровые решения воспроизводимы из authored versioned data, profile-scoped browser-local design snapshot и сохранённого `RoomState`. Любой интерьерный предмет внутри комнаты — catalog instance, а floor/wall — player-owned surface slot; V3 environment оставляет неуправляемыми только shell/exterior/atmosphere.[4] [8]
 
-Cloud sync, multiplayer, платежи, runtime AI-judge, непрозрачная автоматическая расстановка, pathfinding, аудио и native packaging не входят в current baseline. Initial layout не является opaque automation: он детерминированно materialized из reviewable interior recipe и всегда остаётся player-editable.
+Campaign и endless имеют разные persistence boundaries. Campaign design привязан к `profileId + levelId`, а кнопка «Продолжить» ссылается только на последний authored level. Endless identity имеет вид `endless-{seed}`; run materializes только в runtime scope, reset возвращает generated baseline, а завершение, rewards, unlocks и campaign design никогда не записываются.
+
+Cloud sync, multiplayer, платежи, runtime AI-judge, непрозрачная автоматическая расстановка, pathfinding, аудио и native packaging не входят в current baseline. Initial layout не является opaque automation: campaign materializes из reviewable interior recipe, endless materializes из reviewable V1 blueprint + seed; оба baseline всегда остаются player-editable.
 
 ## Продуктовые инварианты
 
@@ -62,6 +64,8 @@ Cloud sync, multiplayer, платежи, runtime AI-judge, непрозрачн�
 6. Style mixing и client preferences оцениваются только относительно explicit authored policy, а не global default aesthetic.
 7. Каждый player-visible object inside room является catalog instance или surface slot; Presentation V3 не создаёт fixtures, built-ins или interior composition assets.
 8. UI может показывать locked variant/finish, но unlock проверяется только Application against PlayerProfile V4.
+9. Endless run должен быть повторяемым по seed и V1 blueprint; его priority feedback key authored вместе с blueprint.
+10. Endless evaluation использует тот же прозрачный scorecard, но не может записать campaign completion, rewards, unlocks, last session или durable design.
 
 За структурами данных и authoring workflow обращайтесь к [Content model](../systems/content-model.md); за техническими зависимостями — к [Architecture overview](../architecture/overview.md).
 
@@ -77,3 +81,4 @@ Cloud sync, multiplayer, платежи, runtime AI-judge, непрозрачн�
 [8]: ../architecture/overview.md "Architecture overview"
 [9]: roadmap.md "Production roadmap"
 [10]: ../../data/items/catalog.v5.json "V5 semantic item catalog and variants"
+[11]: ../../docs/architecture/main-menu-and-endless-mode.md "Menu and endless mode contract"

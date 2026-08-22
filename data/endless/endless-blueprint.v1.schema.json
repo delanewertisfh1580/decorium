@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "decorium/endless-blueprint.v1",
+  "type": "object",
+  "required": ["schemaVersion", "blueprints"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "blueprints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "summary", "client", "clientPriority", "presentationProfileId", "styleTargets", "spatialPreferences", "evaluationPolicy", "room", "surfaceDefaults", "availableItemIds"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "name": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 },
+          "client": {
+            "type": "object",
+            "required": ["id", "displayName"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+              "displayName": { "type": "string", "minLength": 1 }
+            }
+          },
+          "clientPriority": {
+            "type": "object",
+            "required": ["label", "messageKey"],
+            "additionalProperties": false,
+            "properties": {
+              "label": { "type": "string", "minLength": 1 },
+              "messageKey": { "type": "string", "pattern": "^[a-z0-9-]+$" }
+            }
+          },
+          "presentationProfileId": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "styleTargets": { "type": "array", "minItems": 1 },
+          "spatialPreferences": { "type": "object" },
+          "evaluationPolicy": { "type": "object" },
+          "room": {
+            "type": "object",
+            "required": ["minWidth", "maxWidth", "minDepth", "maxDepth"],
+            "additionalProperties": false,
+            "properties": {
+              "minWidth": { "type": "integer", "minimum": 5, "maximum": 12 },
+              "maxWidth": { "type": "integer", "minimum": 5, "maximum": 12 },
+              "minDepth": { "type": "integer", "minimum": 5, "maximum": 12 },
+              "maxDepth": { "type": "integer", "minimum": 5, "maximum": 12 }
+            }
+          },
+          "surfaceDefaults": {
+            "type": "object",
+            "required": ["floorFinishId", "wallFinishId"],
+            "additionalProperties": false,
+            "properties": {
+              "floorFinishId": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+              "wallFinishId": { "type": "string", "pattern": "^[a-z0-9-]+$" }
+            }
+          },
+          "availableItemIds": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }
+          }
+        }
+      }
+    }
+  }
+}

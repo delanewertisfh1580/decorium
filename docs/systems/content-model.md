@@ -16,6 +16,7 @@
 | Progression rewards | `data/progression/rewards.v1.json`, `reward-catalog.v1.schema.json` | Idempotent grants after authored completion. |
 | Presentation environments | `data/presentation/environment-profiles.v3.json`, `environment-profile.v3.schema.json` | Shell, openings, camera, light, exterior and atmosphere only. |
 | Client briefs | `data/briefs/client-briefs.v3.json`, `client-brief.v3.schema.json` | Identity, style targets, priorities, spatial preferences and typed evaluation policy. |
+| Endless blueprints | `data/endless/endless-blueprints.v1.json`, `endless-blueprint.v1.schema.json` | Authoring envelopes for deterministic, catalog-only ephemeral orders. |
 | Style/scoring/feedback | `data/styles/style-constraint-catalog.v1.json`, `data/scoring/scoring-parameters.json`, `data/feedback` | Exact styles, validated `ScoringPolicy` V3 and authored remediation. |
 | Release | `public/release-manifest.json` | Generated/validated operational build identity. |
 
@@ -79,6 +80,23 @@ Level V2 contains no `initialPlacement`. It references `interiorRecipeId`, a det
 
 A recipe contains catalog `itemId`, optional selected `variantId`, stable slot ID, position and right-angle rotation. `RoomInteriorGenerator` creates deterministic `RoomState`; all resulting entities are editable player-owned instances with canonical `catalogItemId#ordinal` identity.[4]
 
+## Endless blueprint V1
+
+An endless blueprint is not an authored campaign level and contains no hidden interior. It chooses a client identity, **authored priority label/message key**, V3 presentation environment, style targets, spatial/evaluation policy, allowed catalog pool, player-owned surface defaults and bounded room dimensions. `EndlessLevelGenerator` selects a blueprint, dimensions and starter recipe deterministically from an unsigned 32-bit seed; `GenerateEndlessLevelUseCase` materializes that recipe into the same `LevelDTO`/`RoomState` contracts used by the renderer.[9]
+
+```json
+{
+  "id": "endless-warm-hosting",
+  "clientPriority": { "label": "Принимать гостей", "messageKey": "priority-host-guests" },
+  "presentationProfileId": "warm-starter-living",
+  "room": { "minWidth": 7, "maxWidth": 9, "minDepth": 5, "maxDepth": 7 },
+  "surfaceDefaults": { "floorFinishId": "floor-light-oak", "wallFinishId": "wall-warm-plaster" },
+  "availableItemIds": ["sofa-001", "chair-001", "table-001", "lamp-001"]
+}
+```
+
+A blueprint priority message key must resolve to shipped authored feedback, its environment ID to V3 content, its default surfaces to profile-entitled base finishes, and its pool to affordances required by its evaluation policy. The generated identifier is `endless-{seed}`. It is registered as an ephemeral scope, so reset returns its generated baseline but save **never** mirrors to `BrowserLocalRoomDesignRepository`; no run may alter campaign completion, rewards, unlocks or `lastSession`.[9] [10]
+
 ## Surfaces, rewards and V4 profile
 
 Surface finish records are player-owned floor/wall slots rather than ambient wallpaper/floor presets. `RoomState.surfaceConfiguration` stores selected IDs only; renderer resolution belongs to the finish catalog. Reward records bind completion to finite unlock IDs. `GrantProgressionRewardsUseCase` writes `grantedRewardIds` and merges `unlockedIds` immutably, making replays idempotent.
@@ -126,7 +144,8 @@ Composition selects explicit affordances, never item `type`. `adjacency` and `fr
 4. For a finish, author surface type, render data and unlock route.
 5. Register runtime JSON/schema in static asset inventory.
 6. Add schema/content, Domain/Application and renderer/UI coverage.
-7. Run full tests, production build, dependency audit and browser smoke before release.
+7. For an endless order, author priority feedback, environment/surface references and a catalog pool that can satisfy every required affordance; never add fixture content.
+8. Run full tests, production build, dependency audit and browser smoke before release.
 
 See [Architecture overview](../architecture/overview.md) for ownership/persistence/runtime flows.
 
@@ -140,3 +159,5 @@ See [Architecture overview](../architecture/overview.md) for ownership/persisten
 [6]: ../../src/Application/UseCases/GrantProgressionRewardsUseCase.js "Idempotent grants"
 [7]: ../../data/presentation/environment-profile.v3.schema.json "Environment V3 schema"
 [8]: ../../src/Domain/Scoring/ScoringPolicy.js "Explicit validated scoring policy"
+[9]: ../../data/endless/endless-blueprints.v1.json "Endless blueprint catalog V1"
+[10]: ../../src/Application/UseCases/GenerateEndlessLevelUseCase.js "Generated endless level assembly"

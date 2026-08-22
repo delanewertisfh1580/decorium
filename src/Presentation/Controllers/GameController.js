@@ -22,6 +22,7 @@ export class GameController {
     evaluateRoomUseCase,
     recordLevelCompletionUseCase,
     startLevelSessionUseCase = null,
+    startEndlessSessionUseCase = null,
     readRoomStateUseCase = null,
     resetRoomAttemptUseCase = null,
     playerProfile = null,
@@ -36,6 +37,7 @@ export class GameController {
     this.evaluateRoomUseCase = evaluateRoomUseCase;
     this.recordLevelCompletionUseCase = recordLevelCompletionUseCase;
     this.startLevelSessionUseCase = startLevelSessionUseCase;
+    this.startEndlessSessionUseCase = startEndlessSessionUseCase;
     this.readRoomStateUseCase = readRoomStateUseCase;
     this.resetRoomAttemptUseCase = resetRoomAttemptUseCase;
     this.playerProfile = playerProfile;
@@ -44,6 +46,7 @@ export class GameController {
     this.roomView = null;
     this.sessionCoordinator = new LevelSessionCoordinator({
       startLevelSessionUseCase: this.startLevelSessionUseCase,
+      startEndlessSessionUseCase: this.startEndlessSessionUseCase,
       readRoomStateUseCase: this.readRoomStateUseCase,
       resetRoomAttemptUseCase: this.resetRoomAttemptUseCase,
       getRoomView: () => this.roomView
@@ -79,6 +82,7 @@ export class GameController {
     this.statusView = null;
     this.keyboardRouter = null;
     this.completionProfileListener = null;
+    this.mainMenuListener = null;
   }
 
   async init(canvas, catalogContainer, toolbarContainer, evaluationContainer, dashboardContainer = null, statusContainer = null, designInspectorContainer = null) {
@@ -95,7 +99,8 @@ export class GameController {
       onLower: () => this._dispatchIntent(INPUT_INTENTS.LOWER),
       onResetCamera: () => this._dispatchIntent(INPUT_INTENTS.RESET_CAMERA),
       onClear: () => this._onClear(),
-      onEvaluate: () => this._dispatchIntent(INPUT_INTENTS.EVALUATE)
+      onEvaluate: () => this._dispatchIntent(INPUT_INTENTS.EVALUATE),
+      onMenu: () => this.openMainMenu()
     });
     this.evaluationView = new EvaluationView(evaluationContainer, {
       onFocusInstance: instanceId => this._onExplainabilityFocus(instanceId)
@@ -131,6 +136,19 @@ export class GameController {
     this.keyboardRouter.start();
   }
 
+  setMainMenuListener(listener) {
+    if (listener !== null && typeof listener !== 'function') {
+      throw new Error('GameController main menu listener must be a function or null.');
+    }
+    this.mainMenuListener = listener;
+  }
+
+  async openMainMenu() {
+    this.roomInteraction.cancelSelection({ announce: false });
+    this.evaluationCoordinator.reset();
+    return this.mainMenuListener?.();
+  }
+
   setCompletionProfileListener(listener) {
     if (listener !== null && typeof listener !== 'function') {
       throw new Error('GameController completion profile listener must be a function or null.');
@@ -151,6 +169,11 @@ export class GameController {
 
   async loadLevel(levelId) {
     await this.sessionCoordinator.load(levelId);
+    this._render();
+  }
+
+  async loadEndlessRun(seed) {
+    await this.sessionCoordinator.loadEndless(seed);
     this._render();
   }
 
@@ -302,6 +325,10 @@ export class GameController {
 
   set pendingItemId(itemId) {
     if (this.roomInteraction) this.roomInteraction.pendingItemId = itemId;
+  }
+
+  showStatus(message) {
+    this._showStatus(message);
   }
 
   _showStatus(message) {

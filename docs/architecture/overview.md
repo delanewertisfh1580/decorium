@@ -36,6 +36,7 @@ Presentation не владеет доменным состоянием, policy, 
 | Presentation environment | V3 | Structural shell, openings, camera, lighting, exterior and atmosphere only. |
 | Player profile | V4 | Settings, completion history and inventory `{ unlockedIds, grantedRewardIds }`. |
 | Scoring policy | V2 | Validated explicit channel weights, style blend, occupancy, density, star thresholds and critical cap. |
+| Endless blueprint catalog | V1 | Versioned authored generation envelopes: client, priority feedback key, available catalog pool, room ranges, surfaces, environment, style and evaluation policy. |
 
 > **Ownership rule.** Каждый видимый объект внутри playable room обязан быть либо catalog instance в `RoomState`, либо player-owned floor/wall surface slot. Structural shell, openings, exterior и atmosphere могут быть неуправляемыми, но не являются интерьером.
 
@@ -53,6 +54,8 @@ Validated Level V2 + ClientBrief V2 + Item V5 + recipe/finishes V1 + PlayerProfi
 
 `RoomState` assigns placements canonical `catalogItemId#ordinal`. Move, rotate, remove, configuration, undo and explainability focus target instance ID only. Its snapshot includes per-instance resolved configuration and `SurfaceConfiguration`, decoupling restore from renderer implementation.[5]
 
+`GenerateEndlessLevelUseCase` takes an unsigned seed and turns one V1 blueprint into a deterministic `LevelDTO` with `mode: 'endless'`, identity `endless-{seed}`, a generated catalog-only baseline, explicit run metadata, an authored client-priority feedback key and the same V3 evaluation contracts as campaign content. `StartEndlessSessionUseCase` registers that baseline as an **ephemeral** `ScopedRoomRepository` scope: save and reset work for the active run, but browser design persistence, `lastSession`, campaign completion, unlocks and rewards remain untouched.[13] [14] [15]
+
 ## Configuration and progression
 
 ```text
@@ -65,7 +68,7 @@ DesignInspectorView → RoomInteractionCoordinator
 
 There is no arbitrary scale slider. The player selects only finite authored color/material/size variants. Application rejects unknown or locked variants, finish IDs or incompatible surface slots before mutation. UI may show a locked option but contains no policy and cannot bypass entitlement validation.[6] [7]
 
-`RecordLevelCompletionUseCase` delegates progression grants to `GrantProgressionRewardsUseCase`. Reward IDs are idempotent: replay cannot grant the same entitlement twice. A new profile is propagated through the active controller so unlocked options appear in the inspector.[8]
+`RecordLevelCompletionUseCase` delegates campaign progression grants to `GrantProgressionRewardsUseCase`. Reward IDs are idempotent: replay cannot grant the same entitlement twice. A new profile is propagated through the active controller so unlocked options appear in the inspector. `EvaluationCoordinator` renders endless results through the shared feedback/HUD flow but never invokes that campaign completion path when `LevelDTO.mode === 'endless'`.[8] [16]
 
 ## Evaluation and scene boundary
 
@@ -87,7 +90,8 @@ RoomState placements + surfaceConfiguration
 | `LevelSessionCoordinator` | start, read and reset session. | Access repository or build baseline directly. |
 | `RoomInteractionCoordinator` | place/move/rotate/remove/configure commands. | Compute unlock, score, reward or persistence policy. |
 | `EvaluationCoordinator` | evaluate and completion record. | Infer eligibility from UI state. |
-| `GameController` | Compose views and coordinators. | Own `RoomState`, schema, score/reward policy or fixture interaction. |
+| `GameController` | Compose views/coordinators and route explicit campaign/endless session commands. | Own `RoomState`, schema, score/reward policy or fixture interaction. |
+| `MainMenuView` + bootstrap | Render navigation only; request campaign list or a seed-based run through callbacks/use cases. | Read repositories, derive unlock/reward policy or persist designs. |
 
 ## Non-negotiable invariants
 
@@ -101,6 +105,8 @@ RoomState placements + surfaceConfiguration
 8. Score depends on authored resolved gameplay data, never UI label, visual mesh, asset or ambient scene state.
 9. Every mutation targets canonical instance ID, never catalog ID.
 10. Presentation reads/resets room state only through use cases.
+11. Campaign and endless modes are explicit `LevelDTO.mode` values: only campaign may write profile-scoped designs, last-session state, completion, reward or unlock data.
+12. A generated run must be reproducible from its V1 blueprint catalog and seed; diagnostic feedback keys are authored by its selected blueprint, never invented by Presentation.
 
 ## Verification
 
@@ -127,3 +133,7 @@ Verification covers schema/content hydration, recipe determinism, entitlement co
 [10]: ../../src/Presentation/Scene/EnvironmentProfilePlan.js "V3 shell and atmosphere plan"
 [11]: ../../src/Presentation/Scene/LocationEnvironmentSystem.js "Exterior-only environment"
 [12]: ../../src/Presentation/Views/RoomView.js "Player-owned room renderer"
+[13]: ../../src/Application/UseCases/GenerateEndlessLevelUseCase.js "Deterministic endless DTO assembly"
+[14]: ../../src/Application/UseCases/StartEndlessSessionUseCase.js "Ephemeral generated-run entry"
+[15]: ../../src/Infrastructure/Repositories/ScopedRoomRepository.js "Campaign versus ephemeral persistence scopes"
+[16]: ../../src/Presentation/Controllers/EvaluationCoordinator.js "Mode-safe evaluation completion"

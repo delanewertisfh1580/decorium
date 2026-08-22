@@ -76,6 +76,20 @@ describe('EvaluationCoordinator', () => {
     expect(ports.onRequestDashboardRender).toHaveBeenCalledTimes(1);
   });
 
+  it('renders an eligible endless evaluation without recording campaign completion, rewards, or unlocks', async () => {
+    const { level, roomViewModel, profile } = createContext();
+    const endlessLevel = { ...level, levelId: 'endless-77', mode: 'endless', run: { seed: 77 } };
+    const { coordinator, evaluationView, recordLevelCompletionUseCase, ports } = createCoordinator();
+
+    await coordinator.evaluate({ level: endlessLevel, roomViewModel, profile });
+
+    expect(recordLevelCompletionUseCase.execute).not.toHaveBeenCalled();
+    expect(evaluationView.render).toHaveBeenCalledWith(expect.objectContaining({ score: 0.82, stars: 4 }));
+    expect(ports.onProfileUpdated).not.toHaveBeenCalled();
+    expect(ports.onCompleted).not.toHaveBeenCalled();
+    expect(ports.onRequestDashboardRender).toHaveBeenCalledTimes(1);
+  });
+
   it('does not invoke completion or render a result when evaluation fails', async () => {
     const { level, roomViewModel, profile } = createContext();
     const { coordinator, evaluationView, recordLevelCompletionUseCase, ports } = createCoordinator({

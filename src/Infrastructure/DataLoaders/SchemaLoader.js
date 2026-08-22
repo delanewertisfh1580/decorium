@@ -36,6 +36,10 @@ export class SchemaLoader {
   static async loadProgressionRewardSchema() {
     return this.load('./data/progression/reward-catalog.v1.schema.json');
   }
+
+  static async loadEndlessBlueprintSchema() {
+    return this.load('./data/endless/endless-blueprint.v1.schema.json');
+  }
 }
 
 export default SchemaLoader;

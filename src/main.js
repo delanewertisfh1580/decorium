@@ -9,6 +9,7 @@ import JsonReleaseManifestRepository from './Infrastructure/Repositories/JsonRel
 import JsonInteriorRecipeRepository from './Infrastructure/Repositories/JsonInteriorRecipeRepository.js';
 import JsonSurfaceFinishCatalog from './Infrastructure/Repositories/JsonSurfaceFinishCatalog.js';
 import JsonProgressionRewardCatalog from './Infrastructure/Repositories/JsonProgressionRewardCatalog.js';
+import JsonEndlessBlueprintCatalog from './Infrastructure/Repositories/JsonEndlessBlueprintCatalog.js';
 import { InMemoryRoomRepository } from './Infrastructure/Repositories/InMemoryRoomRepository.js';
 import ScopedRoomRepository from './Infrastructure/Repositories/ScopedRoomRepository.js';
 import BrowserLocalRoomDesignRepository from './Infrastructure/Repositories/BrowserLocalRoomDesignRepository.js';
@@ -53,6 +54,8 @@ import ResetRoomAttemptUseCase from './Application/UseCases/ResetRoomAttemptUseC
 import ConfigurePlacedItemUseCase from './Application/UseCases/ConfigurePlacedItemUseCase.js';
 import ConfigureRoomSurfaceUseCase from './Application/UseCases/ConfigureRoomSurfaceUseCase.js';
 import GrantProgressionRewardsUseCase from './Application/UseCases/GrantProgressionRewardsUseCase.js';
+import GenerateEndlessLevelUseCase from './Application/UseCases/GenerateEndlessLevelUseCase.js';
+import StartEndlessSessionUseCase from './Application/UseCases/StartEndlessSessionUseCase.js';
 import ProgressionPolicy from './Domain/Progression/ProgressionPolicy.js';
 import { GameController } from './Presentation/Controllers/GameController.js';
 import FurnitureAssetRepository from './Presentation/Scene/FurnitureAssetRepository.js';
@@ -61,7 +64,7 @@ import loungePbrAssetManifest from '../data/visuals/lounge-pbr-assets.v1.json';
 import diningTablePbrAssetManifest from '../data/visuals/dining-table-pbr-assets.v1.json';
 import storagePbrAssetManifest from '../data/visuals/storage-pbr-assets.v1.json';
 import { loadPlayerProfileForApp } from './Presentation/bootstrap/loadPlayerProfileForApp.js';
-import { initializeLevelSelectForApp } from './Presentation/bootstrap/initializeLevelSelectForApp.js';
+import { initializeMainMenuForApp } from './Presentation/bootstrap/initializeMainMenuForApp.js';
 import { initializePlayerSettingsForApp } from './Presentation/bootstrap/initializePlayerSettingsForApp.js';
 import { initializeReleaseInfoForApp } from './Presentation/bootstrap/initializeReleaseInfoForApp.js';
 
@@ -99,7 +102,7 @@ async function bootstrap() {
       appRoot: document.getElementById('app')
     });
 
-    const [levelSchema, itemSchema, presentationEnvironmentSchema, clientBriefSchema, styleConstraintCatalogSchema, interiorRecipeSchema, surfaceFinishSchema, progressionRewardSchema, authoredScoringPolicy] = await Promise.all([
+    const [levelSchema, itemSchema, presentationEnvironmentSchema, clientBriefSchema, styleConstraintCatalogSchema, interiorRecipeSchema, surfaceFinishSchema, progressionRewardSchema, endlessBlueprintSchema, authoredScoringPolicy] = await Promise.all([
       SchemaLoader.loadLevelSchema(),
       SchemaLoader.loadItemSchema(),
       SchemaLoader.loadPresentationEnvironmentSchema(),
@@ -108,6 +111,7 @@ async function bootstrap() {
       SchemaLoader.loadInteriorRecipeSchema(),
       SchemaLoader.loadSurfaceFinishSchema(),
       SchemaLoader.loadProgressionRewardSchema(),
+      SchemaLoader.loadEndlessBlueprintSchema(),
       loadJson('./data/scoring/scoring-parameters.json')
     ]);
     const scoringPolicy = new ScoringPolicy(authoredScoringPolicy);
@@ -126,6 +130,7 @@ async function bootstrap() {
     const interiorRecipeRepository = new JsonInteriorRecipeRepository('./data/interior/interior-recipes.v1.json', interiorRecipeSchema);
     const surfaceFinishCatalog = new JsonSurfaceFinishCatalog('./data/interior/surface-finishes.v1.json', surfaceFinishSchema);
     const progressionRewardCatalog = new JsonProgressionRewardCatalog('./data/progression/rewards.v1.json', progressionRewardSchema);
+    const endlessBlueprintCatalog = new JsonEndlessBlueprintCatalog('./data/endless/endless-blueprints.v1.json', endlessBlueprintSchema);
     const updatePlayerSettingsUseCase = new UpdatePlayerSettingsUseCase(
       savePlayerProfileUseCase,
       () => new Date().toISOString()
@@ -169,6 +174,15 @@ async function bootstrap() {
       { interiorRecipeRepository, surfaceFinishCatalog, roomDesignRepository, getPlayerProfile }
     );
     const startLevelSessionUseCase = new StartLevelSessionUseCase(loadLevelUseCase, roomRepository, getPlayerProfile);
+    const generateEndlessLevelUseCase = new GenerateEndlessLevelUseCase({
+      endlessBlueprintCatalog,
+      itemCatalog,
+      constraintCatalog,
+      presentationEnvironmentRepository,
+      surfaceFinishCatalog,
+      getPlayerProfile
+    });
+    const startEndlessSessionUseCase = new StartEndlessSessionUseCase(generateEndlessLevelUseCase, roomRepository);
     const readRoomStateUseCase = new ReadRoomStateUseCase(roomRepository);
     const resetRoomAttemptUseCase = new ResetRoomAttemptUseCase(roomRepository);
     const placeItemUseCase = new PlaceItemUseCase(roomRepository);
@@ -257,6 +271,7 @@ async function bootstrap() {
       evaluateRoomUseCase,
       recordLevelCompletionUseCase,
       startLevelSessionUseCase,
+      startEndlessSessionUseCase,
       readRoomStateUseCase,
       resetRoomAttemptUseCase,
       playerProfile,
@@ -280,19 +295,21 @@ async function bootstrap() {
       appRoot: document.getElementById('app')
     });
     playerProfile = settingsInitialization.profile;
-    const levelSelection = await initializeLevelSelectForApp({
+    const mainMenu = await initializeMainMenuForApp({
       getCampaignLevelsUseCase,
       savePlayerProfileUseCase,
       gameController: controller,
       profile: playerProfile,
-      levelSelectContainer: document.getElementById('level-select-container'),
-      timestampProvider: () => new Date().toISOString()
+      mainMenuContainer: document.getElementById('main-menu-container'),
+      timestampProvider: () => new Date().toISOString(),
+      seedProvider: () => window.crypto.getRandomValues(new Uint32Array(1))[0]
     });
-    playerProfile = levelSelection.profile;
+    playerProfile = mainMenu.profile;
     controller.setPlayerProfile(playerProfile);
+    controller.setMainMenuListener(() => mainMenu.show());
     controller.setCompletionProfileListener(async profile => {
       playerProfile = profile;
-      return levelSelection.refresh(profile);
+      return mainMenu.refresh(profile);
     });
     controller.roomView.startRenderLoop();
     // После загрузки сцена остаётся чистой: подсказки появляются только

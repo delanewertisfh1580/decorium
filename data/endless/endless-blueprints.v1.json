@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "blueprints": [
+    {
+      "id": "endless-warm-hosting",
+      "name": "Вечер для друзей",
+      "summary": "Соберите тёплую гостиную для долгого разговора и совместного ужина.",
+      "client": { "id": "endless-host", "displayName": "Алексей и Марина" },
+      "clientPriority": { "label": "Принимать гостей", "messageKey": "priority-host-guests" },
+      "presentationProfileId": "warm-starter-living",
+      "styleTargets": [{ "styleId": "scandinavian", "role": "primary", "weight": 1 }],
+      "spatialPreferences": {
+        "density": "balanced",
+        "clearanceMultiplier": 1,
+        "emptySpacePreference": { "mode": "allow", "targetFreeAreaRatio": 0.42 }
+      },
+      "evaluationPolicy": {
+        "styleMode": "weighted-targets-v1",
+        "completion": { "minimumStars": 3, "criticalRuleMode": "block-completion" },
+        "compositionRules": { "minItems": 4, "requiredAffordances": ["dining-seat", "dining-surface", "light-source"] },
+        "ergonomicsRules": { "requiredFunctionalScenarios": [] },
+        "functionalSatisfactionPolicy": { "schemaVersion": 1, "mode": "demand-weighted-coverage" }
+      },
+      "room": { "minWidth": 7, "maxWidth": 9, "minDepth": 5, "maxDepth": 7 },
+      "surfaceDefaults": { "floorFinishId": "floor-light-oak", "wallFinishId": "wall-warm-plaster" },
+      "availableItemIds": ["sofa-001", "sofa-002", "chair-001", "chair-002", "table-001", "table-002", "lamp-001", "lamp-002", "shelf-001", "shelf-002", "cabinet-001", "desk-001", "plant-001", "mirror-001", "rug-001", "coffeetable-001"]
+    },
+    {
+      "id": "endless-evening-media",
+      "name": "Камерный киновечер",
+      "summary": "Создайте спокойный уголок для просмотра и отдыха без визуального шума.",
+      "client": { "id": "endless-media", "displayName": "Денис" },
+      "clientPriority": { "label": "Комфортный просмотр", "messageKey": "priority-media-comfort" },
+      "presentationProfileId": "urban-media-corner",
+      "styleTargets": [{ "styleId": "scandinavian", "role": "primary", "weight": 0.7 }, { "styleId": "japandi", "role": "secondary", "weight": 0.3 }],
+      "spatialPreferences": {
+        "density": "intimate",
+        "clearanceMultiplier": 0.8,
+        "emptySpacePreference": { "mode": "discourage-excess", "targetFreeAreaRatio": 0.35 }
+      },
+      "evaluationPolicy": {
+        "styleMode": "weighted-targets-v1",
+        "completion": { "minimumStars": 3, "criticalRuleMode": "block-completion" },
+        "compositionRules": { "minItems": 4, "requiredAffordances": ["lounge-seat", "coffee-surface", "light-source"] },
+        "ergonomicsRules": { "requiredFunctionalScenarios": [] },
+        "functionalSatisfactionPolicy": { "schemaVersion": 1, "mode": "demand-weighted-coverage" }
+      },
+      "room": { "minWidth": 6, "maxWidth": 8, "minDepth": 5, "maxDepth": 6 },
+      "surfaceDefaults": { "floorFinishId": "floor-light-oak", "wallFinishId": "wall-warm-plaster" },
+      "availableItemIds": ["sofa-002", "tv-001", "chair-001", "table-002", "coffeetable-001", "lamp-001", "lamp-002", "rug-001", "plant-001", "shelf-001", "mirror-001"]
+    },
+    {
+      "id": "endless-open-studio",
+      "name": "Спокойная студия",
+      "summary": "Организуйте собранное рабочее пространство со светом и хранением.",
+      "client": { "id": "endless-studio", "displayName": "София" },
+      "clientPriority": { "label": "Сохранить характер пространства", "messageKey": "priority-keep-space-open" },
+      "presentationProfileId": "bright-studio",
+      "styleTargets": [{ "styleId": "scandinavian", "role": "primary", "weight": 1 }],
+      "spatialPreferences": {
+        "density": "open",
+        "clearanceMultiplier": 1.1,
+        "emptySpacePreference": { "mode": "require-open", "targetFreeAreaRatio": 0.55 }
+      },
+      "evaluationPolicy": {
+        "styleMode": "weighted-targets-v1",
+        "completion": { "minimumStars": 4, "criticalRuleMode": "block-completion" },
+        "compositionRules": { "minItems": 5, "requiredAffordances": ["work-seat", "work-surface", "light-source", "storage-volume"] },
+        "ergonomicsRules": { "requiredFunctionalScenarios": [] },
+        "functionalSatisfactionPolicy": { "schemaVersion": 1, "mode": "demand-weighted-coverage" }
+      },
+      "room": { "minWidth": 7, "maxWidth": 10, "minDepth": 6, "maxDepth": 8 },
+      "surfaceDefaults": { "floorFinishId": "floor-light-oak", "wallFinishId": "wall-warm-plaster" },
+      "availableItemIds": ["chair-001", "chair-002", "desk-001", "table-001", "lamp-001", "lamp-002", "shelf-001", "shelf-002", "cabinet-001", "plant-001", "mirror-001", "rug-001"]
+    }
+  ]
+}

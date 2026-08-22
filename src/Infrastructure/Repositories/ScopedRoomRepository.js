@@ -19,8 +19,20 @@ export class ScopedRoomRepository {
   associate(roomId, { profileId, levelId, baselineRoomState = null }) {
     const baseline = baselineRoomState && typeof baselineRoomState.clone === 'function' ? baselineRoomState.clone() : null;
     this.scopes.set(requireId(roomId, 'roomId'), Object.freeze({
+      persistent: true,
       profileId: requireId(profileId, 'profileId'),
       levelId: requireId(levelId, 'levelId'),
+      baselineRoomState: baseline
+    }));
+  }
+
+  registerEphemeral(roomId, baselineRoomState) {
+    const baseline = baselineRoomState && typeof baselineRoomState.clone === 'function' ? baselineRoomState.clone() : null;
+    if (!baseline) throw new Error('ScopedRoomRepository: ephemeral baselineRoomState is required.');
+    this.scopes.set(requireId(roomId, 'roomId'), Object.freeze({
+      persistent: false,
+      profileId: null,
+      levelId: null,
       baselineRoomState: baseline
     }));
   }
@@ -37,7 +49,7 @@ export class ScopedRoomRepository {
     const saved = await this.sessionRepository.saveState(roomId, roomState);
     if (!saved) return false;
     const scope = this.scopes.get(roomId);
-    if (!scope || !this.roomDesignRepository) return true;
+    if (!scope?.persistent || !this.roomDesignRepository) return true;
     return this.roomDesignRepository.save(scope.profileId, scope.levelId, roomState);
   }
 

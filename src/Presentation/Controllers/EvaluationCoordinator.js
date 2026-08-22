@@ -37,7 +37,7 @@ export class EvaluationCoordinator {
       return result;
     }
 
-    if (this.recordLevelCompletionUseCase?.execute && profile) {
+    if (level.mode !== 'endless' && this.recordLevelCompletionUseCase?.execute && profile) {
       const completion = await this.recordLevelCompletionUseCase.execute({
         levelId: level.levelId,
         stars: result.evaluationData.stars,
@@ -55,6 +55,9 @@ export class EvaluationCoordinator {
       }
     }
 
+    if (level.mode === 'endless' && result.evaluationData.completionEligible) {
+      this.onStatus('Бесконечный заказ завершён. Запустите новый seed для следующего задания.');
+    }
     this.viewModel.update(result.evaluationData);
     this.getEvaluationView()?.render(result.evaluationData);
     this.onRequestDashboardRender();

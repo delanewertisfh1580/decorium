@@ -41,6 +41,10 @@ export class ToolbarView {
             <span class="button-icon" aria-hidden="true">＋</span>
             <span class="button-copy"><span>Новая попытка</span></span>
           </button>
+          <button class="toolbar-button quiet-action" data-action="menu" type="button">
+            <span class="button-icon" aria-hidden="true">☰</span>
+            <span class="button-copy"><span>Главное меню</span></span>
+          </button>
           <details class="help-spoiler" data-help-spoiler>
             <summary>Как играть</summary>
             <div class="help-content">
@@ -61,6 +65,7 @@ export class ToolbarView {
     this.container.querySelector('[data-action="clear"]').onclick = this.callbacks.onClear;
     this.container.querySelector('[data-action="reset-camera"]').onclick = this.callbacks.onResetCamera;
     this.container.querySelector('[data-action="evaluate"]').onclick = this.callbacks.onEvaluate;
+    this.container.querySelector('[data-action="menu"]').onclick = this.callbacks.onMenu;
   }
 
   renderContextActions(container) {

@@ -24,6 +24,6 @@ describe('PROD-004 progression composition root', () => {
     expect(mainSource).toContain('controller.setPlayerProfile(playerProfile);');
     expect(mainSource).toContain('controller.setCompletionProfileListener(async profile => {');
     expect(mainSource).toContain('playerProfile = profile;');
-    expect(mainSource).toContain('return levelSelection.refresh(profile);');
+    expect(mainSource).toContain('return mainMenu.refresh(profile);');
   });
 });
