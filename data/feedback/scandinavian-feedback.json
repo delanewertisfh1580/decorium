@@ -90,6 +90,54 @@
     "severity": "low"
   },
   {
+    "id": "composition-missing-dining-seat",
+    "category": "violation",
+    "template": "Добавьте посадочные места, чтобы обеденный сценарий был доступен гостям.",
+    "severity": "high"
+  },
+  {
+    "id": "composition-missing-dining-surface",
+    "category": "violation",
+    "template": "Добавьте обеденную поверхность, чтобы завершить сценарий приёма гостей.",
+    "severity": "medium"
+  },
+  {
+    "id": "composition-missing-light-source",
+    "category": "violation",
+    "template": "Добавьте источник света, чтобы композиция комнаты была завершённой.",
+    "severity": "medium"
+  },
+  {
+    "id": "composition-missing-lounge-seat",
+    "category": "violation",
+    "template": "Добавьте удобное место для отдыха, чтобы медиа-зона работала по назначению.",
+    "severity": "high"
+  },
+  {
+    "id": "composition-missing-coffee-surface",
+    "category": "violation",
+    "template": "Добавьте журнальную поверхность, чтобы завершить камерный сценарий отдыха.",
+    "severity": "medium"
+  },
+  {
+    "id": "composition-missing-work-seat",
+    "category": "violation",
+    "template": "Добавьте рабочее сиденье, чтобы в студии можно было комфортно работать.",
+    "severity": "high"
+  },
+  {
+    "id": "composition-missing-work-surface",
+    "category": "violation",
+    "template": "Добавьте рабочую поверхность, чтобы студия поддерживала сфокусированную работу.",
+    "severity": "medium"
+  },
+  {
+    "id": "composition-missing-storage-volume",
+    "category": "violation",
+    "template": "Добавьте систему хранения, чтобы поддержать порядок и рабочий сценарий комнаты.",
+    "severity": "medium"
+  },
+  {
     "id": "ergonomics-minimum-clearance",
     "category": "violation",
     "template": "Оставьте больше прохода между предметами: нужно минимум {threshold} м, сейчас {value} м.",

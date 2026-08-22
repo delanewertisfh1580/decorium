@@ -104,6 +104,17 @@ describe('EvaluateRoomUseCase V2', () => {
     });
   });
 
+  it('converts an asynchronous explanation failure into a typed evaluation result', async () => {
+    const roomState = RoomState.createEmpty(new RoomBounds(5, 5));
+    const { useCase } = createUseCase(roomState);
+    useCase._evaluateV2 = vi.fn().mockRejectedValue(new Error('missing authored feedback'));
+
+    await expect(useCase.execute({ roomId: 'room-001', evaluationSpec })).resolves.toMatchObject({
+      success: false,
+      error: 'UNEXPECTED_ERROR: missing authored feedback'
+    });
+  });
+
   it('evaluates a room through the three active channels and returns V2 explanation data', async () => {
     const roomState = RoomState.createEmpty(new RoomBounds(5, 5));
     const { useCase, multiStyleDependencies } = createUseCase(roomState);

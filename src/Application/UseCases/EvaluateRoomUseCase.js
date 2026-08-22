@@ -91,7 +91,7 @@ export class EvaluateRoomUseCase {
     try {
       const roomState = await this.roomRepository.getState(roomId);
       if (!roomState) return EvaluationResultDTO.failure(`ROOM_NOT_FOUND: Room ${roomId} not found.`);
-      return this._evaluateV2({ roomState, placedItems: roomState.getItems(), evaluationSpec });
+      return await this._evaluateV2({ roomState, placedItems: roomState.getItems(), evaluationSpec });
     } catch (error) {
       console.error(`EvaluateRoomUseCase: Error evaluating room ${roomId}:`, error);
       return EvaluationResultDTO.failure(`UNEXPECTED_ERROR: ${error.message}`);

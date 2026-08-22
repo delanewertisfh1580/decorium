@@ -5,6 +5,11 @@ import feedbackEntries from '../../data/feedback/scandinavian-feedback.json';
 
 const clientBriefs = clientBriefCatalog.briefs;
 const styleConstraints = styleConstraintCatalog.profiles.flatMap(profile => profile.constraints);
+const compositionMessageKeys = clientBriefs.flatMap(brief => (
+  brief.evaluationPolicy.compositionRules.requiredAffordances.map(
+    affordance => `composition-missing-${affordance}`
+  )
+));
 
 function collectMessageKeys(value, keys = new Set()) {
   if (Array.isArray(value)) {
@@ -25,11 +30,7 @@ describe('explainable feedback content coverage', () => {
       ...styleConstraints.map(constraint => constraint.messageKey),
       ...collectMessageKeys(clientBriefs),
       'composition-too-few-items',
-      'composition-missing-seating',
-      'composition-missing-surface',
-      'composition-missing-lighting',
-      'composition-missing-storage',
-      'composition-missing-decor',
+      ...compositionMessageKeys,
       'ergonomics-minimum-clearance',
       'ergonomics-passage-zone-free'
     ]);
