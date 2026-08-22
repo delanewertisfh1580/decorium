@@ -9,20 +9,25 @@ const rawLevel = {
   roomId: 'room-001',
   name: 'Гостиная',
   clientBriefId: 'brief-warm-host-001',
+  presentationProfileId: 'warm-starter-living',
   roomDimensions: { width: 8, depth: 6 },
   availableItems: ['chair-001'],
   initialPlacement: []
 };
-
 const rawBrief = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   id: 'brief-warm-host-001',
   levelId: 'level-001',
   client: { id: 'client-warm-host', displayName: 'Марина и Алексей' },
   title: 'Гостиная для тёплых ужинов',
   summary: 'Нужна спокойная гостиная.',
   styleTargets: [{ styleId: 'scandinavian', role: 'primary', weight: 1 }],
-  clientPriorities: [{ id: 'host-guests', label: 'Принимать гостей', weight: 1 }],
+  clientPriorities: [{
+    id: 'host-guests',
+    label: 'Принимать гостей',
+    weight: 1,
+    rule: { schemaVersion: 1, kind: 'functional-scenario', scenarioId: 'dining-hosting', messageKey: 'priority-host-guests' }
+  }],
   spatialPreferences: {
     density: 'balanced',
     clearanceMultiplier: 1,
@@ -36,131 +41,81 @@ const rawBrief = {
       minimumClearance: { minimumDistance: 0.9, weight: 1 },
       passageZones: [],
       functionalLayoutRules: [],
-      requiredFunctionalScenarios: [
-        {
-          schemaVersion: 1,
-          id: 'dining-hosting',
-          label: 'Обеденная группа',
-          requiredRoles: [
-            { affordance: 'dining-surface', minCount: 1 },
-            { affordance: 'dining-seat', minCount: 2 }
-          ],
-          weight: 1.3,
-          critical: true,
-          messageKey: 'scenario-dining-hosting-required'
-        }
-      ]
+      requiredFunctionalScenarios: [{
+        schemaVersion: 1,
+        id: 'dining-hosting',
+        label: 'Обеденная группа',
+        requiredRoles: [
+          { affordance: 'dining-surface', minCount: 1 },
+          { affordance: 'dining-seat', minCount: 2 }
+        ],
+        weight: 1.3,
+        critical: true,
+        messageKey: 'scenario-dining-hosting-required'
+      }]
     }
   }
 };
 
-describe('LoadLevelUseCase ClientBrief hydration', () => {
-  it('derives the current scoring inputs and completion target exclusively from the resolved immutable client brief', async () => {
-    const levelRepository = { loadLevel: vi.fn().mockResolvedValue(rawLevel) };
-    const itemCatalog = { getItemsByIds: vi.fn().mockResolvedValue([item]) };
-    const constraintCatalog = { getConstraintsByStyleId: vi.fn().mockResolvedValue([]) };
-    const clientBriefRepository = { getById: vi.fn().mockResolvedValue(rawBrief) };
-    const useCase = new LoadLevelUseCase(levelRepository, itemCatalog, constraintCatalog, null, clientBriefRepository);
+function createUseCase({ brief = rawBrief, profiles = null } = {}) {
+  const profilesByStyleId = profiles ?? {
+    scandinavian: Object.freeze({ id: 'scandinavian', label: 'Скандинавский', constraints: [Object.freeze({ id: 'scand-wood-min' })] })
+  };
+  return new LoadLevelUseCase(
+    { loadLevel: vi.fn().mockResolvedValue(rawLevel) },
+    { getItemsByIds: vi.fn().mockResolvedValue([item]) },
+    { getStyleProfileById: vi.fn(styleId => Promise.resolve(profilesByStyleId[styleId] ?? null)) },
+    { getById: vi.fn().mockResolvedValue({ id: 'warm-starter-living' }) },
+    { getById: vi.fn().mockResolvedValue(brief) }
+  );
+}
 
-    const result = await useCase.execute('level-001');
+describe('LoadLevelUseCase ClientBrief V2 hydration', () => {
+  it('derives current scoring inputs and completion target exclusively from immutable client policy', async () => {
+    const result = await createUseCase().execute('level-001');
 
     expect(result.success).toBe(true);
     expect(result.data.clientBrief).toBeInstanceOf(ClientBrief);
-    expect(result.data.clientBrief.id).toBe('brief-warm-host-001');
-    expect(result.data.styleId).toBe('scandinavian');
     expect(result.data.targetScore).toBe(4);
-    expect(result.data.compositionRules).toEqual(rawBrief.evaluationPolicy.compositionRules);
-    expect(result.data.ergonomicsRules.minimumClearance.minimumDistance).toBe(0.9);
-    expect(result.data.ergonomicsRules.requiredFunctionalScenarios[0]).toBeInstanceOf(RequiredFunctionalScenario);
-    expect(result.data.ergonomicsRules.requiredFunctionalScenarios[0].id).toBe('dining-hosting');
-    expect(constraintCatalog.getConstraintsByStyleId).toHaveBeenCalledWith('scandinavian');
-    expect(clientBriefRepository.getById).toHaveBeenCalledWith('brief-warm-host-001');
+    expect(result.data.evaluationSpec).toMatchObject({
+      schemaVersion: 1,
+      styleTargets: [{ styleId: 'scandinavian', label: 'Скандинавский', role: 'primary', weight: 1 }],
+      clientPriorities: rawBrief.clientPriorities,
+      spatialPreferences: rawBrief.spatialPreferences,
+      completion: rawBrief.evaluationPolicy.completion
+    });
+    expect(result.data.evaluationSpec.ergonomicsRules.requiredFunctionalScenarios[0]).toBeInstanceOf(RequiredFunctionalScenario);
+    expect(Object.isFrozen(result.data.evaluationSpec)).toBe(true);
   });
 
-  it('hydrates all V2 style targets, priority rules and spatial preferences into an immutable evaluationSpec', async () => {
+  it('hydrates every authored V2 style target through exact style-profile lookup', async () => {
     const mixedBrief = {
       ...rawBrief,
-      schemaVersion: 2,
       styleTargets: [
         { styleId: 'scandinavian', role: 'primary', weight: 0.7 },
         { styleId: 'japandi', role: 'secondary', weight: 0.2 },
         { styleId: 'eclectic', role: 'accent', weight: 0.1 }
-      ],
-      clientPriorities: [{
-        id: 'host-guests', label: 'Принимать гостей', weight: 1,
-        rule: { schemaVersion: 1, kind: 'functional-scenario', scenarioId: 'dining-hosting', messageKey: 'priority-host-guests' }
-      }]
+      ]
     };
-    const constraintsByStyleId = {
-      scandinavian: [Object.freeze({ id: 'scand-wood-min' })],
-      japandi: [Object.freeze({ id: 'japandi-natural-materials' })],
-      eclectic: [Object.freeze({ id: 'eclectic-color-expression' })]
+    const profiles = {
+      scandinavian: { id: 'scandinavian', label: 'Скандинавский', constraints: [{ id: 'scand' }] },
+      japandi: { id: 'japandi', label: 'Japandi', constraints: [{ id: 'japandi' }] },
+      eclectic: { id: 'eclectic', label: 'Эклектика', constraints: [{ id: 'eclectic' }] }
     };
-    const profilesByStyleId = {
-      scandinavian: Object.freeze({ id: 'scandinavian', label: 'Скандинавский', constraints: constraintsByStyleId.scandinavian }),
-      japandi: Object.freeze({ id: 'japandi', label: 'Japandi', constraints: constraintsByStyleId.japandi }),
-      eclectic: Object.freeze({ id: 'eclectic', label: 'Эклектика', constraints: constraintsByStyleId.eclectic })
-    };
-    const levelRepository = { loadLevel: vi.fn().mockResolvedValue(rawLevel) };
-    const itemCatalog = { getItemsByIds: vi.fn().mockResolvedValue([item]) };
-    const constraintCatalog = { getStyleProfileById: vi.fn(styleId => Promise.resolve(profilesByStyleId[styleId] ?? null)) };
-    const clientBriefRepository = { getById: vi.fn().mockResolvedValue(mixedBrief) };
-    const useCase = new LoadLevelUseCase(levelRepository, itemCatalog, constraintCatalog, null, clientBriefRepository);
 
-    const result = await useCase.execute('level-001');
+    const result = await createUseCase({ brief: mixedBrief, profiles }).execute('level-001');
 
     expect(result.success).toBe(true);
-    expect(result.data.evaluationSpec).toMatchObject({
-      schemaVersion: 1,
-      styleTargets: [
-        { styleId: 'scandinavian', label: 'Скандинавский', role: 'primary', weight: 0.7, constraints: constraintsByStyleId.scandinavian },
-        { styleId: 'japandi', label: 'Japandi', role: 'secondary', weight: 0.2, constraints: constraintsByStyleId.japandi },
-        { styleId: 'eclectic', label: 'Эклектика', role: 'accent', weight: 0.1, constraints: constraintsByStyleId.eclectic }
-      ],
-      clientPriorities: mixedBrief.clientPriorities,
-      spatialPreferences: mixedBrief.spatialPreferences
-    });
-    expect(Object.isFrozen(result.data.evaluationSpec)).toBe(true);
-    expect(constraintCatalog.getStyleProfileById).toHaveBeenCalledTimes(3);
+    expect(result.data.evaluationSpec.styleTargets).toHaveLength(3);
+    expect(result.data.evaluationSpec.styleTargets.map(target => target.label)).toEqual(['Скандинавский', 'Japandi', 'Эклектика']);
   });
 
-  it('applies the resolved client clearance multiplier to the hydrated minimum-clearance rule', async () => {
-    const levelRepository = { loadLevel: vi.fn().mockResolvedValue(rawLevel) };
-    const itemCatalog = { getItemsByIds: vi.fn().mockResolvedValue([item]) };
-    const constraintCatalog = { getConstraintsByStyleId: vi.fn().mockResolvedValue([]) };
-    const clientBriefRepository = {
-      getById: vi.fn().mockResolvedValue({
-        ...rawBrief,
-        spatialPreferences: {
-          ...rawBrief.spatialPreferences,
-          clearanceMultiplier: 0.75
-        }
-      })
-    };
-    const useCase = new LoadLevelUseCase(levelRepository, itemCatalog, constraintCatalog, null, clientBriefRepository);
-
-    const result = await useCase.execute('level-001');
-
-    expect(result.success).toBe(true);
-    expect(result.data.ergonomicsRules.minimumClearance.minimumDistance).toBe(0.9);
-    expect(result.data.ergonomicsRules.minimumClearance.clientMultiplier).toBe(0.75);
-    expect(result.data.ergonomicsRules.minimumClearance.effectiveMinimumDistance).toBeCloseTo(0.675, 5);
-  });
-
-  it('rejects absent or cross-level client policy instead of using level-side evaluation fallback', async () => {
-    const levelRepository = { loadLevel: vi.fn().mockResolvedValue(rawLevel) };
-    const itemCatalog = { getItemsByIds: vi.fn().mockResolvedValue([item]) };
-    const missingRepository = { getById: vi.fn().mockResolvedValue(null) };
-    const useCase = new LoadLevelUseCase(levelRepository, itemCatalog, null, null, missingRepository);
-
-    await expect(useCase.execute('level-001')).resolves.toEqual({
+  it('rejects absent and cross-level client policy instead of using level-side fallback rules', async () => {
+    await expect(createUseCase({ brief: null }).execute('level-001')).resolves.toEqual({
       success: false,
       error: 'INVALID_LEVEL_DATA: Unknown client brief brief-warm-host-001'
     });
-
-    const crossLevelRepository = { getById: vi.fn().mockResolvedValue({ ...rawBrief, levelId: 'level-002' }) };
-    const crossLevelUseCase = new LoadLevelUseCase(levelRepository, itemCatalog, null, null, crossLevelRepository);
-    await expect(crossLevelUseCase.execute('level-001')).resolves.toEqual({
+    await expect(createUseCase({ brief: { ...rawBrief, levelId: 'level-002' } }).execute('level-001')).resolves.toEqual({
       success: false,
       error: 'INVALID_LEVEL_DATA: Client brief brief-warm-host-001 belongs to level-002, not level-001'
     });

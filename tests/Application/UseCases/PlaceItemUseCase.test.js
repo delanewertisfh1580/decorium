@@ -58,7 +58,7 @@ describe('Slice A-002: PlaceItemUseCase', () => {
   });
 
   describe('Successful Placement', () => {
-    it('should place an item in a new room', async () => {
+    it('should place an item in a loaded room', async () => {
       const itemData = {
         id: 'chair-01',
         name: 'Wooden Chair',
@@ -85,15 +85,16 @@ describe('Slice A-002: PlaceItemUseCase', () => {
       };
       const position = { x: 1, y: 0, z: 2 };
       const rotation = { x: 0, y: 0, z: 0, w: 1 };
+      await repository.saveState('room-loaded', RoomState.createEmpty(createTestBounds()));
 
-      const result = await useCase.execute('room-new', itemData, position, rotation);
+      const result = await useCase.execute('room-loaded', itemData, position, rotation);
 
       expect(result.success).toBe(true);
       expect(result.itemId).toBe('chair-01');
       expect(result.position).toEqual(position);
       
       // Verify state was saved
-      const savedState = await repository.getState('room-new');
+      const savedState = await repository.getState('room-loaded');
       expect(savedState).toBeInstanceOf(RoomState);
     });
 
@@ -126,7 +127,7 @@ describe('Slice A-002: PlaceItemUseCase', () => {
           storageFunctionShare: 0.0
         }
       };
-      const result = await useCase.execute('room-existing', itemData, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0, w: 1 });
+      const result = await useCase.execute('room-existing', itemData, { x: 1, y: 0, z: 1 }, { x: 0, y: 0, z: 0, w: 1 });
 
       expect(result.success).toBe(true);
       
@@ -136,7 +137,7 @@ describe('Slice A-002: PlaceItemUseCase', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle domain rule violations gracefully', async () => {
+    it('returns a typed failure for a room that was not loaded', async () => {
       const itemData = {
         id: 'big-item',
         name: 'Big Item',
@@ -164,9 +165,10 @@ describe('Slice A-002: PlaceItemUseCase', () => {
       
       const result = await useCase.execute('room-1', itemData, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0, w: 1 });
       
-      // Verify the result structure is correct even if operation fails
-      expect(result).toBeDefined();
-      expect(result.success !== undefined).toBe(true);
+      expect(result).toMatchObject({
+        success: false,
+        error: 'ROOM_NOT_FOUND: Room room-1 not found.'
+      });
     });
   });
 });

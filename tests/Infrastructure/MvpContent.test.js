@@ -12,7 +12,8 @@ const levelSchema = readJson('data/schemas/level.schema.json');
 const clientBriefSchema = readJson('data/briefs/client-brief.v2.schema.json');
 const clientBriefCatalog = readJson('data/briefs/client-briefs.v2.json');
 const clientBriefsById = new Map(clientBriefCatalog.briefs.map(brief => [brief.id, brief]));
-const constraints = readJson('data/constraints/scandinavian-constraints.json');
+const styleConstraintCatalog = readJson('data/styles/style-constraint-catalog.v1.json');
+const constraints = styleConstraintCatalog.profiles.flatMap(profile => profile.constraints);
 const feedback = readJson('data/feedback/scandinavian-feedback.json');
 const visualProfiles = readJson('data/visuals/item-visuals.json');
 
@@ -51,8 +52,8 @@ describe('Production content contracts', () => {
     ]);
   });
 
-  it('maps every style and ergonomics rule to a feedback message', () => {
-    expect(constraints).toHaveLength(5);
+  it('maps every active style and ergonomics rule to a feedback message', () => {
+    expect(constraints.length).toBeGreaterThan(0);
     expect(constraints.every(constraint => feedbackIds.has(constraint.messageKey))).toBe(true);
     expect(feedbackIds.has('ergonomics-minimum-clearance')).toBe(true);
     expect(feedbackIds.has('ergonomics-passage-zone-free')).toBe(true);

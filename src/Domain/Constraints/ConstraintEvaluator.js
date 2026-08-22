@@ -1,6 +1,6 @@
 import { Violation } from './Violation.js';
 
-export class ConstraintEvaluationResult {
+class ConstraintEvaluationResult {
   constructor(constraint, isSatisfied, violation = null) {
     this._constraint = constraint;
     this._isSatisfied = isSatisfied;

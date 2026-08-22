@@ -1,5 +1,3 @@
-import { getScoringParameters } from './scoringParameters.js';
-
 export class StarRatingPolicy {
   constructor(thresholds, { epsilon = 0 } = {}) {
     if (!thresholds || typeof thresholds !== 'object') {
@@ -42,8 +40,4 @@ export class StarRatingPolicy {
       nextThreshold: nextStar === null ? null : this.thresholds[String(nextStar)]
     };
   }
-}
-
-export function createDefaultStarRatingPolicy() {
-  return new StarRatingPolicy(getScoringParameters().starRatingThresholds);
 }

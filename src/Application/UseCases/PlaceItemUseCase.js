@@ -1,6 +1,4 @@
 import PlacementResultDTO from '../DTOs/PlacementResultDTO.js';
-import { RoomState } from '../../Domain/Rooms/RoomState.js';
-import { RoomBounds } from '../../Domain/Rooms/RoomBounds.js';
 import { Item } from '../../Domain/Items/Item.js';
 import { FeatureVector } from '../../Domain/Items/FeatureVector.js';
 
@@ -42,8 +40,8 @@ export class PlaceItemUseCase {
     }
 
     try {
-      let roomState = await getState(this.roomRepository, roomId);
-      if (!roomState) roomState = RoomState.createEmpty(new RoomBounds(8, 6));
+      const roomState = await getState(this.roomRepository, roomId);
+      if (!roomState) return PlacementResultDTO.failure(`ROOM_NOT_FOUND: Room ${roomId} not found.`);
 
       const item = toDomainItem(itemData);
       let placement = roomState.placeItem(item, {
@@ -51,13 +49,6 @@ export class PlaceItemUseCase {
         y: typeof position.y === 'number' ? position.y : 0,
         z: position.z
       }, rotation.y);
-      // Legacy callers used {0,0,0} as a placeholder position. Keep that input
-      // compatible while the browser MVP always supplies a real floor position.
-      if (!placement.success && placement.error === 'OUT_OF_BOUNDS' && position.x === 0 && position.z === 0) {
-        const fallbackState = roomState.addItem(item);
-        roomState = fallbackState;
-        placement = { success: true };
-      }
       if (!placement.success) return PlacementResultDTO.failure(`PLACEMENT_REJECTED: ${placement.error}`);
 
       if (!await saveState(this.roomRepository, roomId, roomState)) {

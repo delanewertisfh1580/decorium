@@ -89,7 +89,7 @@ function normalizePriorityRule(value, index) {
   throw new Error(`ClientBrief clientPriorities[${index}].rule kind is not supported: ${kind}`);
 }
 
-function normalizePriorities(value, schemaVersion) {
+function normalizePriorities(value) {
   if (!Array.isArray(value) || value.length === 0) {
     throw new Error('ClientBrief clientPriorities must be a non-empty array');
   }
@@ -106,7 +106,7 @@ function normalizePriorities(value, schemaVersion) {
       label: requiredString(priority.label, `clientPriorities[${index}].label`),
       weight: finiteNumber(priority.weight, `clientPriorities[${index}].weight`, { min: 0, max: 5, exclusiveMin: true })
     };
-    if (schemaVersion === 2) normalized.rule = normalizePriorityRule(priority.rule, index);
+    normalized.rule = normalizePriorityRule(priority.rule, index);
     return Object.freeze(normalized);
   }));
 }
@@ -168,7 +168,7 @@ function normalizeEvaluationPolicy(value) {
 
 export class ClientBrief {
   constructor({ schemaVersion, id, levelId, client, title, summary, styleTargets, clientPriorities, spatialPreferences, evaluationPolicy } = {}) {
-    if (schemaVersion !== 1 && schemaVersion !== 2) throw new Error('ClientBrief schemaVersion must be 1 or 2');
+    if (schemaVersion !== 2) throw new Error('ClientBrief schemaVersion must be 2');
     this._schemaVersion = schemaVersion;
     this._id = requiredString(id, 'id');
     this._levelId = requiredString(levelId, 'levelId');
@@ -176,7 +176,7 @@ export class ClientBrief {
     this._title = requiredString(title, 'title');
     this._summary = requiredString(summary, 'summary');
     this._styleTargets = normalizeStyleTargets(styleTargets);
-    this._clientPriorities = normalizePriorities(clientPriorities, schemaVersion);
+    this._clientPriorities = normalizePriorities(clientPriorities);
     this._spatialPreferences = normalizeSpatialPreferences(spatialPreferences);
     this._evaluationPolicy = normalizeEvaluationPolicy(evaluationPolicy);
     Object.freeze(this);

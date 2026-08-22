@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import clientBriefs from '../../data/briefs/client-briefs.v1.json';
-import styleConstraints from '../../data/constraints/scandinavian-constraints.json';
+import clientBriefCatalog from '../../data/briefs/client-briefs.v2.json';
+import styleConstraintCatalog from '../../data/styles/style-constraint-catalog.v1.json';
 import feedbackEntries from '../../data/feedback/scandinavian-feedback.json';
+
+const clientBriefs = clientBriefCatalog.briefs;
+const styleConstraints = styleConstraintCatalog.profiles.flatMap(profile => profile.constraints);
 
 function collectMessageKeys(value, keys = new Set()) {
   if (Array.isArray(value)) {

@@ -27,11 +27,9 @@ function createController({ evaluationData, recordResult, profile = createProfil
     levelId: 'level-001',
     roomId: 'room-001',
     targetScore: 3,
-    compositionRules: {},
-    ergonomicsRules: {},
-    clientBrief: { evaluationPolicy: { completion: { minimumStars: 3, criticalRuleMode: 'block-completion' } } }
+    evaluationSpec: { schemaVersion: 1, completion: { minimumStars: 3, criticalRuleMode: 'block-completion' } }
   };
-  controller.roomViewModel = { constraints: [] };
+  controller.roomViewModel = {};
   controller.evaluationView = { render: vi.fn() };
   controller._renderDashboard = vi.fn();
   return { controller, evaluateRoomUseCase, recordLevelCompletionUseCase, profile };
@@ -49,14 +47,10 @@ describe('GameController completion integration', () => {
 
     await controller._onEvaluate();
 
-    expect(evaluateRoomUseCase.execute).toHaveBeenCalledWith(
-      'room-001',
-      [],
-      {},
-      {},
-      { minimumStars: 3, criticalRuleMode: 'block-completion' },
-      null
-    );
+    expect(evaluateRoomUseCase.execute).toHaveBeenCalledWith({
+      roomId: 'room-001',
+      evaluationSpec: { schemaVersion: 1, completion: { minimumStars: 3, criticalRuleMode: 'block-completion' } }
+    });
     expect(recordLevelCompletionUseCase.execute).toHaveBeenCalledWith({
       levelId: 'level-001', stars: 3, targetScore: 3, completionEligible: true, profile
     });

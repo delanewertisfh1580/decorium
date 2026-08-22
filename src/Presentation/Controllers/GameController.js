@@ -401,14 +401,10 @@ export class GameController {
   }
 
   async _onEvaluate() {
-    const result = await this.evaluateRoomUseCase.execute(
-      this.level.roomId,
-      this.roomViewModel.constraints,
-      this.level.compositionRules,
-      this.level.ergonomicsRules,
-      this.level.clientBrief?.evaluationPolicy?.completion ?? null,
-      this.level.evaluationSpec ?? null
-    );
+    const result = await this.evaluateRoomUseCase.execute({
+      roomId: this.level.roomId,
+      evaluationSpec: this.level.evaluationSpec
+    });
     if (!result.success) {
       this._showStatus(result.error);
       return;

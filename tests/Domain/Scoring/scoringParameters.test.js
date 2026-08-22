@@ -47,7 +47,7 @@ describe('scoringParameters', () => {
       }
     };
 
-    expect(() => initializeScoringParameters({ ...baseline, schemaVersion: 3 })).toThrow('schemaVersion must be 1 or 2');
+    expect(() => initializeScoringParameters({ ...baseline, schemaVersion: 3 })).toThrow('schemaVersion must be 2');
     expect(() => initializeScoringParameters({ ...baseline, criticalStarCap: 5 })).toThrow('criticalStarCap must be an integer between 0 and 4');
     expect(() => initializeScoringParameters({ ...baseline, scoreEpsilon: 0.1 })).toThrow('scoreEpsilon must be between 0 and 0.01');
   });

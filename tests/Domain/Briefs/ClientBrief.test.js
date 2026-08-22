@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import ClientBrief from '../../../src/Domain/Briefs/ClientBrief.js';
 
 const validBrief = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   id: 'brief-warm-host-001',
   levelId: 'level-001',
   client: {
@@ -17,8 +17,27 @@ const validBrief = {
     { styleId: 'eclectic', role: 'accent', weight: 0.1 }
   ],
   clientPriorities: [
-    { id: 'host-guests', label: 'Принимать гостей', weight: 1.3 },
-    { id: 'keep-circulation', label: 'Сохранять свободный вход', weight: 1.1 }
+    {
+      id: 'host-guests',
+      label: 'Принимать гостей',
+      weight: 1.3,
+      rule: {
+        schemaVersion: 1,
+        kind: 'functional-scenario',
+        scenarioId: 'dining-hosting',
+        messageKey: 'priority-host-guests'
+      }
+    },
+    {
+      id: 'keep-circulation',
+      label: 'Сохранять свободный вход',
+      weight: 1.1,
+      rule: {
+        schemaVersion: 1,
+        kind: 'spatial-preferences',
+        messageKey: 'priority-keep-circulation'
+      }
+    }
   ],
   spatialPreferences: {
     density: 'intimate',

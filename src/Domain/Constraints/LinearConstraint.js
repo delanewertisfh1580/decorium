@@ -11,12 +11,6 @@ export class LinearConstraint {
       throw new Error('Threshold must be a number');
     }
 
-    // Preserve the legacy constructor form where the fourth argument was a numeric weight.
-    if (typeof id === 'number') {
-      weight = id;
-      id = null;
-    }
-
     this._featureKey = featureKey;
     this._operator = operator;
     this._threshold = threshold;

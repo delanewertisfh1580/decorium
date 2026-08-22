@@ -10,7 +10,6 @@ export class RoomViewModel {
   get height() { return this.level.roomState.depth; }
   get roomState() { return this.level.roomState; }
   get placedItems() { return this.level.roomState.getItems(); }
-  get constraints() { return this.level.constraints; }
   get availableItems() { return this.level.availableItems; }
   get selectedItemId() { return this._selectedItemId; }
 

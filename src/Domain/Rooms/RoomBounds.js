@@ -9,8 +9,6 @@ export class RoomBounds {
 
     this.width = width;
     this.depth = depth;
-    // Kept as an alias for the original MVP tests and DTO vocabulary.
-    this.height = depth;
     this.doors = doors.map(rect => this._normalizeRect(rect));
     this.windows = windows.map(rect => this._normalizeRect(rect));
   }

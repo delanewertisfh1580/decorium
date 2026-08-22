@@ -11,7 +11,6 @@ import BrowserLocalPlayerProfileRepository from './Infrastructure/Repositories/B
 import BrowserPlayerProfileFactory from './Infrastructure/Factories/BrowserPlayerProfileFactory.js';
 import { JsonItemCatalog } from './Infrastructure/DataLoaders/JsonItemCatalog.js';
 import { JsonConstraintCatalog } from './Infrastructure/DataLoaders/JsonConstraintCatalog.js';
-import { JsonStyleCatalog } from './Infrastructure/DataLoaders/JsonStyleCatalog.js';
 import { JsonFeedbackCatalog } from './Infrastructure/DataLoaders/JsonFeedbackCatalog.js';
 import { ConstraintEvaluator } from './Domain/Constraints/ConstraintEvaluator.js';
 import { StyleScorer } from './Domain/Scoring/StyleScorer.js';
@@ -22,8 +21,6 @@ import ClearanceEvaluator from './Domain/Ergonomics/ClearanceEvaluator.js';
 import PassageZoneEvaluator from './Domain/Ergonomics/PassageZoneEvaluator.js';
 import FunctionalLayoutEvaluator from './Domain/Ergonomics/FunctionalLayoutEvaluator.js';
 import ErgonomicsScorer from './Domain/Scoring/ErgonomicsScorer.js';
-import EvaluationScoreAggregator from './Domain/Scoring/EvaluationScoreAggregator.js';
-import ViolationImpactPolicy from './Domain/Scoring/ViolationImpactPolicy.js';
 import MultiStyleEvaluator from './Domain/Scoring/MultiStyleEvaluator.js';
 import StyleChannelPolicy from './Domain/Scoring/StyleChannelPolicy.js';
 import RoomOccupancyProfile from './Domain/Scoring/RoomOccupancyProfile.js';
@@ -127,12 +124,10 @@ async function bootstrap() {
       './data/styles/style-constraint-catalog.v1.json',
       styleConstraintCatalogSchema
     );
-    const styleCatalog = new JsonStyleCatalog();
     const feedbackCatalog = new JsonFeedbackCatalog();
     await Promise.all([
       itemCatalog.loadAllItems(),
       constraintCatalog.loadAllConstraints(),
-      styleCatalog.loadAllStyles(),
       feedbackCatalog.loadAllFeedback()
     ]);
 
@@ -154,19 +149,9 @@ async function bootstrap() {
     const styleScorer = new StyleScorer(scoring);
     const starRatingPolicy = new StarRatingPolicy(scoring.starRatingThresholds, { epsilon: scoring.scoreEpsilon });
     const ergonomicsScorer = new ErgonomicsScorer(scoring);
-    const scoreAggregator = new EvaluationScoreAggregator({
-      styleWeight: scoring.styleWeight,
-      ergonomicsWeight: scoring.ergonomicsWeight
-    });
     const scorecardCalibrationPolicy = new ScorecardCalibrationPolicy({
       schemaVersion: 1,
       criticalStarCap: scoring.criticalStarCap
-    });
-    const violationImpactPolicy = new ViolationImpactPolicy({
-      styleScorer,
-      ergonomicsScorer,
-      scoreAggregator,
-      scorecardCalibrationPolicy
     });
     const multiStyleEvaluator = new MultiStyleEvaluator({
       constraintEvaluator: new ConstraintEvaluator(),
@@ -208,7 +193,6 @@ async function bootstrap() {
     };
     const evaluateRoomUseCase = new EvaluateRoomUseCase(
       roomRepository,
-      new ConstraintEvaluator(),
       styleScorer,
       starRatingPolicy,
       feedbackCatalog,
@@ -218,9 +202,7 @@ async function bootstrap() {
         new FunctionalLayoutEvaluator()
       ),
       ergonomicsScorer,
-      scoreAggregator,
       scorecardCalibrationPolicy,
-      violationImpactPolicy,
       multiStyleDependencies
     );
 

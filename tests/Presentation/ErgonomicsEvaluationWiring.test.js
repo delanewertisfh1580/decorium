@@ -7,17 +7,16 @@ const mainSource = readFileSync(join(root, 'src/main.js'), 'utf8');
 const controllerSource = readFileSync(join(root, 'src/Presentation/Controllers/GameController.js'), 'utf8');
 
 describe('ergonomics evaluation wiring', () => {
-  it('constructs spatial, functional, scoring and aggregation dependencies in the composition root', () => {
+  it('constructs spatial, functional and three-channel scoring dependencies in the composition root', () => {
     expect(mainSource).toContain('SpatialErgonomicsEvaluator');
     expect(mainSource).toContain('FunctionalLayoutEvaluator');
     expect(mainSource).toContain('new FunctionalLayoutEvaluator()');
     expect(mainSource).toContain('ErgonomicsScorer');
-    expect(mainSource).toContain('EvaluationScoreAggregator');
-    expect(mainSource).toContain('ViolationImpactPolicy');
-    expect(mainSource).toContain('new ViolationImpactPolicy({');
+    expect(mainSource).toContain('ThreeChannelScoreAggregator');
+    expect(mainSource).toContain('MultiChannelViolationImpactPolicy');
   });
 
-  it('passes active level ergonomics rules into the evaluation use case', () => {
-    expect(controllerSource).toContain('this.level.ergonomicsRules');
+  it('passes immutable EvaluationSpec into the V2 evaluation use case', () => {
+    expect(controllerSource).toContain('evaluationSpec: this.level.evaluationSpec');
   });
 });

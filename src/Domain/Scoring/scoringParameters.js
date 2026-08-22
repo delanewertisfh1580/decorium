@@ -16,7 +16,7 @@ function validateSharedParameters(params) {
     || params.scoreEpsilon < 0 || params.scoreEpsilon > 0.01) {
     throw new Error('scoringParameters: scoreEpsilon must be between 0 and 0.01');
   }
-  const thresholds = params.starRatingThresholds ?? params.starThresholds;
+  const thresholds = params.starRatingThresholds;
   if (!thresholds || typeof thresholds !== 'object' || Array.isArray(thresholds)) {
     throw new Error('scoringParameters: missing starRatingThresholds');
   }
@@ -82,17 +82,10 @@ export function initializeScoringParameters(params) {
   if (!params || typeof params !== 'object') {
     throw new Error('scoringParameters: params must be a valid object');
   }
-  if (params.schemaVersion !== 1 && params.schemaVersion !== 2) {
-    throw new Error('scoringParameters: schemaVersion must be 1 or 2');
+  if (params.schemaVersion !== 2) {
+    throw new Error('scoringParameters: schemaVersion must be 2');
   }
   const shared = validateSharedParameters(params);
-  if (params.schemaVersion === 1) {
-    const styleWeight = typeof params.styleWeight === 'number' ? params.styleWeight : 1;
-    const ergonomicsWeight = typeof params.ergonomicsWeight === 'number' ? params.ergonomicsWeight : 0;
-    _scoringParameters = Object.freeze({ schemaVersion: 1, ...shared, styleWeight, ergonomicsWeight });
-    return;
-  }
-
   const channelWeights = normalizeWeights(params.channelWeights, 'channelWeights', ['style', 'clientPriorities', 'ergonomics']);
   const styleBlend = normalizeWeights(params.styleBlend, 'styleBlend', ['targetFit', 'composition']);
   const occupancy = normalizeOccupancy(params.occupancy);
@@ -103,10 +96,7 @@ export function initializeScoringParameters(params) {
     channelWeights,
     styleBlend,
     occupancy,
-    densityProfiles,
-    // Explicit legacy projections keep pre-PROD-023 consumers read-compatible during migration.
-    styleWeight: channelWeights.style,
-    ergonomicsWeight: channelWeights.ergonomics
+    densityProfiles
   });
 }
 
