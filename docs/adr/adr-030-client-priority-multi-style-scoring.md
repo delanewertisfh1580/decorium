@@ -40,7 +40,7 @@ A player’s authored brief now changes all three visible score channels. An int
 
 The explanation result preserves the prior trust boundary: UI renders supplied three-channel facts, target labels and priority provenance, and can focus only supplied live instances. It does not calculate occupancy, satisfaction, weights, counterfactual recovery, stars or unlocks.[6] [7]
 
-V1 scoring parameters and legacy evaluation tests remain supported by the parameter normalizer and legacy evaluation path. Production bootstrap, however, loads only the V2 brief catalog, V2 schema and multi-style catalog. The static asset inventory explicitly publishes these runtime JSON files into `dist/data`, preventing a build that passes compilation but fails after deployment.[3] [8]
+The retired V1 scoring parameters and legacy evaluation path are not supported. Production bootstrap loads only the V2 brief catalog, V2 schema, immutable `ScoringPolicy` and multi-style catalog. The static asset inventory explicitly publishes these runtime JSON files into `dist/data`, preventing a build that passes compilation but fails after deployment.[3] [8]
 
 Exact counterfactual attribution costs work proportional to active diagnostics. It is retained because capped style penalties, normalized priorities, exponential ergonomics scoring and critical completion gates make proportional UI estimates false. Any future caching or performance change must preserve deterministic V2 inputs and be introduced as a separate versioned policy decision.[6]
 
