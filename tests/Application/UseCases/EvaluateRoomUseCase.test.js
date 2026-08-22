@@ -78,11 +78,19 @@ describe('EvaluateRoomUseCase V2', () => {
       styleScore: 0.8,
       clientPriorityScore: 0.7,
       ergonomicsScore: 0.9,
+      styleTargetPenalty: 1,
+      compositionPenalty: 0,
+      styleChannelPenalty: 0.2,
       scoreWeights: { style: 0.5, clientPriorities: 0.2, ergonomics: 0.3 },
       explanation: { schemaVersion: 2, violations: [] },
       scoreBreakdown: {
         schemaVersion: 1,
-        style: expect.objectContaining({ score: 0.8 }),
+        style: expect.objectContaining({
+          score: 0.8,
+          targetPenalty: 1,
+          compositionPenalty: 0,
+          channelPenalty: 0.2
+        }),
         clientPriorities: expect.objectContaining({ score: 0.7 }),
         ergonomics: { score: 0.9, weight: 0.3 }
       }

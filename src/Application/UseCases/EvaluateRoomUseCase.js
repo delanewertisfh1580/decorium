@@ -121,6 +121,9 @@ export class EvaluateRoomUseCase {
       weightedTargetFit: multiStyle.weightedTargetFit,
       compositionScore: compositionScoring.score
     });
+    const styleTargetPenalty = Number((1 - multiStyle.weightedTargetFit).toFixed(12));
+    const compositionPenalty = compositionScoring.penalty;
+    const styleChannelPenalty = Number((1 - styleChannel.score).toFixed(12));
     const occupancyProfile = roomOccupancyProfile.evaluate({ roomState });
     const priority = clientPriorityEvaluator.evaluate({
       priorities: evaluationSpec.clientPriorities,
@@ -159,7 +162,9 @@ export class EvaluateRoomUseCase {
       score: aggregate.totalScore,
       rawScore: scorecard.rawScore,
       rawStars: scorecard.rawStars,
-      penalty: compositionScoring.penalty,
+      styleTargetPenalty,
+      compositionPenalty,
+      styleChannelPenalty,
       stars: scorecard.stars,
       nextThreshold: scorecard.nextThreshold,
       completionEligible: scorecard.completionEligible,
@@ -178,7 +183,6 @@ export class EvaluateRoomUseCase {
       styleScore: styleChannel.score,
       clientPriorityScore: priority.score,
       ergonomicsScore: ergonomicsScoring.score,
-      stylePenalty: compositionScoring.penalty,
       ergonomicsPenalty: ergonomicsScoring.penalty,
       scoreWeights: {
         style: aggregate.styleWeight,
@@ -191,7 +195,10 @@ export class EvaluateRoomUseCase {
           score: styleChannel.score,
           weight: aggregate.styleWeight,
           weightedTargetFit: multiStyle.weightedTargetFit,
+          targetPenalty: styleTargetPenalty,
           compositionScore: compositionScoring.score,
+          compositionPenalty,
+          channelPenalty: styleChannelPenalty,
           targets: multiStyle.targets
         },
         clientPriorities: {

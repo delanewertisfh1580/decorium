@@ -104,7 +104,7 @@ The V2 evaluator has three deterministic channels. All numeric policy is version
 
 | Channel | Input | Authoritative calculation |
 |---|---|---|
-| Style | Exact profile constraints for every style target plus composition rules. | `0.75 × weightedTargetFit + 0.25 × compositionScore`; composition participates once. |
+| Style | Exact profile constraints for every style target plus composition rules. | `0.75 × weightedTargetFit + 0.25 × compositionScore`; composition participates once, and result exposes separate target, composition and blended-channel penalties. |
 | Client priorities | Explicit priority rules, required-scenario result and spatial-preference result. | `Σ(weight × satisfaction) / Σ(weight)`. |
 | Ergonomics | Clearance, passage, functional relationships and required scenarios. | Existing deterministic ergonomics scorer. |
 | Total | The three channel scores. | `0.5 × style + 0.2 × clientPriorities + 0.3 × ergonomics`. |

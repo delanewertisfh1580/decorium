@@ -37,7 +37,7 @@ styleScore       = existing StyleScorer result
  totalScore      = 0.7 × styleScore + 0.3 × ergonomicsScore
 ```
 
-Total score используется для star rating. Поля `styleScore`, `ergonomicsScore`, `stylePenalty`, `ergonomicsPenalty` и `scoreWeights` публикуются в evaluation result, когда production ergonomics channel активен.
+Total score используется для star rating. На момент слайса evaluation result публиковал `styleScore`, `ergonomicsScore`, `stylePenalty`, `ergonomicsPenalty` и `scoreWeights`. **Текущий P2 contract заменил ambiguous `stylePenalty` на отдельные `styleTargetPenalty`, `compositionPenalty` и `styleChannelPenalty`; historical two-channel formula выше не описывает active scoring model.**
 
 ## Data delivery
 
