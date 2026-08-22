@@ -87,6 +87,8 @@ Presentation resolver output is immutable and is consumed only by Three.js scene
 
 A level definition declares geometry, available items, initial placement and `presentationProfileId`; it references exactly one `clientBriefId`. ClientBrief owns style targets, priority rules, spatial preferences, completion, composition and ergonomics policy. Composition rules declare `minItems` and exact `requiredAffordances`; `Item.type` is a visual/content grouping and is never a composition or gameplay policy input. Evaluators are generic Domain code: they consume hydrated policy and must never recover an evaluation rule from level topology or UI state.
 
+At runtime, `RoomState` assigns each placement the canonical `catalogItemId#ordinal` identity, beginning at `#1`. Persisted placements, move/rotate/remove commands, diagnostic causal `itemIds` and feedback focus all use only this instance ID. A catalog ID identifies an authored template and may only query the matching placed instances; it never selects a mutable entity.
+
 | Rule kind | Required extra field | Use case |
 |---|---|---|
 | `adjacency` | none | Dining table requires sufficient seats on declared usable sides. |

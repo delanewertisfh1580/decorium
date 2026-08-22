@@ -4,14 +4,14 @@
  */
 class MoveResultDTO {
   /**
-   * @param {boolean} success 
-   * @param {string|null} itemId 
-   * @param {Object|null} newPosition 
-   * @param {string|null} error 
+   * @param {boolean} success
+   * @param {string|null} instanceId
+   * @param {Object|null} newPosition
+   * @param {string|null} error
    */
-  constructor(success, itemId = null, newPosition = null, error = null) {
+  constructor(success, instanceId = null, newPosition = null, error = null) {
     this.success = success;
-    this.itemId = itemId;
+    this.instanceId = instanceId;
     this.newPosition = newPosition; // { x, y, z }
     this.error = error;
     
@@ -19,12 +19,12 @@ class MoveResultDTO {
     Object.freeze(this);
   }
 
-  static success(itemId, newPosition) {
-    return new MoveResultDTO(true, itemId, newPosition, null);
+  static success(instanceId, newPosition) {
+    return new MoveResultDTO(true, instanceId, newPosition, null);
   }
 
-  static failure(error, itemId = null) {
-    return new MoveResultDTO(false, itemId, null, error);
+  static failure(error, instanceId = null) {
+    return new MoveResultDTO(false, instanceId, null, error);
   }
 }
 

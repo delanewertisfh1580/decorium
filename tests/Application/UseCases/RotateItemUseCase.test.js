@@ -13,14 +13,14 @@ class MockRoomRepository {
     
     // Создаем мок комнаты с getItem и rotateItem
     return {
-      getItem: (id) => id === 'item-1' ? { id: 'item-1', name: 'Chair' } : null,
+      getItem: (id) => id === 'item-1#1' ? { id: 'item-1#1', name: 'Chair' } : null,
       rotateItem: (id, rotation) => {
         // Простая логика: принимаем только кратные 90 градусам по Y
         if (rotation.y === undefined || typeof rotation.y !== 'number') return null;
         if (rotation.y % 90 !== 0) return null;
         // Возвращаем новое состояние комнаты
         return {
-          getItem: (itemId) => itemId === 'item-1' ? { id: 'item-1', name: 'Chair' } : null,
+          getItem: (instanceId) => instanceId === 'item-1#1' ? { id: 'item-1#1', name: 'Chair' } : null,
           rotateItem: () => null
         };
       }
@@ -38,13 +38,13 @@ describe('RotateItemUseCase', () => {
     const repo = new MockRoomRepository('valid');
     const useCase = new RotateItemUseCase(repo);
     
-    const result = await useCase.execute('', 'item-1', { y: 90 });
+    const result = await useCase.execute('', 'item-1#1', { y: 90 });
     
     expect(result.success).toBe(false);
     expect(result.error).toContain('INVALID_INPUT');
   });
 
-  it('should return failure for invalid itemId', async () => {
+  it('should return failure for invalid instanceId', async () => {
     const repo = new MockRoomRepository('valid');
     const useCase = new RotateItemUseCase(repo);
     
@@ -58,7 +58,7 @@ describe('RotateItemUseCase', () => {
     const repo = new MockRoomRepository('valid');
     const useCase = new RotateItemUseCase(repo);
     
-    const result = await useCase.execute('room-1', 'item-1', { x: 90 });
+    const result = await useCase.execute('room-1', 'item-1#1', { x: 90 });
     
     expect(result.success).toBe(false);
     expect(result.error).toContain('INVALID_INPUT');
@@ -68,7 +68,7 @@ describe('RotateItemUseCase', () => {
     const repo = new MockRoomRepository('valid');
     const useCase = new RotateItemUseCase(repo);
     
-    const result = await useCase.execute('room-1', 'item-1', { y: 45 });
+    const result = await useCase.execute('room-1', 'item-1#1', { y: 45 });
     
     expect(result.success).toBe(false);
     expect(result.error).toContain('INVALID_INPUT');
@@ -78,13 +78,13 @@ describe('RotateItemUseCase', () => {
     const repo = new MockRoomRepository('room_not_found');
     const useCase = new RotateItemUseCase(repo);
     
-    const result = await useCase.execute('room-999', 'item-1', { y: 90 });
+    const result = await useCase.execute('room-999', 'item-1#1', { y: 90 });
     
     expect(result.success).toBe(false);
     expect(result.error).toContain('ROOM_NOT_FOUND');
   });
 
-  it('should return failure if item not found in room', async () => {
+  it('should return failure if instance not found in room', async () => {
     const repo = new MockRoomRepository('valid');
     const useCase = new RotateItemUseCase(repo);
     
@@ -94,10 +94,10 @@ describe('RotateItemUseCase', () => {
       rotateItem: () => null
     });
     
-    const result = await useCase.execute('room-1', 'item-999', { y: 90 });
+    const result = await useCase.execute('room-1', 'item-999#1', { y: 90 });
     
     expect(result.success).toBe(false);
-    expect(result.error).toContain('ITEM_NOT_FOUND');
+    expect(result.error).toContain('INSTANCE_NOT_FOUND');
   });
 
   it('should return failure if domain rejects rotation', async () => {
@@ -106,18 +106,18 @@ describe('RotateItemUseCase', () => {
     
     // Мокируем отклонение поворота доменом (например, отрицательный угол)
     repo.loadRoomState = async () => ({
-      getItem: (id) => id === 'item-1' ? { id: 'item-1' } : null,
+      getItem: (id) => id === 'item-1#1' ? { id: 'item-1#1' } : null,
       rotateItem: (id, rot) => {
         // Домен отклоняет отрицательные углы
         if (rot.y < 0) return null;
         return {
-          getItem: (itemId) => itemId === 'item-1' ? { id: 'item-1' } : null,
+          getItem: (instanceId) => instanceId === 'item-1#1' ? { id: 'item-1#1' } : null,
           rotateItem: () => null
         };
       }
     });
     
-    const result = await useCase.execute('room-1', 'item-1', { y: -90 });
+    const result = await useCase.execute('room-1', 'item-1#1', { y: -90 });
     
     expect(result.success).toBe(false);
     expect(result.error).toContain('ROTATION_REJECTED');
@@ -132,21 +132,21 @@ describe('RotateItemUseCase', () => {
 
     // Мокируем успешный поворот
     repo.loadRoomState = async () => ({
-      getItem: (id) => id === 'item-1' ? { id: 'item-1' } : null,
+      getItem: (id) => id === 'item-1#1' ? { id: 'item-1#1' } : null,
       rotateItem: (id, rot) => {
         if (rot.y % 90 !== 0) return null;
         // Возвращаем новое состояние комнаты
         return {
-          getItem: (itemId) => itemId === 'item-1' ? { id: 'item-1' } : null,
+          getItem: (instanceId) => instanceId === 'item-1#1' ? { id: 'item-1#1' } : null,
           rotateItem: () => null
         };
       }
     });
 
-    const result = await useCase.execute('room-1', 'item-1', rotationDelta);
+    const result = await useCase.execute('room-1', 'item-1#1', rotationDelta);
 
     expect(result.success).toBe(true);
-    expect(result.itemId).toBe('item-1');
+    expect(result.instanceId).toBe('item-1#1');
     expect(result.newRotation).toEqual(newRotation);
     expect(repo.savedState).not.toBeNull();
   });
@@ -160,7 +160,7 @@ describe('RotateItemUseCase', () => {
       throw new Error('Database connection failed');
     };
     
-    const result = await useCase.execute('room-1', 'item-1', { y: 90 });
+    const result = await useCase.execute('room-1', 'item-1#1', { y: 90 });
     
     expect(result.success).toBe(false);
     expect(result.error).toContain('UNEXPECTED_ERROR');

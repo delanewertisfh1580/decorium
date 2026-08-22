@@ -89,7 +89,7 @@ describe('RequiredFunctionalScenarioEvaluator', () => {
     expect(violations[0].actualValue).toBe(1);
     expect(violations[0].threshold).toBe(2);
     expect(violations[0].severity).toBeCloseTo(0.5, 5);
-    expect(violations[0].itemIds).toEqual(['chair-001']);
+    expect(violations[0].itemIds).toEqual(['chair-001#1']);
     expect(violations[0].constraint.weight).toBe(1.3);
   });
 

@@ -39,9 +39,7 @@ export class PlaceItemUseCase {
       if (!await saveState(this.roomRepository, roomId, roomState)) {
         return PlacementResultDTO.failure('PERSISTENCE_ERROR: Failed to save room state.');
       }
-      const placedItems = roomState.getItems().filter(placed => placed.itemId === item.id);
-      const placedInstance = placedItems[placedItems.length - 1];
-      return PlacementResultDTO.success(placedInstance?.id ?? item.id, position, rotation);
+      return PlacementResultDTO.success(placement.data.instanceId, position, rotation);
     } catch (error) {
       console.error(`PlaceItemUseCase: Error placing item ${item.id}:`, error);
       return PlacementResultDTO.failure(`UNEXPECTED_ERROR: ${error.message}`);

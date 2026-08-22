@@ -12,8 +12,8 @@ class MockRoomRepository {
     if (this.scenario === 'room_not_found') return null;
     
     return {
-      getItem: id => id === 'item-1' ? { id: 'item-1' } : null,
-      moveItem: (id, pos) => id === 'item-1' && pos.x >= 0
+      getItem: id => id === 'item-1#1' ? { id: 'item-1#1' } : null,
+      moveItem: (id, pos) => id === 'item-1#1' && pos.x >= 0
     };
   }
 
@@ -28,13 +28,13 @@ describe('MoveItemUseCase', () => {
     const repo = new MockRoomRepository('valid');
     const useCase = new MoveItemUseCase(repo);
     
-    const result = await useCase.execute('', 'item-1', { x: 1, y: 1, z: 1 });
+    const result = await useCase.execute('', 'item-1#1', { x: 1, y: 1, z: 1 });
     
     expect(result.success).toBe(false);
     expect(result.error).toContain('INVALID_INPUT');
   });
 
-  it('should return failure for invalid itemId', async () => {
+  it('should return failure for invalid instanceId', async () => {
     const repo = new MockRoomRepository('valid');
     const useCase = new MoveItemUseCase(repo);
     
@@ -48,7 +48,7 @@ describe('MoveItemUseCase', () => {
     const repo = new MockRoomRepository('valid');
     const useCase = new MoveItemUseCase(repo);
     
-    const result = await useCase.execute('room-1', 'item-1', { x: 'a', y: 1, z: 1 });
+    const result = await useCase.execute('room-1', 'item-1#1', { x: 'a', y: 1, z: 1 });
     
     expect(result.success).toBe(false);
     expect(result.error).toContain('INVALID_INPUT');
@@ -58,13 +58,13 @@ describe('MoveItemUseCase', () => {
     const repo = new MockRoomRepository('room_not_found');
     const useCase = new MoveItemUseCase(repo);
     
-    const result = await useCase.execute('room-999', 'item-1', { x: 1, y: 1, z: 1 });
+    const result = await useCase.execute('room-999', 'item-1#1', { x: 1, y: 1, z: 1 });
     
     expect(result.success).toBe(false);
     expect(result.error).toContain('ROOM_NOT_FOUND');
   });
 
-  it('should return failure if item not found in room', async () => {
+  it('should return failure if instance not found in room', async () => {
     const repo = new MockRoomRepository('valid');
     const useCase = new MoveItemUseCase(repo);
     
@@ -74,10 +74,10 @@ describe('MoveItemUseCase', () => {
       moveItem: () => false
     });
     
-    const result = await useCase.execute('room-1', 'item-999', { x: 1, y: 1, z: 1 });
+    const result = await useCase.execute('room-1', 'item-999#1', { x: 1, y: 1, z: 1 });
     
     expect(result.success).toBe(false);
-    expect(result.error).toContain('ITEM_NOT_FOUND');
+    expect(result.error).toContain('INSTANCE_NOT_FOUND');
   });
 
   it('should return failure if domain rejects move (e.g., out of bounds)', async () => {
@@ -86,11 +86,11 @@ describe('MoveItemUseCase', () => {
     
     // Мокируем отклонение перемещения (x < 0)
     repo.loadRoomState = async () => ({
-      getItem: (id) => id === 'item-1' ? {} : null,
+      getItem: (id) => id === 'item-1#1' ? {} : null,
       moveItem: (id, pos) => pos.x >= 0 // Отклоняем отрицательные X
     });
     
-    const result = await useCase.execute('room-1', 'item-1', { x: -5, y: 0, z: 0 });
+    const result = await useCase.execute('room-1', 'item-1#1', { x: -5, y: 0, z: 0 });
     
     expect(result.success).toBe(false);
     expect(result.error).toContain('MOVE_REJECTED');
@@ -104,14 +104,14 @@ describe('MoveItemUseCase', () => {
     
     // Мокируем успешное перемещение
     repo.loadRoomState = async () => ({
-      getItem: (id) => id === 'item-1' ? { id: 'item-1' } : null,
+      getItem: (id) => id === 'item-1#1' ? { id: 'item-1#1' } : null,
       moveItem: (id, pos) => true // Всегда успешно для этого теста
     });
     
-    const result = await useCase.execute('room-1', 'item-1', newPosition);
+    const result = await useCase.execute('room-1', 'item-1#1', newPosition);
     
     expect(result.success).toBe(true);
-    expect(result.itemId).toBe('item-1');
+    expect(result.instanceId).toBe('item-1#1');
     expect(result.newPosition).toEqual(newPosition);
     expect(repo.savedState).not.toBeNull();
   });

@@ -237,12 +237,12 @@ export class GameController {
     this._invalidateEvaluation();
     this.roomView.cancelPlacement();
     this.pendingItemId = null;
-    const placedItemId = result.itemId ?? item.id;
-    this.roomViewModel.selectItem(placedItemId);
+    const placedInstanceId = result.instanceId ?? item.id;
+    this.roomViewModel.selectItem(placedInstanceId);
     this.undoBuffer.push({
       label: `Отменить размещение: ${item.name}`,
       undo: async () => {
-        const undoResult = await this.removeItemUseCase.execute(this.level.roomId, placedItemId);
+        const undoResult = await this.removeItemUseCase.execute(this.level.roomId, placedInstanceId);
         if (!undoResult.success) throw new Error(undoResult.error);
       }
     });
@@ -387,8 +387,8 @@ export class GameController {
       if (!result.success) return;
       await this._refreshRoomState();
       this._invalidateEvaluation();
-      const restoredItemId = result.value?.itemId;
-      if (restoredItemId) this.roomViewModel.selectItem(restoredItemId);
+      const restoredInstanceId = result.value?.instanceId;
+      if (restoredInstanceId) this.roomViewModel.selectItem(restoredInstanceId);
       else if (this.roomViewModel.selectedItemId && !this.roomViewModel.roomState.getItem(this.roomViewModel.selectedItemId)) {
         this.roomViewModel.clearSelection();
       }

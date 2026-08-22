@@ -49,7 +49,7 @@ describe('Slice A-005: RemoveItemUseCase', () => {
       expect(result.error).toContain('INVALID_INPUT');
     });
 
-    it('should fail if itemId is missing', async () => {
+    it('should fail if instanceId is missing', async () => {
       const result = await useCase.execute('room-1', '');
       expect(result.success).toBe(false);
       expect(result.error).toContain('INVALID_INPUT');
@@ -61,7 +61,7 @@ describe('Slice A-005: RemoveItemUseCase', () => {
       expect(result.error).toContain('INVALID_INPUT');
     });
 
-    it('should fail if itemId is not a string', async () => {
+    it('should fail if instanceId is not a string', async () => {
       const result = await useCase.execute('room-1', null);
       expect(result.success).toBe(false);
       expect(result.error).toContain('INVALID_INPUT');
@@ -76,8 +76,8 @@ describe('Slice A-005: RemoveItemUseCase', () => {
     });
   });
 
-  describe('Item Not Found', () => {
-    it('should fail if item is not in the room', async () => {
+  describe('Instance Not Found', () => {
+    it('should fail if instance is not in the room', async () => {
       // Create a room with one item
       const featureVector = new FeatureVector({
         woodShare: 0.8,
@@ -104,13 +104,14 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         type: 'seating',
         featureVector: featureVector
       });
-      const initialState = RoomState.createEmpty(createTestBounds()).addItem(existingItem);
+      const initialState = RoomState.createEmpty(createTestBounds());
+      expect(initialState.placeItem(existingItem, { x: 1, z: 1 }).success).toBe(true);
       await repository.saveState('room-with-item', initialState);
 
       // Try to remove a non-existent item
-      const result = await useCase.execute('room-with-item', 'non-existent-item');
+      const result = await useCase.execute('room-with-item', 'non-existent-item#1');
       expect(result.success).toBe(false);
-      expect(result.error).toContain('ITEM_NOT_FOUND');
+      expect(result.error).toContain('INSTANCE_NOT_FOUND');
     });
   });
 
@@ -168,25 +169,25 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         featureVector: featureVector2
       });
       
-      const initialState = RoomState.createEmpty(createTestBounds())
-        .addItem(item1)
-        .addItem(item2);
+      const initialState = RoomState.createEmpty(createTestBounds());
+      expect(initialState.placeItem(item1, { x: 1, z: 1 }).success).toBe(true);
+      expect(initialState.placeItem(item2, { x: 2, z: 1 }).success).toBe(true);
       
       await repository.saveState('room-multi', initialState);
 
       // Remove first item
-      const result = await useCase.execute('room-multi', 'item-1');
+      const result = await useCase.execute('room-multi', 'item-1#1');
 
       expect(result.success).toBe(true);
-      expect(result.itemId).toBe('item-1');
+      expect(result.instanceId).toBe('item-1#1');
       expect(result.remainingItemCount).toBe(1);
 
       // Verify state was updated
       const savedState = await repository.getState('room-multi');
       expect(savedState).toBeInstanceOf(RoomState);
       expect(savedState.getItemCount()).toBe(1);
-      expect(savedState.getItem('item-1')).toBeNull();
-      expect(savedState.getItem('item-2')).toBeDefined();
+      expect(savedState.getItem('item-1#1')).toBeNull();
+      expect(savedState.getItem('item-2#1')).toBeDefined();
     });
 
     it('should remove the last item from the room', async () => {
@@ -216,14 +217,15 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         type: 'seating',
         featureVector: featureVector
       });
-      const initialState = RoomState.createEmpty(createTestBounds()).addItem(singleItem);
+      const initialState = RoomState.createEmpty(createTestBounds());
+      expect(initialState.placeItem(singleItem, { x: 1, z: 1 }).success).toBe(true);
       await repository.saveState('room-single', initialState);
 
       // Remove the only item
-      const result = await useCase.execute('room-single', 'only-item');
+      const result = await useCase.execute('room-single', 'only-item#1');
 
       expect(result.success).toBe(true);
-      expect(result.itemId).toBe('only-item');
+      expect(result.instanceId).toBe('only-item#1');
       expect(result.remainingItemCount).toBe(0);
 
       // Verify room is empty
@@ -263,26 +265,26 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         }));
       }
       
-      let initialState = RoomState.createEmpty(createTestBounds());
-      items.forEach(item => {
-        initialState = initialState.addItem(item);
+      const initialState = RoomState.createEmpty(createTestBounds());
+      items.forEach((item, index) => {
+        expect(initialState.placeItem(item, { x: 1 + index, z: 1 }).success).toBe(true);
       });
       
       await repository.saveState('room-three', initialState);
 
       // Remove middle item
-      const result = await useCase.execute('room-three', 'item-2');
+      const result = await useCase.execute('room-three', 'item-2#1');
 
       expect(result.success).toBe(true);
-      expect(result.itemId).toBe('item-2');
+      expect(result.instanceId).toBe('item-2#1');
       expect(result.remainingItemCount).toBe(2);
 
       // Verify correct items remain
       const savedState = await repository.getState('room-three');
       expect(savedState.getItemCount()).toBe(2);
-      expect(savedState.getItem('item-1')).toBeDefined();
-      expect(savedState.getItem('item-2')).toBeNull();
-      expect(savedState.getItem('item-3')).toBeDefined();
+      expect(savedState.getItem('item-1#1')).toBeDefined();
+      expect(savedState.getItem('item-2#1')).toBeNull();
+      expect(savedState.getItem('item-3#1')).toBeDefined();
     });
   });
 
@@ -352,14 +354,15 @@ describe('Slice A-005: RemoveItemUseCase', () => {
         type: 'seating',
         featureVector: featureVector
       });
-      const initialState = RoomState.createEmpty(createTestBounds()).addItem(item);
+      const initialState = RoomState.createEmpty(createTestBounds());
+      expect(initialState.placeItem(item, { x: 1, z: 1 }).success).toBe(true);
       await repository.saveState('room-test', initialState);
 
-      const result = await useCase.execute('room-test', 'test-item');
+      const result = await useCase.execute('room-test', 'test-item#1');
 
       expect(result).toBeInstanceOf(RemoveResultDTO);
       expect(result.success).toBe(true);
-      expect(result.itemId).toBe('test-item');
+      expect(result.instanceId).toBe('test-item#1');
       expect(result.remainingItemCount).toBe(0);
       expect(result.error).toBeNull();
     });
@@ -369,7 +372,7 @@ describe('Slice A-005: RemoveItemUseCase', () => {
 
       expect(result).toBeInstanceOf(RemoveResultDTO);
       expect(result.success).toBe(false);
-      expect(result.itemId).toBeNull();
+      expect(result.instanceId).toBeNull();
       expect(result.remainingItemCount).toBeNull();
       expect(result.error).toBeDefined();
     });

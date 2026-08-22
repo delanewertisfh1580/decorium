@@ -61,9 +61,9 @@ describe('PlaceItemUseCase', () => {
     const result = await useCase.execute('room-loaded', item, position, rotation);
 
     expect(result.success).toBe(true);
-    expect(result.itemId).toBe('chair-01');
+    expect(result.instanceId).toBe('chair-01#1');
     expect(result.position).toEqual(position);
-    expect((await repository.getState('room-loaded')).getItem('chair-01').item).toBe(item);
+    expect((await repository.getState('room-loaded')).getItem('chair-01#1').item).toBe(item);
   });
 
   it('adds a validated catalog item to an existing room', async () => {
@@ -73,7 +73,7 @@ describe('PlaceItemUseCase', () => {
     const result = await useCase.execute('room-existing', item, { x: 1, y: 0, z: 1 }, rotation);
 
     expect(result.success).toBe(true);
-    expect((await repository.getState('room-existing')).getItem('table-01').item).toBe(item);
+    expect((await repository.getState('room-existing')).getItem('table-01#1').item).toBe(item);
   });
 
   it('returns a typed failure for a room that was not loaded', async () => {

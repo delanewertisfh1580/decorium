@@ -130,7 +130,7 @@ describe('RoomState', () => {
     const item = createTestItem('item-1', 1, 1);
     state.placeItem(item, { x: 2.5, z: 2.5 });
 
-    const result = state.validateMove('item-1', { x: 10, z: 10 });
+    const result = state.validateMove('item-1#1', { x: 10, z: 10 });
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('OUT_OF_BOUNDS');
@@ -143,7 +143,7 @@ describe('RoomState', () => {
     const item = createTestItem('item-1', 1, 1);
 
     state.placeItem(item, { x: 2.5, z: 2.5 }, 0);
-    const result = state.moveItem('item-1', { x: 3.5, z: 3.5 });
+    const result = state.moveItem('item-1#1', { x: 3.5, z: 3.5 });
     
     expect(result.success).toBe(true);
     const items = state.getItems();
@@ -156,7 +156,7 @@ describe('RoomState', () => {
     const item = createTestItem('item-1', 1, 1);
 
     state.placeItem(item, { x: 2.5, z: 2.5 }, 0);
-    const result = state.moveItem('item-1', { x: 10, z: 10 }); // За границей
+    const result = state.moveItem('item-1#1', { x: 10, z: 10 }); // За границей
     
     expect(result.success).toBe(false);
     expect(result.error).toBe('OUT_OF_BOUNDS');
@@ -168,7 +168,7 @@ describe('RoomState', () => {
     const item = createTestItem('item-1', 1, 2); // Прямоугольный предмет
 
     state.placeItem(item, { x: 5, z: 5 }, 0);
-    const result = state.rotateItem('item-1');
+    const result = state.rotateItem('item-1#1');
     
     expect(result.success).toBe(true);
     const items = state.getItems();
@@ -183,7 +183,10 @@ describe('RoomState', () => {
     state.placeItem(item, { x: 2.5, y: 1, z: 2.5 });
 
     expect(state.getItems()).toHaveLength(2);
-    expect(state.getItems().map(placed => placed.id)).toEqual(['repeatable-item', 'repeatable-item#2']);
+    expect(state.getItems().map(placed => placed.id)).toEqual(['repeatable-item#1', 'repeatable-item#2']);
+    expect(state.getItemsByCatalogItemId('repeatable-item')).toHaveLength(2);
+    expect(state.getItem('repeatable-item')).toBeNull();
+    expect(state.moveItem('repeatable-item', { x: 3, z: 3 })).toEqual({ success: false, error: 'NOT_FOUND', data: null });
     expect(state.getItems()[1].position).toEqual({ x: 2.5, y: 1, z: 2.5 });
   });
 
@@ -193,10 +196,11 @@ describe('RoomState', () => {
     const item = createTestItem('item-1', 1, 1);
 
     state.placeItem(item, { x: 2.5, z: 2.5 }, 0);
-    const newState = state.removeItem('item-1');
-    
-    expect(newState).not.toBeNull();
-    expect(newState.getItems()).toHaveLength(0);
+    const result = state.removeItem('item-1#1');
+
+    expect(result.success).toBe(true);
+    expect(result.data.instanceId).toBe('item-1#1');
+    expect(state.getItems()).toHaveLength(0);
   });
 
   it('should return null when removing non-existent item', () => {
@@ -204,8 +208,46 @@ describe('RoomState', () => {
     const state = new RoomState(bounds);
     
     const result = state.removeItem('non-existent');
-    
-    expect(result).toBeNull();
+
+    expect(result).toEqual({ success: false, error: 'NOT_FOUND', data: null });
+  });
+
+  it('should reject a snapshot that references an unknown catalog item', () => {
+    const bounds = createBounds(5, 5);
+    const snapshot = {
+      items: [{ id: 'unknown#1', itemId: 'unknown', position: { x: 2.5, z: 2.5 }, rotation: 0 }]
+    };
+
+    expect(() => RoomState.deserialize(snapshot, bounds, new Map())).toThrow(
+      'RoomState snapshot references unknown catalog item: unknown'
+    );
+  });
+
+  it('should reject a snapshot with a malformed or noncanonical instance id', () => {
+    const bounds = createBounds(5, 5);
+    const item = createTestItem('item-1', 1, 1);
+    const snapshot = {
+      items: [{ id: 'item-1#01', itemId: 'item-1', position: { x: 2.5, z: 2.5 }, rotation: 0 }]
+    };
+
+    expect(() => RoomState.deserialize(snapshot, bounds, new Map([['item-1', item]]))).toThrow(
+      'RoomState snapshot contains invalid placement: INVALID_INSTANCE_ID'
+    );
+  });
+
+  it('should reject a snapshot with duplicate instance ids', () => {
+    const bounds = createBounds(5, 5);
+    const item = createTestItem('item-1', 1, 1);
+    const snapshot = {
+      items: [
+        { id: 'item-1#1', itemId: 'item-1', position: { x: 2.5, z: 2.5 }, rotation: 0 },
+        { id: 'item-1#1', itemId: 'item-1', position: { x: 3.5, z: 2.5 }, rotation: 0 }
+      ]
+    };
+
+    expect(() => RoomState.deserialize(snapshot, bounds, new Map([['item-1', item]]))).toThrow(
+      'RoomState snapshot contains invalid placement: DUPLICATE_INSTANCE_ID'
+    );
   });
 
   it('should serialize and deserialize state', () => {
@@ -220,7 +262,7 @@ describe('RoomState', () => {
     const restored = RoomState.deserialize(snapshot, bounds, itemCatalog);
     
     expect(restored.getItems()).toHaveLength(1);
-    expect(restored.getItems()[0].id).toBe('item-1');
+    expect(restored.getItems()[0].id).toBe('item-1#1');
     expect(restored.getItems()[0].position).toEqual({ x: 2.5, y: 0, z: 2.5 });
   });
 });

@@ -14,9 +14,9 @@ export class MoveItemUseCase {
     this.roomRepository = roomRepository;
   }
 
-  async execute(roomId, itemId, newPosition) {
+  async execute(roomId, instanceId, newPosition) {
     if (!roomId || typeof roomId !== 'string') return MoveResultDTO.failure('INVALID_INPUT: RoomID is required.');
-    if (!itemId || typeof itemId !== 'string') return MoveResultDTO.failure('INVALID_INPUT: ItemID is required.');
+    if (!instanceId || typeof instanceId !== 'string') return MoveResultDTO.failure('INVALID_INPUT: InstanceID is required.');
     if (!newPosition || ['x', 'y', 'z'].some(key => typeof newPosition[key] !== 'number')) {
       return MoveResultDTO.failure('INVALID_INPUT: New position must contain x, y, z numbers.');
     }
@@ -24,9 +24,9 @@ export class MoveItemUseCase {
     try {
       const roomState = await getState(this.roomRepository, roomId);
       if (!roomState) return MoveResultDTO.failure(`ROOM_NOT_FOUND: Room ${roomId} not found.`);
-      if (!roomState.getItem(itemId)) return MoveResultDTO.failure(`ITEM_NOT_FOUND: Item ${itemId} not found in room.`);
+      if (!roomState.getItem(instanceId)) return MoveResultDTO.failure(`INSTANCE_NOT_FOUND: Instance ${instanceId} not found in room.`);
 
-      const result = roomState.moveItem(itemId, {
+      const result = roomState.moveItem(instanceId, {
         x: newPosition.x,
         y: newPosition.y,
         z: newPosition.z
@@ -35,9 +35,9 @@ export class MoveItemUseCase {
       if (!success) return MoveResultDTO.failure(`MOVE_REJECTED: ${result.error ?? 'Domain rule violation.'}`);
 
       await saveState(this.roomRepository, roomId, roomState);
-      return MoveResultDTO.success(itemId, newPosition);
+      return MoveResultDTO.success(instanceId, newPosition);
     } catch (error) {
-      console.error(`MoveItemUseCase: Error moving item ${itemId} in room ${roomId}:`, error);
+      console.error(`MoveItemUseCase: Error moving instance ${instanceId} in room ${roomId}:`, error);
       return MoveResultDTO.failure(`UNEXPECTED_ERROR: ${error.message}`);
     }
   }

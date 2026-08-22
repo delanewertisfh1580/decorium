@@ -69,7 +69,7 @@ describe('FunctionalLayoutEvaluator', () => {
     ]), [diningRule]);
 
     expect(result.violations).toEqual([]);
-    expect(result.matchedPairs).toEqual([['dining-chair', 'dining-table']]);
+    expect(result.matchedPairs).toEqual([['dining-chair#1', 'dining-table#1']]);
   });
 
   it('does not count a seat on a non-usable table side as dining seating', () => {
@@ -86,7 +86,7 @@ describe('FunctionalLayoutEvaluator', () => {
     expect(result.violations).toHaveLength(1);
     expect(result.violations[0]).toMatchObject({
       constraintId: 'dining-seating-required', actualValue: 0, threshold: 1,
-      itemIds: ['dining-table'], messageKey: 'functional-dining-seat-required'
+      itemIds: ['dining-table#1'], messageKey: 'functional-dining-seat-required'
     });
   });
 
@@ -118,10 +118,10 @@ describe('FunctionalLayoutEvaluator', () => {
     ]), [rule]);
 
     expect(facingResult.violations).toEqual([]);
-    expect(facingResult.matchedPairs).toEqual([['sofa', 'television']]);
+    expect(facingResult.matchedPairs).toEqual([['sofa#1', 'television#1']]);
     expect(awayResult.violations).toHaveLength(1);
     expect(awayResult.violations[0]).toMatchObject({
-      constraintId: 'lounge-seat-faces-view-target', itemIds: ['sofa'], actualValue: 0
+      constraintId: 'lounge-seat-faces-view-target', itemIds: ['sofa#1'], actualValue: 0
     });
   });
 
@@ -155,7 +155,7 @@ describe('FunctionalLayoutEvaluator', () => {
     expect(inFront.violations).toEqual([]);
     expect(behind.violations).toHaveLength(1);
     expect(behind.violations[0]).toMatchObject({
-      constraintId: 'coffee-surface-in-front-of-lounge-seat', itemIds: ['sofa'], actualValue: 0
+      constraintId: 'coffee-surface-in-front-of-lounge-seat', itemIds: ['sofa#1'], actualValue: 0
     });
   });
 
@@ -174,8 +174,8 @@ describe('FunctionalLayoutEvaluator', () => {
       [diningChair, { x: 4, z: 4 }]
     ]), [diningRule]);
 
-    expect(result.matchedPairs).toEqual([['dining-chair', 'table-a']]);
+    expect(result.matchedPairs).toEqual([['dining-chair#1', 'table-a#1']]);
     expect(result.violations).toHaveLength(1);
-    expect(result.violations[0]).toMatchObject({ itemIds: ['table-b'], actualValue: 0, severity: 1 });
+    expect(result.violations[0]).toMatchObject({ itemIds: ['table-b#1'], actualValue: 0, severity: 1 });
   });
 });

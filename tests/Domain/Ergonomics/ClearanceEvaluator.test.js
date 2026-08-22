@@ -69,7 +69,7 @@ describe('ClearanceEvaluator', () => {
 
     expect(violation.constraintId).toBe('ergonomics-minimum-clearance');
     expect(violation.messageKey).toBe('ergonomics-minimum-clearance');
-    expect(violation.itemIds).toEqual(['chair-a', 'chair-b']);
+    expect(violation.itemIds).toEqual(['chair-a#1', 'chair-b#1']);
     expect(violation.actualValue).toBeCloseTo(0.3, 5);
     expect(violation.threshold).toBe(0.9);
     expect(violation.severity).toBeCloseTo(2 / 3, 5);
@@ -140,11 +140,11 @@ describe('ClearanceEvaluator', () => {
     ]);
 
     const violations = new ClearanceEvaluator().evaluate(room, rule, {
-      excludedPairs: [['dining-table', 'dining-chair']]
+      excludedPairs: [['dining-table#1', 'dining-chair#1']]
     });
 
     expect(violations.map(violation => violation.itemIds)).toEqual([
-      ['cabinet', 'dining-chair']
+      ['cabinet#1', 'dining-chair#1']
     ]);
   });
 
@@ -164,8 +164,8 @@ describe('ClearanceEvaluator', () => {
       'ergonomics-minimum-clearance'
     ]);
     expect(violations.map(violation => violation.diagnosticId)).toEqual([
-      'ergonomics-minimum-clearance:chair-a:chair-b',
-      'ergonomics-minimum-clearance:chair-c:chair-d'
+      'ergonomics-minimum-clearance:chair-a#1:chair-b#1',
+      'ergonomics-minimum-clearance:chair-c#1:chair-d#1'
     ]);
   });
 });

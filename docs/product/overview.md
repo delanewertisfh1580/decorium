@@ -13,7 +13,7 @@ Decorium — браузерная Three.js-игра о проектирован�
 |---|---|---|
 | 1 | Открывает профиль и выбирает заказ/уровень кампании. | Восстанавливаются settings, completed levels и session context. |
 | 2 | Читает brief: стили, запросы клиента, сценарии и ограничения. | Hydrated `ClientBrief v2` supplies versioned authored policy; UI displays it without interpretation. |
-| 3 | Выбирает, размещает и поворачивает предметы в 3D-комнате. | `RoomState` создаёт stable instance IDs; действия можно переместить, повернуть, удалить или отменить. |
+| 3 | Выбирает, размещает и поворачивает предметы в 3D-комнате. | `RoomState` создаёт canonical stable instance IDs вида `catalogItemId#n`; move, rotate, remove и feedback focus принимают только этот ID, а catalog Item ID используется лишь для поиска всех экземпляров. |
 | 4 | Нажимает «Оценить». | Application вычисляет multi-style fit, composition, client-priority satisfaction и spatial ergonomics, затем калибрует scorecard. |
 | 5 | Читает результат и уточняет композицию. | UI показывает total score, calibrated stars, три канала, style targets и actionable explanation. |
 | 6 | Выполняет условия заказа. | Profile records completion только при `completionEligible`; campaign availability пересчитывается и открывает следующий brief. |

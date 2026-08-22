@@ -57,7 +57,7 @@ describe('PassageZoneEvaluator', () => {
 
     expect(violation.constraintId).toBe('ergonomics-passage-zone-free');
     expect(violation.messageKey).toBe('ergonomics-passage-zone-free');
-    expect(violation.itemIds).toEqual(['chair-001']);
+    expect(violation.itemIds).toEqual(['chair-001#1']);
     expect(violation.zoneId).toBe('entrance-passage');
     expect(violation.zoneLabel).toBe('Входной проход');
     expect(violation.severity).toBeGreaterThan(0);
