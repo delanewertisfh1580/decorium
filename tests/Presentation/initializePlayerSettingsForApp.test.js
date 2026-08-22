@@ -6,14 +6,15 @@ import { initializePlayerSettingsForApp } from '../../src/Presentation/bootstrap
 describe('initializePlayerSettingsForApp', () => {
   it('applies persisted preferences to the app and controller on startup', async () => {
     const profile = PlayerProfile.fromData({
-      schemaVersion: 3,
+      schemaVersion: 4,
       profileId: 'profile-001',
       createdAt: '2026-08-14T10:00:00.000Z',
       updatedAt: '2026-08-14T10:01:00.000Z',
       displayName: null,
       settings: { reducedMotion: true, uiScale: 'large', qualityTier: 'performance' },
       lastSession: { levelId: null },
-      progress: { completedLevels: {} }
+      progress: { completedLevels: {} },
+      inventory: { unlockedIds: ['base-interior'], grantedRewardIds: [] }
     });
     const appRoot = document.createElement('main');
     const gameController = { setPlayerProfile: vi.fn(), setPlayerSettings: vi.fn() };

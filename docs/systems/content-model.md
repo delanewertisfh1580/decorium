@@ -1,144 +1,141 @@
 # Content model
 
 **Статус:** Active production reference
-**Обновлено:** 18 августа 2026 г.
+**Обновлено:** 22 августа 2026 г.
 
-Этот документ — единственный current guide для authored JSON Decorium. Content rules не должны копироваться в Presentation и не должны выводиться из display names, visual meshes или UI category labels.
+Этот документ — canonical guide для authored JSON Decorium. Content policy не должна копироваться в Presentation и не выводится из display label, visual mesh, asset family или UI category. `ClientBrief v2` — единственный источник style, functional и client-priority policy.[1]
 
-> **Контентный canon:** стиль — это policy конкретного заказа. Scandinavian, Japandi и Eclectic profiles являются authored targets, а не глобальными правилами игры. Controlled mixing и personal client requests задаются только versioned `ClientBrief v2`.[1] [2]
+## Runtime inventory
 
-## Runtime content inventory
-
-| Область | Current canonical files | Version / validation |
+| Область | Canonical files | Runtime responsibility |
 |---|---|---|
-| Items | `data/items/catalog.v4.json`, `data/items/item.v4.schema.json` | Catalog schema V4: complete functional and spatial semantics for every shipped item |
-| Levels | `data/levels/manifest.json`, `data/levels/level-*.json`, `data/schemas/level.schema.json` | Manifest V1 and topology-only level schema, including required ClientBrief and presentation references |
-| Client briefs | `data/briefs/client-briefs.v2.json`, `data/briefs/client-brief.v2.schema.json` | ClientBrief catalog V2: identity, weighted targets, explicit priority rules, spatial preferences and evaluation policy |
-| Style profiles | `data/styles/style-constraint-catalog.v1.json`, `data/styles/style-constraint-catalog.v1.schema.json` | Exact multi-style profile IDs, authored labels and constraints; no fuzzy lookup |
-| Presentation environments | `data/presentation/environment-profiles.v2.json`, `data/presentation/environment-profile.v2.schema.json` | Profile catalog V2 and strict closed-vocabulary schema |
-| Scoring | `data/scoring/scoring-parameters.json` | `ScoringPolicy` V2 validates and freezes channels, style blend, occupancy, density profiles and calibration before explicit bootstrap injection |
-| Feedback | `data/feedback/scandinavian-feedback.json` | Versioned authored remediation for style, ergonomics and client-priority diagnostics |
-| Visuals | `data/visuals/item-visuals.json` | Presentation-only visual profile |
-| Release | `public/release-manifest.json` | Generated and validated by operational `src/Operations/Release/BuildInfo` during dev/build |
+| Items | `data/items/catalog.v5.json`, `data/items/item.v5.schema.json` | Semantic items, finite variants, base variant и unlock IDs. |
+| Levels | `data/levels/level-*.json`, `data/schemas/level.v2.schema.json` | Bounds, catalog subset, recipe, seed, surface defaults, brief/environment references. |
+| Interior recipes | `data/interior/interior-recipes.v1.json`, `interior-recipe.v1.schema.json` | Deterministic initial player-owned catalog placements. |
+| Surface finishes | `data/interior/surface-finishes.v1.json`, `surface-finish.v1.schema.json` | Floor/wall slots with visual data and `unlockId`. |
+| Progression rewards | `data/progression/rewards.v1.json`, `reward-catalog.v1.schema.json` | Idempotent grants after authored completion. |
+| Presentation environments | `data/presentation/environment-profiles.v3.json`, `environment-profile.v3.schema.json` | Shell, openings, camera, light, exterior and atmosphere only. |
+| Client briefs | `data/briefs/client-briefs.v2.json`, `client-brief.v2.schema.json` | Identity, style targets, priorities, spatial preferences and typed evaluation policy. |
+| Style/scoring/feedback | `data/styles/style-constraint-catalog.v1.json`, `data/scoring/scoring-parameters.json`, `data/feedback` | Exact styles, validated `ScoringPolicy` V2 and authored remediation. |
+| Release | `public/release-manifest.json` | Generated/validated operational build identity. |
 
-`src/Infrastructure/DataLoaders/staticDataAssets.js` is the deployment inventory. Every runtime JSON file must be added there and covered by a content test; otherwise Vite may not publish it into `dist/data/`.[3]
+`src/Infrastructure/DataLoaders/staticDataAssets.js` is the deployment inventory. Every runtime JSON/schema must be registered there or Vite will not publish it next to `dist/index.html`.[2]
 
-## Item catalog V4
+## Item catalog V5
 
-The catalog currently has **34** items. Each item contains a stable `id`, display fields, two-dimensional footprint, price, 16-field `featureVector`, required `InteractionProfile v1` and required `SpatialBehavior v1`. Catalog item `type` remains a content/visual grouping; it is never a runtime source of gameplay policy.[10]
+A V5 item preserves semantic contracts—footprint, 16-field `featureVector`, `InteractionProfile v1` and `SpatialBehavior v1`—and adds a finite authored variant registry. `type` stays a content/visual grouping and never becomes policy.[3]
 
 ```json
 {
-  "id": "rug-001",
-  "type": "decor",
-  "dimensions": { "x": 2.0, "z": 1.5 },
-  "interactionProfile": {
-    "schemaVersion": 1,
-    "affordances": ["floor-decor"],
-    "frontAxis": null,
-    "usableSides": []
-  },
-  "spatialBehavior": {
-    "schemaVersion": 1,
-    "placementKind": "floor-overlay",
-    "occupancyMode": "ignored",
-    "clearanceMode": "ignored",
-    "supportMode": "none"
+  "id": "chair-001",
+  "baseVariantId": "base",
+  "variants": [
+    {
+      "id": "base",
+      "label": "Базовый",
+      "unlockId": "base-interior",
+      "visual": { "materialId": "oak-light", "color": "#a97956", "assetId": null, "scale": 1 }
+    },
+    {
+      "id": "compact",
+      "label": "Компактный размер",
+      "unlockId": "size-compact",
+      "visual": { "materialId": "oak-light", "color": "#a97956", "assetId": null, "scale": 0.85 },
+      "dimensions": { "x": 0.43, "z": 0.43 }
+    }
+  ]
+}
+```
+
+| Field | Rule | Effect |
+|---|---|---|
+| `baseVariantId` | Must name one `variants` record. | Deterministic initial configuration. |
+| `variants[].id` | Unique lowercase item-local ID. | Sole discrete configuration selection. |
+| `variants[].unlockId` | Must be in PlayerProfile V4 inventory. | Application entitlement boundary. |
+| `visual` | Authored material/color/asset/scale. | Presentation-only unless feature-vector delta exists. |
+| optional `dimensions` | Schema-valid footprint. | Resolved placement/occupancy dimensions. |
+| optional `featureVector` | Complete valid vector. | Only visual variant change that can affect score. |
+
+Never add arbitrary sliders, colors or materials from UI. A new option requires V5 schema/content test, unlock path and browser verification. Domain rejects absent semantic behavior and never infers role, clearance or occupancy from name/type/mesh.[3]
+
+## Level V2 and recipe V1
+
+Level V2 contains no `initialPlacement`. It references `interiorRecipeId`, a deterministic `generationSeed` and player-owned `surfaceDefaults`.
+
+```json
+{
+  "schemaVersion": 2,
+  "id": "level-001",
+  "roomId": "room-001",
+  "roomDimensions": { "width": 8, "depth": 6 },
+  "availableItems": ["chair-001", "sofa-001"],
+  "interiorRecipeId": "living-starter",
+  "generationSeed": 101,
+  "surfaceDefaults": { "floorFinishId": "floor-light-oak", "wallFinishId": "wall-warm-plaster" },
+  "clientBriefId": "brief-warm-host-001",
+  "presentationProfileId": "warm-starter-living"
+}
+```
+
+A recipe contains catalog `itemId`, optional selected `variantId`, stable slot ID, position and right-angle rotation. `RoomInteriorGenerator` creates deterministic `RoomState`; all resulting entities are editable player-owned instances with canonical `catalogItemId#ordinal` identity.[4]
+
+## Surfaces, rewards and V4 profile
+
+Surface finish records are player-owned floor/wall slots rather than ambient wallpaper/floor presets. `RoomState.surfaceConfiguration` stores selected IDs only; renderer resolution belongs to the finish catalog. Reward records bind completion to finite unlock IDs. `GrantProgressionRewardsUseCase` writes `grantedRewardIds` and merges `unlockedIds` immutably, making replays idempotent.
+
+```json
+{
+  "inventory": {
+    "unlockedIds": ["base-interior", "floor-light-oak", "wall-warm-plaster"],
+    "grantedRewardIds": []
   }
 }
 ```
 
-| Contract field | Allowed values | Meaning |
-|---|---|---|
-| `InteractionProfile.affordances` | Scenario roles plus `rest-surface`, `storage-volume`, `light-source`, `floor-decor`, `wall-decor`, `media-support` | Every V4 item has at least one declared functional or semantic role. |
-| `InteractionProfile.frontAxis` | `positiveX`, `negativeX`, `positiveZ`, `negativeZ`, `null` | Local front direction before placed-item rotation. |
-| `InteractionProfile.usableSides` | Cardinal local axes | Sides on which adjacency partners may satisfy the anchor. |
-| `SpatialBehavior.placementKind` | `floor`, `floor-overlay`, `wall`, `ceiling`, `surface-mounted` | Author-owned placement class, independent of visual mesh. |
-| `SpatialBehavior.occupancyMode` | `occupies`, `ignored` | Only a declared floor obstacle may occupy fixed-grid floor area. |
-| `SpatialBehavior.clearanceMode` | `obstacle`, `ignored` | Only a declared floor obstacle enters generic minimum-clearance pairs. |
-| `SpatialBehavior.supportMode` | `none`, `surface` | Explicit authored support semantics for current/future functional rules. |
+V3→V4 browser migration seeds mandatory base item/surface unlocks. UI may display locked options, but only Application decides whether a variant/finish is entitled.[5] [6]
 
-Schema and Domain reject contradictory combinations and missing semantics: overlay/wall/ceiling/surface-mounted items must ignore occupancy and clearance; floor occupancy requires obstacle clearance; every `Item` requires complete `InteractionProfile` and `SpatialBehavior` with no implicit defaults. The V4 mapping classifies every ID explicitly: rugs are overlays; shelf/mirror/curtain/clock are wall artifacts; chandelier is ceiling; table lamp is surface-mounted; furniture and free-standing floor objects remain obstacles. Adding an item requires V4 schema validity, non-empty role, complete `InteractionProfile`, complete `SpatialBehavior`, complete feature vector, optional visual profile, catalog content test and only then level references. Do not infer semantics from `id`, `type`, `name` or mesh.[10]
+## Presentation environment V3
 
-## ClientBrief v2 and style profiles
+Every level resolves one V3 profile. It may define `openingsPreset`, `cameraPreset`, `exteriorCompositionPreset`, lighting, exterior and scene life. It must **not** contain surface presets, wall treatments, built-ins, ambient fixtures, TV, shelf, mirror, cat or any player-visible room interior object.[7]
 
-`ClientBrief v2` is the runtime-loaded, versioned contract for every shipped design order. It is validated in Infrastructure, normalized by the Domain value object and owns a typed immutable `EvaluationPolicy` graph that is forwarded into `LevelDTO.evaluationSpec` before V2 evaluation. It makes requirements reviewable, deterministic and replayable.[1] [4]
+> A V3 profile controls atmosphere and structural context. It never materializes a playable interior item and never changes feature vectors, score, economy, reward eligibility or progression.
 
-| Field group | Shipped V2 policy | Active behavior |
-|---|---|---|
-| Identity | `schemaVersion`, stable brief ID, level binding, client ID and display name. | Active loading and player presentation. |
-| Style targets | Unique primary/secondary/accent profile IDs with positive normalized weights. | Every target is independently scored; weighted fit feeds style channel. |
-| Profile label | `style-constraint-catalog.v1` profile `label`. | Hydrated through evaluation result for display only; label does not change policy. |
-| Client priorities | Stable ID, label, positive weight and required explicit rule. | Independently evaluated and normalized into client-priority channel. |
-| `functional-scenario` rule | Scenario ID plus message key. | Satisfaction comes from the matching hydrated required scenario. |
-| `spatial-preferences` rule | Priority references authored spatial preferences. | Satisfaction comes from fixed-grid occupancy and density/free-area rules. |
-| Spatial preferences | Density, clearance multiplier and empty-space target/mode. | Clearance multiplier, density range and explicit empty-space direction are active; priority importance belongs only to `clientPriorities[].weight`. |
-| Evaluation policy | Completion target, `criticalRuleMode`, composition and ergonomics rules. | Active source of evaluation inputs; critical results calibrate completion. |
+The sole authoring path for initial TV, shelf, decor, rug or media item is a V5 catalog record in an interior recipe.
 
-Style profile IDs must resolve exactly. `JsonConstraintCatalog.getStyleProfileById()` returns an immutable profile `{ id, label, constraints }`, and unknown IDs resolve to `null`; application treats a referenced unknown/empty profile as a deterministic content error. The style profile schema is versioned separately because profile content evolves independently of ClientBrief records.[2] [5]
+## ClientBrief V2, function and scoring
 
-## Authored presentation environments
+`ClientBrief v2` is validated in Infrastructure, normalized by a Domain value object and owns a typed immutable `EvaluationPolicy` graph. The graph contains completion, composition and hydrated ergonomics rules; `LoadLevelUseCase` resolves exact style profiles without deriving nested policy from topology/UI.[1]
 
-Every shipped level declares `presentationProfileId`. `LoadLevelUseCase` resolves the reference through the validated PresentationEnvironment repository and returns the hydrated profile in `LevelDTO.presentationEnvironment`. The profile catalog is `schemaVersion: 2`; each profile selects only closed presets for floor, wall, openings, camera, lighting, exterior and scene-life.
+| Field group | Active policy |
+|---|---|
+| Style targets | Unique weighted primary/secondary/accent profiles; each receives independent target fit. |
+| Client priorities | Stable label/weight plus explicit `functional-scenario` or `spatial-preferences` rule. |
+| Spatial preferences | Density, client clearance multiplier and directional empty-space policy. |
+| Evaluation policy | Completion, composition, passages, function and required scenarios. |
 
-Presentation resolver output is immutable and is consumed only by Three.js scene assembly. It must not become a feature vector, scorer input, ergonomics rule, progression condition or economy input.
+Composition selects explicit affordances, never item `type`. `adjacency` and `front-adjacency` rules consume semantic selectors, partner count, distance and authored message keys. Required scenarios independently declare role/cardinality even if no anchor exists.
 
-## Levels and functional layout
-
-A level definition declares geometry, available items, initial placement and `presentationProfileId`; it references exactly one `clientBriefId`. ClientBrief owns style targets, priority rules, spatial preferences, completion, composition and ergonomics policy. Composition rules declare `minItems` and exact `requiredAffordances`; `Item.type` is a visual/content grouping and is never a composition or gameplay policy input. Evaluators are generic Domain code: they consume hydrated policy and must never recover an evaluation rule from level topology or UI state.
-
-At runtime, `RoomState` assigns each placement the canonical `catalogItemId#ordinal` identity, beginning at `#1`. Persisted placements, move/rotate/remove commands, diagnostic causal `itemIds` and feedback focus all use only this instance ID. A catalog ID identifies an authored template and may only query the matching placed instances; it never selects a mutable entity.
-
-| Rule kind | Required extra field | Use case |
-|---|---|---|
-| `adjacency` | none | Dining table requires sufficient seats on declared usable sides. |
-| `front-adjacency` | `maxAngleDegrees` in `(0, 90]` | Sofa faces TV; coffee surface lies in front of the sofa. |
-
-All functional relationship rules use semantic selectors, `minPartners`, edge-to-edge `distance`, positive `weight` and an authored `messageKey`. Partners are consumed one-to-one for a rule. Successful functional pairs are passed to the clearance evaluator as narrow exclusions; unrelated tight pairs retain their clearance penalties.
-
-A required functional scenario is separate policy: it declares one or more affordance roles and `minCount` cardinality even when no anchor is present. `RequiredFunctionalScenarioEvaluator` emits a critical role-level diagnostic for each missing role. Scenarios are client-owned in `ClientBrief`, not inferred from level topology.
-
-## Scoring, explanations and feedback
-
-The V2 evaluator has three deterministic channels. All numeric policy is versioned content, validated and frozen by the explicit `ScoringPolicy` dependency before bootstrap, then consumed outside Presentation; no mutable module-level scoring singleton exists.[6] [7]
-
-| Channel | Input | Authoritative calculation |
-|---|---|---|
-| Style | Exact profile constraints for every style target plus composition rules. | `0.75 × weightedTargetFit + 0.25 × compositionScore`; composition participates once, and result exposes separate target, composition and blended-channel penalties. |
-| Client priorities | Explicit priority rules, required-scenario result and spatial-preference result. | `Σ(weight × satisfaction) / Σ(weight)`. |
-| Ergonomics | Clearance, passage, functional relationships and required scenarios. | Existing deterministic ergonomics scorer. |
-| Total | The three channel scores. | `0.5 × style + 0.2 × clientPriorities + 0.3 × ergonomics`. |
-
-`RoomOccupancyProfile` uses the versioned `0.1 m` cell size to mark each **declared floor obstacle** once. `ClearanceEvaluator` and `PassageZoneEvaluator` use that same authored boundary before generic pair and passage evaluation. `SpatialPreferenceEvaluator` makes the authored `intimate`, `balanced` or `open` density range an active satisfaction baseline; `discourage-excess` narrows its upper bound and `require-open` raises its lower bound. A compact room is therefore valid when the client requests it; overlays and mounted artifacts cannot artificially make it look occupied or block a generic passage.[8] [10]
-
-`EvaluationExplanation v2` is a runtime Application-to-Presentation contract, not persisted JSON. Each card carries a unique `diagnosticId` for one concrete fact and its separate rule-level `constraintId`, plus channel, priority identity when applicable, rule description, actual/desired fact, numeric/authored severity, authored remediation, exact counterfactual recovery and current RoomState instance references. Feedback severity uses `low`, `medium` or `high`; Domain `critical: true` remains the authoritative override.[9]
-
-`MultiChannelViolationImpactPolicy` calculates recovery by recomputing the V2 result without only that diagnostic. It is neither a content-authored weight nor additive per-item blame. `ScorecardCalibrationPolicy` preserves raw values and derives display stars, critical caps and `completionEligible`; Presentation forwards the result and never compares stars or derives an unlock.[7] [9]
-
-## Visual profiles
-
-`item-visuals.json` controls only Three.js representation. Geometry is not a source of gameplay semantics. A visual profile may be added or changed without changing scoring unless a separate semantic catalog/brief contract changes.
+`ScoringPolicy` V2 validates and freezes numeric parameters before explicit bootstrap injection—there is no mutable module-global scoring singleton. The deterministic evaluator remains three-channel: style, client priorities and ergonomics. Visual assets, profile labels and ambient scene never enter a scorer. `EvaluationExplanation v2` carries diagnostic/remediation/canonical instance references to Presentation; UI does not infer score or unlock.[8]
 
 ## Authoring checklist
 
-1. Decide whether the change is a catalog item, a client brief, a style profile, a scoring parameter, feedback or visual-only profile.
-2. Update the relevant versioned JSON and schema only if its public contract changes.
-3. Add a red content/schema test and minimal Domain test for a new rule kind.
-4. Register new runtime data in static asset inventory.
-5. Add feedback for every user-visible violation and every client constraint.
-6. Run full tests, build and dependency audit; test the affected brief in browser before release.
+1. Choose the versioned contract; never add interior to environment V3.
+2. For an item option, author V5 variant, unlock ID and valid resolved dimensions/features.
+3. For pre-arranged design, create a recipe placement—not fixture, built-in or GLB prop.
+4. For a finish, author surface type, render data and unlock route.
+5. Register runtime JSON/schema in static asset inventory.
+6. Add schema/content, Domain/Application and renderer/UI coverage.
+7. Run full tests, production build, dependency audit and browser smoke before release.
 
-See [Architecture overview](../architecture/overview.md) for layer ownership and [Product overview](../product/overview.md) for current player scenarios.
+See [Architecture overview](../architecture/overview.md) for ownership/persistence/runtime flows.
 
 ## References
 
 [1]: ../../data/briefs/client-brief.v2.schema.json "ClientBrief V2 schema"
-[2]: ../../data/styles/style-constraint-catalog.v1.schema.json "Style catalog schema"
-[3]: ../../src/Infrastructure/DataLoaders/staticDataAssets.js "Static runtime data inventory"
-[4]: ../../src/Domain/Briefs/ClientBrief.js "ClientBrief Domain value"
-[5]: ../../src/Infrastructure/DataLoaders/JsonConstraintCatalog.js "Exact profile adapter"
-[6]: ../../data/scoring/scoring-parameters.json "Scoring parameters V2"
-[7]: ../../src/Application/UseCases/EvaluateRoomUseCase.js "Evaluation application boundary"
-[8]: ../../src/Domain/Scoring/RoomOccupancyProfile.js "Fixed-grid occupancy measurement"
-[9]: ../../src/Application/Services/MultiChannelEvaluationExplanationAssembler.js "Explanation V2 assembly"
-[10]: ../../src/Domain/Items/SpatialBehavior.js "V4 SpatialBehavior Domain contract"
+[2]: ../../src/Infrastructure/DataLoaders/staticDataAssets.js "Static runtime inventory"
+[3]: ../../data/items/item.v5.schema.json "Item V5 schema"
+[4]: ../../data/interior/interior-recipe.v1.schema.json "Interior recipe V1 schema"
+[5]: ../../src/Domain/Profile/PlayerProfile.js "PlayerProfile V4 inventory"
+[6]: ../../src/Application/UseCases/GrantProgressionRewardsUseCase.js "Idempotent grants"
+[7]: ../../data/presentation/environment-profile.v3.schema.json "Environment V3 schema"
+[8]: ../../src/Domain/Scoring/ScoringPolicy.js "Explicit validated scoring policy"

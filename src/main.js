@@ -6,7 +6,12 @@ import { JsonLevelRepository } from './Infrastructure/Repositories/JsonLevelRepo
 import JsonPresentationEnvironmentRepository from './Infrastructure/Repositories/JsonPresentationEnvironmentRepository.js';
 import JsonClientBriefRepository from './Infrastructure/Repositories/JsonClientBriefRepository.js';
 import JsonReleaseManifestRepository from './Infrastructure/Repositories/JsonReleaseManifestRepository.js';
+import JsonInteriorRecipeRepository from './Infrastructure/Repositories/JsonInteriorRecipeRepository.js';
+import JsonSurfaceFinishCatalog from './Infrastructure/Repositories/JsonSurfaceFinishCatalog.js';
+import JsonProgressionRewardCatalog from './Infrastructure/Repositories/JsonProgressionRewardCatalog.js';
 import { InMemoryRoomRepository } from './Infrastructure/Repositories/InMemoryRoomRepository.js';
+import ScopedRoomRepository from './Infrastructure/Repositories/ScopedRoomRepository.js';
+import BrowserLocalRoomDesignRepository from './Infrastructure/Repositories/BrowserLocalRoomDesignRepository.js';
 import BrowserLocalPlayerProfileRepository from './Infrastructure/Repositories/BrowserLocalPlayerProfileRepository.js';
 import BrowserPlayerProfileFactory from './Infrastructure/Factories/BrowserPlayerProfileFactory.js';
 import { JsonItemCatalog } from './Infrastructure/DataLoaders/JsonItemCatalog.js';
@@ -44,15 +49,16 @@ import GetBuildInfoUseCase from './Application/UseCases/GetBuildInfoUseCase.js';
 import StartLevelSessionUseCase from './Application/UseCases/StartLevelSessionUseCase.js';
 import ReadRoomStateUseCase from './Application/UseCases/ReadRoomStateUseCase.js';
 import ResetRoomAttemptUseCase from './Application/UseCases/ResetRoomAttemptUseCase.js';
+import ConfigurePlacedItemUseCase from './Application/UseCases/ConfigurePlacedItemUseCase.js';
+import ConfigureRoomSurfaceUseCase from './Application/UseCases/ConfigureRoomSurfaceUseCase.js';
+import GrantProgressionRewardsUseCase from './Application/UseCases/GrantProgressionRewardsUseCase.js';
 import ProgressionPolicy from './Domain/Progression/ProgressionPolicy.js';
 import { GameController } from './Presentation/Controllers/GameController.js';
 import FurnitureAssetRepository from './Presentation/Scene/FurnitureAssetRepository.js';
-import RoomCompositionAssetRepository from './Presentation/Scene/RoomCompositionAssetRepository.js';
 import furnitureAssetManifest from '../data/visuals/furniture-assets.v1.json';
 import loungePbrAssetManifest from '../data/visuals/lounge-pbr-assets.v1.json';
 import diningTablePbrAssetManifest from '../data/visuals/dining-table-pbr-assets.v1.json';
 import storagePbrAssetManifest from '../data/visuals/storage-pbr-assets.v1.json';
-import roomCompositionPbrAssetManifest from '../data/visuals/room-composition-pbr-assets.v1.json';
 import { loadPlayerProfileForApp } from './Presentation/bootstrap/loadPlayerProfileForApp.js';
 import { initializeLevelSelectForApp } from './Presentation/bootstrap/initializeLevelSelectForApp.js';
 import { initializePlayerSettingsForApp } from './Presentation/bootstrap/initializePlayerSettingsForApp.js';
@@ -92,19 +98,22 @@ async function bootstrap() {
       appRoot: document.getElementById('app')
     });
 
-    const [levelSchema, itemSchema, presentationEnvironmentSchema, clientBriefSchema, styleConstraintCatalogSchema, authoredScoringPolicy] = await Promise.all([
+    const [levelSchema, itemSchema, presentationEnvironmentSchema, clientBriefSchema, styleConstraintCatalogSchema, interiorRecipeSchema, surfaceFinishSchema, progressionRewardSchema, authoredScoringPolicy] = await Promise.all([
       SchemaLoader.loadLevelSchema(),
       SchemaLoader.loadItemSchema(),
       SchemaLoader.loadPresentationEnvironmentSchema(),
       SchemaLoader.loadClientBriefSchema(),
       SchemaLoader.loadStyleConstraintCatalogSchema(),
+      SchemaLoader.loadInteriorRecipeSchema(),
+      SchemaLoader.loadSurfaceFinishSchema(),
+      SchemaLoader.loadProgressionRewardSchema(),
       loadJson('./data/scoring/scoring-parameters.json')
     ]);
     const scoringPolicy = new ScoringPolicy(authoredScoringPolicy);
 
     const levelRepository = new JsonLevelRepository('./data/levels', levelSchema);
     const presentationEnvironmentRepository = new JsonPresentationEnvironmentRepository(
-      './data/presentation/environment-profiles.v2.json',
+      './data/presentation/environment-profiles.v3.json',
       presentationEnvironmentSchema
     );
     const clientBriefRepository = new JsonClientBriefRepository(
@@ -112,15 +121,25 @@ async function bootstrap() {
       clientBriefSchema
     );
     const savePlayerProfileUseCase = new SavePlayerProfileUseCase(profileRepository);
+    const getPlayerProfile = () => playerProfile;
+    const interiorRecipeRepository = new JsonInteriorRecipeRepository('./data/interior/interior-recipes.v1.json', interiorRecipeSchema);
+    const surfaceFinishCatalog = new JsonSurfaceFinishCatalog('./data/interior/surface-finishes.v1.json', surfaceFinishSchema);
+    const progressionRewardCatalog = new JsonProgressionRewardCatalog('./data/progression/rewards.v1.json', progressionRewardSchema);
     const updatePlayerSettingsUseCase = new UpdatePlayerSettingsUseCase(
       savePlayerProfileUseCase,
       () => new Date().toISOString()
     );
     const progressionPolicy = new ProgressionPolicy();
     const getCampaignLevelsUseCase = new GetCampaignLevelsUseCase(levelRepository, progressionPolicy);
-    const recordLevelCompletionUseCase = new RecordLevelCompletionUseCase(
+    const grantProgressionRewardsUseCase = new GrantProgressionRewardsUseCase(
+      progressionRewardCatalog,
       savePlayerProfileUseCase,
       () => new Date().toISOString()
+    );
+    const recordLevelCompletionUseCase = new RecordLevelCompletionUseCase(
+      savePlayerProfileUseCase,
+      () => new Date().toISOString(),
+      grantProgressionRewardsUseCase
     );
     const itemCatalog = new JsonItemCatalog('./data/items', itemSchema);
     const constraintCatalog = new JsonConstraintCatalog(
@@ -134,23 +153,29 @@ async function bootstrap() {
       feedbackCatalog.loadAllFeedback()
     ]);
 
-    const roomRepository = new InMemoryRoomRepository();
+    const roomDesignRepository = new BrowserLocalRoomDesignRepository(window.localStorage);
+    const roomRepository = new ScopedRoomRepository({
+      sessionRepository: new InMemoryRoomRepository(),
+      roomDesignRepository
+    });
     const furnitureAssetRepository = new FurnitureAssetRepository({ manifests: [furnitureAssetManifest, loungePbrAssetManifest, diningTablePbrAssetManifest, storagePbrAssetManifest] });
-    const roomCompositionAssetRepository = new RoomCompositionAssetRepository({ manifest: roomCompositionPbrAssetManifest });
     const loadLevelUseCase = new LoadLevelUseCase(
       levelRepository,
       itemCatalog,
       constraintCatalog,
       presentationEnvironmentRepository,
-      clientBriefRepository
+      clientBriefRepository,
+      { interiorRecipeRepository, surfaceFinishCatalog, roomDesignRepository, getPlayerProfile }
     );
-    const startLevelSessionUseCase = new StartLevelSessionUseCase(loadLevelUseCase, roomRepository);
+    const startLevelSessionUseCase = new StartLevelSessionUseCase(loadLevelUseCase, roomRepository, getPlayerProfile);
     const readRoomStateUseCase = new ReadRoomStateUseCase(roomRepository);
     const resetRoomAttemptUseCase = new ResetRoomAttemptUseCase(roomRepository);
     const placeItemUseCase = new PlaceItemUseCase(roomRepository);
     const moveItemUseCase = new MoveItemUseCase(roomRepository);
     const rotateItemUseCase = new RotateItemUseCase(roomRepository);
     const removeItemUseCase = new RemoveItemUseCase(roomRepository);
+    const configurePlacedItemUseCase = new ConfigurePlacedItemUseCase(roomRepository, getPlayerProfile);
+    const configureRoomSurfaceUseCase = new ConfigureRoomSurfaceUseCase(roomRepository, surfaceFinishCatalog, getPlayerProfile);
     const scoring = scoringPolicy;
     const styleScorer = new StyleScorer(scoring);
     const starRatingPolicy = new StarRatingPolicy(scoring.starRatingThresholds, { epsilon: scoring.scoreEpsilon });
@@ -218,6 +243,8 @@ async function bootstrap() {
       moveItemUseCase,
       rotateItemUseCase,
       removeItemUseCase,
+      configurePlacedItemUseCase,
+      configureRoomSurfaceUseCase,
       evaluateRoomUseCase,
       recordLevelCompletionUseCase,
       startLevelSessionUseCase,
@@ -225,8 +252,7 @@ async function bootstrap() {
       resetRoomAttemptUseCase,
       playerProfile,
       roomRepository,
-      furnitureAssetRepository,
-      roomCompositionAssetRepository
+      furnitureAssetRepository
     });
     await controller.init(
       document.getElementById('room-canvas'),
@@ -234,7 +260,8 @@ async function bootstrap() {
       document.getElementById('toolbar-container'),
       document.getElementById('evaluation-container'),
       document.getElementById('dashboard-container'),
-      document.getElementById('boot-status')
+      document.getElementById('boot-status'),
+      document.getElementById('design-inspector-container')
     );
     const settingsInitialization = await initializePlayerSettingsForApp({
       updatePlayerSettingsUseCase,
@@ -254,7 +281,10 @@ async function bootstrap() {
     });
     playerProfile = levelSelection.profile;
     controller.setPlayerProfile(playerProfile);
-    controller.setCompletionProfileListener(levelSelection.refresh);
+    controller.setCompletionProfileListener(async profile => {
+      playerProfile = profile;
+      return levelSelection.refresh(profile);
+    });
     controller.roomView.startRenderLoop();
     // После загрузки сцена остаётся чистой: подсказки появляются только
     // как реакция на доступное или выполненное действие.

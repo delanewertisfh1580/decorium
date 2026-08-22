@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "rewards": [
+    {
+      "id": "reward-starter-artisan",
+      "levelId": "level-001",
+      "minimumStars": 1,
+      "grantUnlockIds": ["material-artisan", "size-compact"]
+    },
+    {
+      "id": "reward-media-surfaces",
+      "levelId": "level-002",
+      "minimumStars": 2,
+      "grantUnlockIds": ["floor-dark-oak", "wall-midnight-paper"]
+    },
+    {
+      "id": "reward-studio-surfaces",
+      "levelId": "level-003",
+      "minimumStars": 3,
+      "grantUnlockIds": ["floor-concrete-sand", "wall-gallery-white"]
+    }
+  ]
+}

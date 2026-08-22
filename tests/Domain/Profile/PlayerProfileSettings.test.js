@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 import PlayerProfile from '../../../src/Domain/Profile/PlayerProfile.js';
 import PlayerSettings from '../../../src/Domain/Profile/PlayerSettings.js';
 
-describe('PlayerProfile settings v3', () => {
-  it('creates schema v3 profiles with complete persisted player settings', () => {
+describe('PlayerProfile settings v4', () => {
+  it('creates schema v4 profiles with complete persisted player settings', () => {
     const profile = PlayerProfile.create({
       profileId: 'profile-001',
       timestamp: '2026-08-14T10:00:00.000Z'
     });
 
-    expect(profile.schemaVersion).toBe(3);
+    expect(profile.schemaVersion).toBe(4);
     expect(profile.settings).toEqual({
       reducedMotion: false,
       uiScale: 'standard',

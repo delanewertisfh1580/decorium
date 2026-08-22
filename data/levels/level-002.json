@@ -1,25 +1,15 @@
 {
+  "schemaVersion": 2,
   "id": "level-002",
+  "roomId": "room-002",
   "name": "Уютный уголок",
   "clientBriefId": "brief-intimate-media-002",
   "presentationProfileId": "urban-media-corner",
-  "roomDimensions": {
-    "width": 6,
-    "height": 3,
-    "depth": 5
-  },
+  "roomDimensions": { "width": 6, "height": 3, "depth": 5 },
   "availableItems": [
-    "sofa-002",
-    "tv-001",
-    "chair-001",
-    "table-002",
-    "coffeetable-001",
-    "lamp-001",
-    "lamp-002",
-    "rug-001",
-    "plant-001",
-    "shelf-001",
-    "mirror-001"
+    "sofa-002", "tv-001", "chair-001", "table-002", "coffeetable-001", "lamp-001", "lamp-002", "rug-001", "plant-001", "shelf-001", "mirror-001"
   ],
-  "initialPlacement": []
+  "interiorRecipeId": "media-corner-v1",
+  "generationSeed": 202,
+  "surfaceDefaults": { "floorFinishId": "floor-light-oak", "wallFinishId": "wall-warm-plaster" }
 }

@@ -11,7 +11,7 @@ describe('presentation environment production wiring', () => {
     expect(mainSource).toContain('JsonPresentationEnvironmentRepository');
     expect(mainSource).toContain('SchemaLoader.loadPresentationEnvironmentSchema()');
     expect(mainSource).toContain('new JsonPresentationEnvironmentRepository(');
-    expect(mainSource).toContain("'./data/presentation/environment-profiles.v2.json'");
+    expect(mainSource).toContain("'./data/presentation/environment-profiles.v3.json'");
     expect(mainSource).toContain('presentationEnvironmentSchema');
     expect(mainSource).toContain('new LoadLevelUseCase(');
     expect(schemaLoaderSource).toContain('loadClientBriefSchema');
@@ -19,5 +19,9 @@ describe('presentation environment production wiring', () => {
     expect(mainSource).toContain('SchemaLoader.loadClientBriefSchema()');
     expect(mainSource).toContain("'./data/briefs/client-briefs.v2.json'");
     expect(mainSource).toContain('clientBriefRepository');
+    expect(mainSource).toContain('JsonInteriorRecipeRepository');
+    expect(mainSource).toContain('JsonSurfaceFinishCatalog');
+    expect(mainSource).toContain('interiorRecipeRepository');
+    expect(mainSource).toContain('surfaceFinishCatalog');
   });
 });

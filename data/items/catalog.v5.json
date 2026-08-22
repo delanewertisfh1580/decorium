@@ -1,0 +1,2834 @@
+{
+  "schemaVersion": 5,
+  "items": [
+    {
+      "id": "chair-001",
+      "name": "Стул Modern",
+      "type": "chair",
+      "dimensions": {
+        "x": 0.5,
+        "z": 0.5
+      },
+      "price": 150,
+      "featureVector": {
+        "woodShare": 0.7,
+        "metalShare": 0.2,
+        "glassShare": 0,
+        "plasticShare": 0.1,
+        "textileShare": 0.3,
+        "lightColorShare": 0.6,
+        "darkColorShare": 0.4,
+        "warmPaletteShare": 0.8,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.9,
+        "roundnessShare": 0.3,
+        "rectilinearShare": 0.7,
+        "sizeNorm": 0.3,
+        "priceNorm": 0.2,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "dining-seat",
+          "work-seat"
+        ],
+        "frontAxis": "positiveZ",
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#604430",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.425,
+            "z": 0.425
+          }
+        }
+      ]
+    },
+    {
+      "id": "chair-002",
+      "name": "Кресло Comfort",
+      "type": "chair",
+      "dimensions": {
+        "x": 0.8,
+        "z": 0.8
+      },
+      "price": 350,
+      "featureVector": {
+        "woodShare": 0.4,
+        "metalShare": 0.1,
+        "glassShare": 0,
+        "plasticShare": 0.2,
+        "textileShare": 0.8,
+        "lightColorShare": 0.5,
+        "darkColorShare": 0.5,
+        "warmPaletteShare": 0.6,
+        "saturationLevel": 0.5,
+        "formSimplicity": 0.7,
+        "roundnessShare": 0.6,
+        "rectilinearShare": 0.4,
+        "sizeNorm": 0.5,
+        "priceNorm": 0.5,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "lounge-seat"
+        ],
+        "frontAxis": "positiveZ",
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#604430",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.68,
+            "z": 0.68
+          }
+        }
+      ]
+    },
+    {
+      "id": "table-001",
+      "name": "Стол обеденный",
+      "type": "table",
+      "dimensions": {
+        "x": 1.8,
+        "z": 0.9
+      },
+      "price": 500,
+      "featureVector": {
+        "woodShare": 0.9,
+        "metalShare": 0.1,
+        "glassShare": 0,
+        "plasticShare": 0,
+        "textileShare": 0,
+        "lightColorShare": 0.7,
+        "darkColorShare": 0.3,
+        "warmPaletteShare": 0.9,
+        "saturationLevel": 0.3,
+        "formSimplicity": 0.8,
+        "roundnessShare": 0.2,
+        "rectilinearShare": 0.8,
+        "sizeNorm": 0.8,
+        "priceNorm": 0.6,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "dining-surface"
+        ],
+        "frontAxis": null,
+        "usableSides": [
+          "positiveX",
+          "negativeX",
+          "positiveZ",
+          "negativeZ"
+        ]
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "surface"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#9c7251",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#594035",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#9c7251",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 1.53,
+            "z": 0.765
+          }
+        }
+      ]
+    },
+    {
+      "id": "table-002",
+      "name": "Журнальный стол",
+      "type": "table",
+      "dimensions": {
+        "x": 1,
+        "z": 0.6
+      },
+      "price": 200,
+      "featureVector": {
+        "woodShare": 0.6,
+        "metalShare": 0.3,
+        "glassShare": 0.1,
+        "plasticShare": 0,
+        "textileShare": 0,
+        "lightColorShare": 0.4,
+        "darkColorShare": 0.6,
+        "warmPaletteShare": 0.5,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.9,
+        "roundnessShare": 0.4,
+        "rectilinearShare": 0.6,
+        "sizeNorm": 0.4,
+        "priceNorm": 0.3,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "coffee-surface"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "surface"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#9c7251",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#594035",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#9c7251",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.85,
+            "z": 0.51
+          }
+        }
+      ]
+    },
+    {
+      "id": "sofa-001",
+      "name": "Диван угловой",
+      "type": "sofa",
+      "dimensions": {
+        "x": 2.5,
+        "z": 1.8
+      },
+      "price": 800,
+      "featureVector": {
+        "woodShare": 0.2,
+        "metalShare": 0.1,
+        "glassShare": 0,
+        "plasticShare": 0.1,
+        "textileShare": 0.9,
+        "lightColorShare": 0.6,
+        "darkColorShare": 0.4,
+        "warmPaletteShare": 0.7,
+        "saturationLevel": 0.5,
+        "formSimplicity": 0.6,
+        "roundnessShare": 0.5,
+        "rectilinearShare": 0.5,
+        "sizeNorm": 1,
+        "priceNorm": 0.9,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.1
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "lounge-seat"
+        ],
+        "frontAxis": "positiveZ",
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "textile",
+            "color": "#8d725f",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "velvet",
+            "color": "#405d59",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "textile",
+            "color": "#8d725f",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 2.125,
+            "z": 1.53
+          }
+        }
+      ]
+    },
+    {
+      "id": "sofa-002",
+      "name": "Диван прямой",
+      "type": "sofa",
+      "dimensions": {
+        "x": 2,
+        "z": 0.9
+      },
+      "price": 600,
+      "featureVector": {
+        "woodShare": 0.3,
+        "metalShare": 0.1,
+        "glassShare": 0,
+        "plasticShare": 0.1,
+        "textileShare": 0.8,
+        "lightColorShare": 0.5,
+        "darkColorShare": 0.5,
+        "warmPaletteShare": 0.6,
+        "saturationLevel": 0.6,
+        "formSimplicity": 0.7,
+        "roundnessShare": 0.4,
+        "rectilinearShare": 0.6,
+        "sizeNorm": 0.8,
+        "priceNorm": 0.7,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "lounge-seat"
+        ],
+        "frontAxis": "positiveZ",
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "textile",
+            "color": "#8d725f",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "velvet",
+            "color": "#405d59",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "textile",
+            "color": "#8d725f",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 1.7,
+            "z": 0.765
+          }
+        }
+      ]
+    },
+    {
+      "id": "lamp-001",
+      "name": "Лампа настольная",
+      "type": "lighting",
+      "dimensions": {
+        "x": 0.3,
+        "z": 0.3
+      },
+      "price": 100,
+      "featureVector": {
+        "woodShare": 0.2,
+        "metalShare": 0.6,
+        "glassShare": 0.2,
+        "plasticShare": 0.1,
+        "textileShare": 0.1,
+        "lightColorShare": 0.8,
+        "darkColorShare": 0.2,
+        "warmPaletteShare": 0.7,
+        "saturationLevel": 0.3,
+        "formSimplicity": 0.8,
+        "roundnessShare": 0.7,
+        "rectilinearShare": 0.3,
+        "sizeNorm": 0.2,
+        "priceNorm": 0.1,
+        "lightingFunctionShare": 1,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "light-source"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "surface-mounted",
+        "occupancyMode": "ignored",
+        "clearanceMode": "ignored",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "brass",
+            "color": "#c79b55",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "black-metal",
+            "color": "#2d3440",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "brass",
+            "color": "#c79b55",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.255,
+            "z": 0.255
+          }
+        }
+      ]
+    },
+    {
+      "id": "lamp-002",
+      "name": "Торшер высокий",
+      "type": "lighting",
+      "dimensions": {
+        "x": 0.4,
+        "z": 0.4
+      },
+      "price": 180,
+      "featureVector": {
+        "woodShare": 0.3,
+        "metalShare": 0.5,
+        "glassShare": 0.1,
+        "plasticShare": 0.1,
+        "textileShare": 0.2,
+        "lightColorShare": 0.6,
+        "darkColorShare": 0.4,
+        "warmPaletteShare": 0.6,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.9,
+        "roundnessShare": 0.5,
+        "rectilinearShare": 0.5,
+        "sizeNorm": 0.4,
+        "priceNorm": 0.2,
+        "lightingFunctionShare": 1,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "light-source"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "brass",
+            "color": "#c79b55",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "black-metal",
+            "color": "#2d3440",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "brass",
+            "color": "#c79b55",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.34,
+            "z": 0.34
+          }
+        }
+      ]
+    },
+    {
+      "id": "shelf-001",
+      "name": "Полка настенная",
+      "type": "storage",
+      "dimensions": {
+        "x": 1.2,
+        "z": 0.3
+      },
+      "price": 120,
+      "featureVector": {
+        "woodShare": 0.8,
+        "metalShare": 0.2,
+        "glassShare": 0,
+        "plasticShare": 0,
+        "textileShare": 0,
+        "lightColorShare": 0.5,
+        "darkColorShare": 0.5,
+        "warmPaletteShare": 0.6,
+        "saturationLevel": 0.3,
+        "formSimplicity": 0.9,
+        "roundnessShare": 0.1,
+        "rectilinearShare": 0.9,
+        "sizeNorm": 0.5,
+        "priceNorm": 0.15,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.8
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "storage-volume"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "wall",
+        "occupancyMode": "ignored",
+        "clearanceMode": "ignored",
+        "supportMode": "surface"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#5f4635",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 1.02,
+            "z": 0.255
+          }
+        }
+      ]
+    },
+    {
+      "id": "shelf-002",
+      "name": "Шкаф книжный",
+      "type": "storage",
+      "dimensions": {
+        "x": 1,
+        "z": 0.4
+      },
+      "price": 450,
+      "featureVector": {
+        "woodShare": 0.9,
+        "metalShare": 0.1,
+        "glassShare": 0.1,
+        "plasticShare": 0,
+        "textileShare": 0,
+        "lightColorShare": 0.4,
+        "darkColorShare": 0.6,
+        "warmPaletteShare": 0.7,
+        "saturationLevel": 0.3,
+        "formSimplicity": 0.8,
+        "roundnessShare": 0.1,
+        "rectilinearShare": 0.9,
+        "sizeNorm": 0.9,
+        "priceNorm": 0.5,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 1
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "storage-volume"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "surface"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#5f4635",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.85,
+            "z": 0.34
+          }
+        }
+      ]
+    },
+    {
+      "id": "cabinet-001",
+      "name": "Комод",
+      "type": "storage",
+      "dimensions": {
+        "x": 1.4,
+        "z": 0.5
+      },
+      "price": 380,
+      "featureVector": {
+        "woodShare": 0.85,
+        "metalShare": 0.1,
+        "glassShare": 0,
+        "plasticShare": 0.05,
+        "textileShare": 0,
+        "lightColorShare": 0.5,
+        "darkColorShare": 0.5,
+        "warmPaletteShare": 0.8,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.7,
+        "roundnessShare": 0.2,
+        "rectilinearShare": 0.8,
+        "sizeNorm": 0.7,
+        "priceNorm": 0.45,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.95
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "storage-volume"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "surface"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#5f4635",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 1.19,
+            "z": 0.425
+          }
+        }
+      ]
+    },
+    {
+      "id": "bed-001",
+      "name": "Кровать двуспальная",
+      "type": "bed",
+      "dimensions": {
+        "x": 1.8,
+        "z": 2
+      },
+      "price": 700,
+      "featureVector": {
+        "woodShare": 0.6,
+        "metalShare": 0.1,
+        "glassShare": 0,
+        "plasticShare": 0.1,
+        "textileShare": 0.7,
+        "lightColorShare": 0.7,
+        "darkColorShare": 0.3,
+        "warmPaletteShare": 0.8,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.8,
+        "roundnessShare": 0.3,
+        "rectilinearShare": 0.7,
+        "sizeNorm": 0.95,
+        "priceNorm": 0.8,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.2
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "rest-surface"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "textile",
+            "color": "#647b92",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "linen",
+            "color": "#9a745e",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "textile",
+            "color": "#647b92",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 1.53,
+            "z": 1.7
+          }
+        }
+      ]
+    },
+    {
+      "id": "bed-002",
+      "name": "Кровать односпальная",
+      "type": "bed",
+      "dimensions": {
+        "x": 1,
+        "z": 2
+      },
+      "price": 400,
+      "featureVector": {
+        "woodShare": 0.65,
+        "metalShare": 0.1,
+        "glassShare": 0,
+        "plasticShare": 0.1,
+        "textileShare": 0.6,
+        "lightColorShare": 0.6,
+        "darkColorShare": 0.4,
+        "warmPaletteShare": 0.7,
+        "saturationLevel": 0.5,
+        "formSimplicity": 0.85,
+        "roundnessShare": 0.25,
+        "rectilinearShare": 0.75,
+        "sizeNorm": 0.6,
+        "priceNorm": 0.5,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.15
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "rest-surface"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "textile",
+            "color": "#647b92",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "linen",
+            "color": "#9a745e",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "textile",
+            "color": "#647b92",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.85,
+            "z": 1.7
+          }
+        }
+      ]
+    },
+    {
+      "id": "desk-001",
+      "name": "Письменный стол",
+      "type": "table",
+      "dimensions": {
+        "x": 1.4,
+        "z": 0.7
+      },
+      "price": 320,
+      "featureVector": {
+        "woodShare": 0.7,
+        "metalShare": 0.25,
+        "glassShare": 0.05,
+        "plasticShare": 0,
+        "textileShare": 0,
+        "lightColorShare": 0.5,
+        "darkColorShare": 0.5,
+        "warmPaletteShare": 0.6,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.8,
+        "roundnessShare": 0.2,
+        "rectilinearShare": 0.8,
+        "sizeNorm": 0.6,
+        "priceNorm": 0.4,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.3
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "work-surface"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "surface"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#9c7251",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#594035",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#9c7251",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 1.19,
+            "z": 0.595
+          }
+        }
+      ]
+    },
+    {
+      "id": "rug-001",
+      "name": "Ковер большой",
+      "type": "decor",
+      "dimensions": {
+        "x": 2,
+        "z": 1.5
+      },
+      "price": 250,
+      "featureVector": {
+        "woodShare": 0,
+        "metalShare": 0,
+        "glassShare": 0,
+        "plasticShare": 0.1,
+        "textileShare": 1,
+        "lightColorShare": 0.4,
+        "darkColorShare": 0.6,
+        "warmPaletteShare": 0.7,
+        "saturationLevel": 0.7,
+        "formSimplicity": 0.9,
+        "roundnessShare": 0.1,
+        "rectilinearShare": 0.9,
+        "sizeNorm": 0.8,
+        "priceNorm": 0.3,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "floor-decor"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor-overlay",
+        "occupancyMode": "ignored",
+        "clearanceMode": "ignored",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "terracotta",
+            "color": "#b36e50",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 1.7,
+            "z": 1.275
+          }
+        }
+      ]
+    },
+    {
+      "id": "rug-002",
+      "name": "Ковер маленький",
+      "type": "decor",
+      "dimensions": {
+        "x": 1,
+        "z": 0.8
+      },
+      "price": 120,
+      "featureVector": {
+        "woodShare": 0,
+        "metalShare": 0,
+        "glassShare": 0,
+        "plasticShare": 0.1,
+        "textileShare": 0.95,
+        "lightColorShare": 0.6,
+        "darkColorShare": 0.4,
+        "warmPaletteShare": 0.8,
+        "saturationLevel": 0.6,
+        "formSimplicity": 0.9,
+        "roundnessShare": 0.6,
+        "rectilinearShare": 0.4,
+        "sizeNorm": 0.3,
+        "priceNorm": 0.15,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "floor-decor"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor-overlay",
+        "occupancyMode": "ignored",
+        "clearanceMode": "ignored",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "terracotta",
+            "color": "#b36e50",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.85,
+            "z": 0.68
+          }
+        }
+      ]
+    },
+    {
+      "id": "curtain-001",
+      "name": "Шторы плотные",
+      "type": "decor",
+      "dimensions": {
+        "x": 2.5,
+        "z": 0.1
+      },
+      "price": 200,
+      "featureVector": {
+        "woodShare": 0,
+        "metalShare": 0,
+        "glassShare": 0,
+        "plasticShare": 0.05,
+        "textileShare": 1,
+        "lightColorShare": 0.3,
+        "darkColorShare": 0.7,
+        "warmPaletteShare": 0.5,
+        "saturationLevel": 0.5,
+        "formSimplicity": 0.9,
+        "roundnessShare": 0.1,
+        "rectilinearShare": 0.9,
+        "sizeNorm": 0.7,
+        "priceNorm": 0.25,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "wall-decor"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "wall",
+        "occupancyMode": "ignored",
+        "clearanceMode": "ignored",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "terracotta",
+            "color": "#b36e50",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 2.125,
+            "z": 0.085
+          }
+        }
+      ]
+    },
+    {
+      "id": "plant-001",
+      "name": "Растение в горшке",
+      "type": "decor",
+      "dimensions": {
+        "x": 0.3,
+        "z": 0.3
+      },
+      "price": 80,
+      "featureVector": {
+        "woodShare": 0.1,
+        "metalShare": 0,
+        "glassShare": 0,
+        "plasticShare": 0.2,
+        "textileShare": 0,
+        "lightColorShare": 0.2,
+        "darkColorShare": 0.1,
+        "warmPaletteShare": 0.3,
+        "saturationLevel": 0.9,
+        "formSimplicity": 0.6,
+        "roundnessShare": 0.8,
+        "rectilinearShare": 0.2,
+        "sizeNorm": 0.2,
+        "priceNorm": 0.1,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "floor-decor"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "terracotta",
+            "color": "#b36e50",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.255,
+            "z": 0.255
+          }
+        }
+      ]
+    },
+    {
+      "id": "mirror-001",
+      "name": "Зеркало настенное",
+      "type": "decor",
+      "dimensions": {
+        "x": 0.8,
+        "z": 0.05
+      },
+      "price": 150,
+      "featureVector": {
+        "woodShare": 0.2,
+        "metalShare": 0.1,
+        "glassShare": 0.9,
+        "plasticShare": 0,
+        "textileShare": 0,
+        "lightColorShare": 0.8,
+        "darkColorShare": 0.2,
+        "warmPaletteShare": 0.5,
+        "saturationLevel": 0.2,
+        "formSimplicity": 0.9,
+        "roundnessShare": 0.3,
+        "rectilinearShare": 0.7,
+        "sizeNorm": 0.5,
+        "priceNorm": 0.2,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "wall-decor"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "wall",
+        "occupancyMode": "ignored",
+        "clearanceMode": "ignored",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "terracotta",
+            "color": "#b36e50",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.68,
+            "z": 0.05
+          }
+        }
+      ]
+    },
+    {
+      "id": "chair-003",
+      "name": "Стул офисный",
+      "type": "chair",
+      "dimensions": {
+        "x": 0.6,
+        "z": 0.6
+      },
+      "price": 280,
+      "featureVector": {
+        "woodShare": 0.1,
+        "metalShare": 0.4,
+        "glassShare": 0,
+        "plasticShare": 0.3,
+        "textileShare": 0.5,
+        "lightColorShare": 0.4,
+        "darkColorShare": 0.6,
+        "warmPaletteShare": 0.4,
+        "saturationLevel": 0.5,
+        "formSimplicity": 0.7,
+        "roundnessShare": 0.5,
+        "rectilinearShare": 0.5,
+        "sizeNorm": 0.4,
+        "priceNorm": 0.35,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "work-seat"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#604430",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.51,
+            "z": 0.51
+          }
+        }
+      ]
+    },
+    {
+      "id": "table-003",
+      "name": "Стол компьютерный",
+      "type": "table",
+      "dimensions": {
+        "x": 1.6,
+        "z": 0.8
+      },
+      "price": 420,
+      "featureVector": {
+        "woodShare": 0.5,
+        "metalShare": 0.4,
+        "glassShare": 0.1,
+        "plasticShare": 0.1,
+        "textileShare": 0,
+        "lightColorShare": 0.3,
+        "darkColorShare": 0.7,
+        "warmPaletteShare": 0.4,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.8,
+        "roundnessShare": 0.1,
+        "rectilinearShare": 0.9,
+        "sizeNorm": 0.7,
+        "priceNorm": 0.5,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.4
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "work-surface"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "surface"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#9c7251",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#594035",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#9c7251",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 1.36,
+            "z": 0.68
+          }
+        }
+      ]
+    },
+    {
+      "id": "lamp-003",
+      "name": "Люстра потолочная",
+      "type": "lighting",
+      "dimensions": {
+        "x": 0.6,
+        "z": 0.6
+      },
+      "price": 350,
+      "featureVector": {
+        "woodShare": 0.1,
+        "metalShare": 0.3,
+        "glassShare": 0.6,
+        "plasticShare": 0.1,
+        "textileShare": 0,
+        "lightColorShare": 0.9,
+        "darkColorShare": 0.1,
+        "warmPaletteShare": 0.6,
+        "saturationLevel": 0.3,
+        "formSimplicity": 0.6,
+        "roundnessShare": 0.8,
+        "rectilinearShare": 0.2,
+        "sizeNorm": 0.5,
+        "priceNorm": 0.4,
+        "lightingFunctionShare": 1,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "light-source"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "ceiling",
+        "occupancyMode": "ignored",
+        "clearanceMode": "ignored",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "brass",
+            "color": "#c79b55",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "black-metal",
+            "color": "#2d3440",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "brass",
+            "color": "#c79b55",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.51,
+            "z": 0.51
+          }
+        }
+      ]
+    },
+    {
+      "id": "shelf-003",
+      "name": "Стеллаж высокий",
+      "type": "storage",
+      "dimensions": {
+        "x": 0.8,
+        "z": 0.35
+      },
+      "price": 280,
+      "featureVector": {
+        "woodShare": 0.7,
+        "metalShare": 0.25,
+        "glassShare": 0.05,
+        "plasticShare": 0,
+        "textileShare": 0,
+        "lightColorShare": 0.5,
+        "darkColorShare": 0.5,
+        "warmPaletteShare": 0.6,
+        "saturationLevel": 0.3,
+        "formSimplicity": 0.85,
+        "roundnessShare": 0.1,
+        "rectilinearShare": 0.9,
+        "sizeNorm": 0.8,
+        "priceNorm": 0.35,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.85
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "storage-volume"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "surface"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#5f4635",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.68,
+            "z": 0.297
+          }
+        }
+      ]
+    },
+    {
+      "id": "ottoman-001",
+      "name": "Пуфик",
+      "type": "chair",
+      "dimensions": {
+        "x": 0.5,
+        "z": 0.5
+      },
+      "price": 90,
+      "featureVector": {
+        "woodShare": 0.1,
+        "metalShare": 0.05,
+        "glassShare": 0,
+        "plasticShare": 0.1,
+        "textileShare": 0.9,
+        "lightColorShare": 0.5,
+        "darkColorShare": 0.5,
+        "warmPaletteShare": 0.7,
+        "saturationLevel": 0.5,
+        "formSimplicity": 0.9,
+        "roundnessShare": 0.7,
+        "rectilinearShare": 0.3,
+        "sizeNorm": 0.25,
+        "priceNorm": 0.1,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "lounge-seat"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#604430",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.425,
+            "z": 0.425
+          }
+        }
+      ]
+    },
+    {
+      "id": "bench-001",
+      "name": "Скамья прихожая",
+      "type": "chair",
+      "dimensions": {
+        "x": 1.2,
+        "z": 0.4
+      },
+      "price": 180,
+      "featureVector": {
+        "woodShare": 0.8,
+        "metalShare": 0.15,
+        "glassShare": 0,
+        "plasticShare": 0.05,
+        "textileShare": 0.1,
+        "lightColorShare": 0.6,
+        "darkColorShare": 0.4,
+        "warmPaletteShare": 0.7,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.85,
+        "roundnessShare": 0.3,
+        "rectilinearShare": 0.7,
+        "sizeNorm": 0.5,
+        "priceNorm": 0.2,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.1
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "lounge-seat"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#604430",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 1.02,
+            "z": 0.34
+          }
+        }
+      ]
+    },
+    {
+      "id": "vase-001",
+      "name": "Ваза напольная",
+      "type": "decor",
+      "dimensions": {
+        "x": 0.3,
+        "z": 0.3
+      },
+      "price": 110,
+      "featureVector": {
+        "woodShare": 0,
+        "metalShare": 0,
+        "glassShare": 0.8,
+        "plasticShare": 0,
+        "textileShare": 0,
+        "lightColorShare": 0.7,
+        "darkColorShare": 0.3,
+        "warmPaletteShare": 0.5,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.7,
+        "roundnessShare": 0.9,
+        "rectilinearShare": 0.1,
+        "sizeNorm": 0.35,
+        "priceNorm": 0.12,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "floor-decor"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "terracotta",
+            "color": "#b36e50",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.255,
+            "z": 0.255
+          }
+        }
+      ]
+    },
+    {
+      "id": "clock-001",
+      "name": "Часы настенные",
+      "type": "decor",
+      "dimensions": {
+        "x": 0.4,
+        "z": 0.05
+      },
+      "price": 95,
+      "featureVector": {
+        "woodShare": 0.3,
+        "metalShare": 0.2,
+        "glassShare": 0.3,
+        "plasticShare": 0.2,
+        "textileShare": 0,
+        "lightColorShare": 0.6,
+        "darkColorShare": 0.4,
+        "warmPaletteShare": 0.6,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.8,
+        "roundnessShare": 0.8,
+        "rectilinearShare": 0.2,
+        "sizeNorm": 0.25,
+        "priceNorm": 0.1,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "wall-decor"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "wall",
+        "occupancyMode": "ignored",
+        "clearanceMode": "ignored",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "terracotta",
+            "color": "#b36e50",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "ceramic",
+            "color": "#78939b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.34,
+            "z": 0.05
+          }
+        }
+      ]
+    },
+    {
+      "id": "sideboard-001",
+      "name": "Буфет",
+      "type": "storage",
+      "dimensions": {
+        "x": 1.5,
+        "z": 0.45
+      },
+      "price": 520,
+      "featureVector": {
+        "woodShare": 0.9,
+        "metalShare": 0.05,
+        "glassShare": 0.1,
+        "plasticShare": 0,
+        "textileShare": 0,
+        "lightColorShare": 0.5,
+        "darkColorShare": 0.5,
+        "warmPaletteShare": 0.8,
+        "saturationLevel": 0.35,
+        "formSimplicity": 0.75,
+        "roundnessShare": 0.2,
+        "rectilinearShare": 0.8,
+        "sizeNorm": 0.75,
+        "priceNorm": 0.6,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.9
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "storage-volume"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "surface"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#5f4635",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 1.275,
+            "z": 0.383
+          }
+        }
+      ]
+    },
+    {
+      "id": "barstool-001",
+      "name": "Барный стул",
+      "type": "chair",
+      "dimensions": {
+        "x": 0.4,
+        "z": 0.4
+      },
+      "price": 140,
+      "featureVector": {
+        "woodShare": 0.5,
+        "metalShare": 0.4,
+        "glassShare": 0,
+        "plasticShare": 0.1,
+        "textileShare": 0.2,
+        "lightColorShare": 0.5,
+        "darkColorShare": 0.5,
+        "warmPaletteShare": 0.5,
+        "saturationLevel": 0.45,
+        "formSimplicity": 0.8,
+        "roundnessShare": 0.4,
+        "rectilinearShare": 0.6,
+        "sizeNorm": 0.3,
+        "priceNorm": 0.18,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "dining-seat"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#604430",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.34,
+            "z": 0.34
+          }
+        }
+      ]
+    },
+    {
+      "id": "coffeetable-001",
+      "name": "Столик журнальный круглый",
+      "type": "table",
+      "dimensions": {
+        "x": 0.9,
+        "z": 0.9
+      },
+      "price": 230,
+      "featureVector": {
+        "woodShare": 0.7,
+        "metalShare": 0.2,
+        "glassShare": 0.1,
+        "plasticShare": 0,
+        "textileShare": 0,
+        "lightColorShare": 0.6,
+        "darkColorShare": 0.4,
+        "warmPaletteShare": 0.7,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.85,
+        "roundnessShare": 0.9,
+        "rectilinearShare": 0.1,
+        "sizeNorm": 0.45,
+        "priceNorm": 0.28,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.1
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "coffee-surface"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "surface"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#9c7251",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#594035",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#9c7251",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.765,
+            "z": 0.765
+          }
+        }
+      ]
+    },
+    {
+      "id": "tvstand-001",
+      "name": "Тумба под ТВ",
+      "type": "storage",
+      "dimensions": {
+        "x": 1.6,
+        "z": 0.4
+      },
+      "price": 340,
+      "featureVector": {
+        "woodShare": 0.75,
+        "metalShare": 0.2,
+        "glassShare": 0.05,
+        "plasticShare": 0.05,
+        "textileShare": 0,
+        "lightColorShare": 0.4,
+        "darkColorShare": 0.6,
+        "warmPaletteShare": 0.6,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.8,
+        "roundnessShare": 0.15,
+        "rectilinearShare": 0.85,
+        "sizeNorm": 0.7,
+        "priceNorm": 0.4,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.75
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "storage-volume",
+          "media-support"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "surface"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#5f4635",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 1.36,
+            "z": 0.34
+          }
+        }
+      ]
+    },
+    {
+      "id": "nightstand-001",
+      "name": "Прикроватная тумба",
+      "type": "storage",
+      "dimensions": {
+        "x": 0.5,
+        "z": 0.4
+      },
+      "price": 160,
+      "featureVector": {
+        "woodShare": 0.85,
+        "metalShare": 0.1,
+        "glassShare": 0,
+        "plasticShare": 0.05,
+        "textileShare": 0,
+        "lightColorShare": 0.55,
+        "darkColorShare": 0.45,
+        "warmPaletteShare": 0.75,
+        "saturationLevel": 0.4,
+        "formSimplicity": 0.85,
+        "roundnessShare": 0.2,
+        "rectilinearShare": 0.8,
+        "sizeNorm": 0.3,
+        "priceNorm": 0.2,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0.7
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "storage-volume"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "surface"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#5f4635",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#8b654b",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.425,
+            "z": 0.34
+          }
+        }
+      ]
+    },
+    {
+      "id": "armchair-001",
+      "name": "Кресло классическое",
+      "type": "chair",
+      "dimensions": {
+        "x": 0.9,
+        "z": 0.9
+      },
+      "price": 420,
+      "featureVector": {
+        "woodShare": 0.4,
+        "metalShare": 0.1,
+        "glassShare": 0,
+        "plasticShare": 0.1,
+        "textileShare": 0.85,
+        "lightColorShare": 0.5,
+        "darkColorShare": 0.5,
+        "warmPaletteShare": 0.7,
+        "saturationLevel": 0.5,
+        "formSimplicity": 0.65,
+        "roundnessShare": 0.6,
+        "rectilinearShare": 0.4,
+        "sizeNorm": 0.55,
+        "priceNorm": 0.5,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "lounge-seat"
+        ],
+        "frontAxis": null,
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "walnut",
+            "color": "#604430",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "oak-light",
+            "color": "#a97956",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 0.765,
+            "z": 0.765
+          }
+        }
+      ]
+    },
+    {
+      "id": "tv-001",
+      "name": "Телевизор Nordic Frame",
+      "type": "media",
+      "dimensions": {
+        "x": 1.6,
+        "z": 0.3
+      },
+      "price": 650,
+      "featureVector": {
+        "woodShare": 0.1,
+        "metalShare": 0.2,
+        "glassShare": 0.1,
+        "plasticShare": 0.6,
+        "textileShare": 0,
+        "lightColorShare": 0.15,
+        "darkColorShare": 0.85,
+        "warmPaletteShare": 0.3,
+        "saturationLevel": 0.2,
+        "formSimplicity": 0.85,
+        "roundnessShare": 0.1,
+        "rectilinearShare": 0.9,
+        "sizeNorm": 0.7,
+        "priceNorm": 0.65,
+        "lightingFunctionShare": 0,
+        "storageFunctionShare": 0
+      },
+      "interactionProfile": {
+        "schemaVersion": 1,
+        "affordances": [
+          "view-target"
+        ],
+        "frontAxis": "negativeZ",
+        "usableSides": []
+      },
+      "spatialBehavior": {
+        "schemaVersion": 1,
+        "placementKind": "floor",
+        "occupancyMode": "occupies",
+        "clearanceMode": "obstacle",
+        "supportMode": "none"
+      },
+      "baseVariantId": "base",
+      "variants": [
+        {
+          "id": "base",
+          "label": "Базовый",
+          "unlockId": "base-interior",
+          "visual": {
+            "materialId": "graphite",
+            "color": "#273347",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "accent",
+          "label": "Акцентный материал",
+          "unlockId": "material-artisan",
+          "visual": {
+            "materialId": "midnight-metal",
+            "color": "#172131",
+            "assetId": null,
+            "scale": 1
+          }
+        },
+        {
+          "id": "compact",
+          "label": "Компактный размер",
+          "unlockId": "size-compact",
+          "visual": {
+            "materialId": "graphite",
+            "color": "#273347",
+            "assetId": null,
+            "scale": 0.85
+          },
+          "dimensions": {
+            "x": 1.36,
+            "z": 0.255
+          }
+        }
+      ]
+    }
+  ]
+}

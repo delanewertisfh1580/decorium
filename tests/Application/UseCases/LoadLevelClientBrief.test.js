@@ -2,18 +2,18 @@ import { describe, expect, it, vi } from 'vitest';
 import ClientBrief from '../../../src/Domain/Briefs/ClientBrief.js';
 import RequiredFunctionalScenario from '../../../src/Domain/Ergonomics/RequiredFunctionalScenario.js';
 import { LoadLevelUseCase } from '../../../src/Application/UseCases/LoadLevelUseCase.js';
+import { asV2Level, loadLevelV2Dependencies } from '../../Fixtures/loadLevelV2Dependencies.js';
 
 const item = Object.freeze({ id: 'chair-001' });
-const rawLevel = {
+const rawLevel = asV2Level({
   id: 'level-001',
   roomId: 'room-001',
   name: 'Гостиная',
   clientBriefId: 'brief-warm-host-001',
   presentationProfileId: 'warm-starter-living',
   roomDimensions: { width: 8, depth: 6 },
-  availableItems: ['chair-001'],
-  initialPlacement: []
-};
+  availableItems: ['chair-001']
+});
 const rawBrief = {
   schemaVersion: 2,
   id: 'brief-warm-host-001',
@@ -66,7 +66,8 @@ function createUseCase({ brief = rawBrief, profiles = null } = {}) {
     { getItemsByIds: vi.fn().mockResolvedValue([item]) },
     { getStyleProfileById: vi.fn(styleId => Promise.resolve(profilesByStyleId[styleId] ?? null)) },
     { getById: vi.fn().mockResolvedValue({ id: 'warm-starter-living' }) },
-    { getById: vi.fn().mockResolvedValue(brief) }
+    { getById: vi.fn().mockResolvedValue(brief) },
+    loadLevelV2Dependencies()
   );
 }
 
@@ -117,7 +118,7 @@ describe('LoadLevelUseCase ClientBrief V2 hydration', () => {
     });
     await expect(createUseCase({ brief: { ...rawBrief, levelId: 'level-002' } }).execute('level-001')).resolves.toEqual({
       success: false,
-      error: 'INVALID_LEVEL_DATA: Client brief brief-warm-host-001 belongs to level-002, not level-001'
+      error: 'INVALID_LEVEL_DATA: Client brief brief-warm-host-001 does not belong to level-001'
     });
   });
 });

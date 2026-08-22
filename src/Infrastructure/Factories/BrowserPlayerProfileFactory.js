@@ -15,7 +15,8 @@ export class BrowserPlayerProfileFactory {
   create() {
     return PlayerProfile.create({
       profileId: this.idProvider(),
-      timestamp: this.timestampProvider()
+      timestamp: this.timestampProvider(),
+      baseUnlockIds: ['base-interior', 'floor-light-oak', 'wall-warm-plaster']
     });
   }
 }

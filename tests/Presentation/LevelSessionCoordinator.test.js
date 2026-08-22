@@ -11,6 +11,8 @@ function createLevel(roomState = RoomState.createEmpty(new RoomBounds(6, 5))) {
     roomState,
     availableItems: [],
     constraints: [],
+    surfaceFinishes: [],
+    unlockedIds: [],
     presentationEnvironment: { id: 'warm-starter-living' }
   };
 }
@@ -18,7 +20,7 @@ function createLevel(roomState = RoomState.createEmpty(new RoomBounds(6, 5))) {
 describe('LevelSessionCoordinator', () => {
   it('starts a session, applies the authored environment and creates a fresh RoomViewModel', async () => {
     const level = createLevel();
-    const roomView = { setPresentationEnvironment: vi.fn() };
+    const roomView = { setPresentationEnvironment: vi.fn(), setSurfaceFinishes: vi.fn() };
     const startLevelSessionUseCase = { execute: vi.fn(async () => ({ success: true, data: level })) };
     const coordinator = new LevelSessionCoordinator({
       startLevelSessionUseCase,
@@ -29,6 +31,7 @@ describe('LevelSessionCoordinator', () => {
 
     expect(startLevelSessionUseCase.execute).toHaveBeenCalledWith('level-001');
     expect(roomView.setPresentationEnvironment).toHaveBeenCalledWith(level.presentationEnvironment);
+    expect(roomView.setSurfaceFinishes).toHaveBeenCalledWith(level.surfaceFinishes);
     expect(context.level).toBe(level);
     expect(context.roomViewModel.roomState).toBe(level.roomState);
     expect(Object.isFrozen(context)).toBe(true);

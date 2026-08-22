@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "finishes": [
+    {
+      "id": "floor-light-oak",
+      "label": "Светлый дуб",
+      "surface": "floor",
+      "unlockId": "floor-light-oak",
+      "visual": { "color": "#bca18b", "roughness": 0.9, "metalness": 0 }
+    },
+    {
+      "id": "floor-dark-oak",
+      "label": "Тёмный орех",
+      "surface": "floor",
+      "unlockId": "floor-dark-oak",
+      "visual": { "color": "#5e4a42", "roughness": 0.86, "metalness": 0 }
+    },
+    {
+      "id": "floor-concrete-sand",
+      "label": "Песочный бетон",
+      "surface": "floor",
+      "unlockId": "floor-concrete-sand",
+      "visual": { "color": "#9d9388", "roughness": 0.96, "metalness": 0 }
+    },
+    {
+      "id": "wall-warm-plaster",
+      "label": "Тёплая штукатурка",
+      "surface": "wall",
+      "unlockId": "wall-warm-plaster",
+      "visual": { "color": "#4a5965", "roughness": 0.96, "metalness": 0 }
+    },
+    {
+      "id": "wall-midnight-paper",
+      "label": "Графичные обои Midnight",
+      "surface": "wall",
+      "unlockId": "wall-midnight-paper",
+      "visual": { "color": "#202b48", "roughness": 0.84, "metalness": 0 }
+    },
+    {
+      "id": "wall-gallery-white",
+      "label": "Галерейный белый",
+      "surface": "wall",
+      "unlockId": "wall-gallery-white",
+      "visual": { "color": "#dbd9d2", "roughness": 0.94, "metalness": 0 }
+    }
+  ]
+}

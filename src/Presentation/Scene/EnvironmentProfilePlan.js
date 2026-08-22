@@ -1,37 +1,8 @@
 const PRESETS = Object.freeze({
-  floors: Object.freeze({
-    'light-oak': Object.freeze({ color: 0xbca18b, roughness: 0.9, style: 'light-oak' }),
-    'dark-oak': Object.freeze({ color: 0x5e4a42, roughness: 0.86, style: 'dark-oak' }),
-    'concrete-sand': Object.freeze({ color: 0x9d9388, roughness: 0.96, style: 'concrete-sand' })
-  }),
-  walls: Object.freeze({
-    'warm-plaster': Object.freeze({ color: 0x4a5965, roughness: 0.96, style: 'warm-plaster' }),
-    'charcoal-accent': Object.freeze({ color: 0x252c36, roughness: 0.92, style: 'charcoal-accent' }),
-    'gallery-white': Object.freeze({ color: 0xdbd9d2, roughness: 0.94, style: 'gallery-white' })
-  }),
-  wallTreatments: Object.freeze({
-    'warm-linen-wainscot': Object.freeze({ kind: 'warm-linen-wainscot', wainscotColor: 0xa66f4c, trimColor: 0xe4cda7, textileColor: 0x677986, patternColor: 0xaeb9b3 }),
-    'midnight-graphic-wallpaper': Object.freeze({ kind: 'midnight-graphic-wallpaper', wainscotColor: 0x1d2535, trimColor: 0xb98b58, textileColor: 0x202b48, patternColor: 0x6f86b6 }),
-    'sunwash-gallery-wall': Object.freeze({ kind: 'sunwash-gallery-wall', wainscotColor: 0xbda98f, trimColor: 0x635b56, textileColor: 0x5d9594, patternColor: 0xc2735d })
-  }),
-  builtIns: Object.freeze({
-    'living-library-nook': Object.freeze({ kind: 'living-library-nook', semantic: false, woodColor: 0x80563c, accentColor: 0xd4b075, fabricColor: 0x718799 }),
-    'media-wall-screen': Object.freeze({ kind: 'media-wall-screen', semantic: false, woodColor: 0x242a38, accentColor: 0xa77952, fabricColor: 0x526e9a }),
-    'studio-gallery-rail': Object.freeze({ kind: 'studio-gallery-rail', semantic: false, woodColor: 0x8e8378, accentColor: 0xc5a678, fabricColor: 0x85a6a3 })
-  }),
   openings: Object.freeze({
-    'living-window-and-door': Object.freeze({
-      window: Object.freeze({ widthFactor: 0.34, centerXFactor: 0.68, height: 1.35, bottom: 1.25, glassOpacity: 0.24, maxWidth: 2.15 }),
-      door: Object.freeze({ centerZFactor: 0.72, width: 0.9, color: 0x394b52 })
-    }),
-    'media-narrow-window': Object.freeze({
-      window: Object.freeze({ widthFactor: 0.24, centerXFactor: 0.24, height: 1.05, bottom: 1.5, glassOpacity: 0.18, maxWidth: 1.45 }),
-      door: Object.freeze({ centerZFactor: 0.76, width: 0.82, color: 0x242b34 })
-    }),
-    'studio-wide-window': Object.freeze({
-      window: Object.freeze({ widthFactor: 0.56, centerXFactor: 0.56, height: 1.72, bottom: 0.92, glassOpacity: 0.3, maxWidth: 5.4 }),
-      door: Object.freeze({ centerZFactor: 0.24, width: 1.0, color: 0x6f665c })
-    })
+    'living-window-and-door': Object.freeze({ window: Object.freeze({ widthFactor: 0.34, centerXFactor: 0.68, height: 1.35, bottom: 1.25, glassOpacity: 0.24, maxWidth: 2.15 }), door: Object.freeze({ centerZFactor: 0.72, width: 0.9, color: 0x394b52 }) }),
+    'media-narrow-window': Object.freeze({ window: Object.freeze({ widthFactor: 0.24, centerXFactor: 0.24, height: 1.05, bottom: 1.5, glassOpacity: 0.18, maxWidth: 1.45 }), door: Object.freeze({ centerZFactor: 0.76, width: 0.82, color: 0x242b34 }) }),
+    'studio-wide-window': Object.freeze({ window: Object.freeze({ widthFactor: 0.56, centerXFactor: 0.56, height: 1.72, bottom: 0.92, glassOpacity: 0.3, maxWidth: 5.4 }), door: Object.freeze({ centerZFactor: 0.24, width: 1.0, color: 0x6f665c }) })
   }),
   cameras: Object.freeze({
     'compact-living': Object.freeze({ xFactor: 1.16, zFactor: 1.34, heightFactor: 1.1, minHeight: 5.4, targetHeight: 0.8 }),
@@ -54,18 +25,11 @@ const PRESETS = Object.freeze({
     'courtyard-workshop': Object.freeze({ kind: 'courtyard-workshop', facadeInsetColor: 0xd3c9b7, accentColor: 0xd29f64, foliageScale: 1.24 })
   }),
   sceneLife: Object.freeze({
-    'calm-indoor-evening': Object.freeze({ moteCount: 14, petEnabled: true, routeScale: 1 }),
+    'calm-indoor-evening': Object.freeze({ moteCount: 14, petEnabled: false, routeScale: 1 }),
     'quiet-media-dusk': Object.freeze({ moteCount: 7, petEnabled: false, routeScale: 0.65 }),
     'studio-daylight': Object.freeze({ moteCount: 20, petEnabled: false, routeScale: 0.45 })
   })
 });
-
-function freezePlan(plan) {
-  Object.values(plan).forEach(value => {
-    if (value && typeof value === 'object' && !Object.isFrozen(value)) Object.freeze(value);
-  });
-  return Object.freeze(plan);
-}
 
 function requirePreset(group, id) {
   const preset = PRESETS[group][id];
@@ -75,32 +39,19 @@ function requirePreset(group, id) {
 
 export function resolveEnvironmentProfilePlan(profile) {
   const room = profile?.room;
-  if (!profile?.id || !room?.floorPreset || !room?.wallPreset || !room?.openingsPreset || !room?.cameraPreset ||
-      !room?.identity?.wallTreatmentPreset || !room?.identity?.builtInPreset || !room?.identity?.exteriorCompositionPreset ||
-      !profile?.lightingPreset || !profile?.exteriorPreset || !Array.isArray(profile?.ambientFixtures) || !profile?.sceneLifePreset) {
+  if (!profile?.id || !room?.openingsPreset || !room?.cameraPreset || !room?.exteriorCompositionPreset
+    || !profile?.lightingPreset || !profile?.exteriorPreset || !profile?.sceneLifePreset) {
     throw new Error('Presentation environment profile is incomplete.');
   }
-
-  const fixtures = Object.freeze([...profile.ambientFixtures]);
-  return freezePlan({
+  return Object.freeze({
     id: profile.id,
-    surfaces: Object.freeze({
-      floor: requirePreset('floors', room.floorPreset),
-      wall: requirePreset('walls', room.wallPreset)
-    }),
-    identity: Object.freeze({
-      wallTreatment: requirePreset('wallTreatments', room.identity.wallTreatmentPreset),
-      builtIn: requirePreset('builtIns', room.identity.builtInPreset),
-      exteriorComposition: requirePreset('exteriorCompositions', room.identity.exteriorCompositionPreset)
-    }),
     openings: requirePreset('openings', room.openingsPreset),
     camera: requirePreset('cameras', room.cameraPreset),
     lighting: requirePreset('lighting', profile.lightingPreset),
     exterior: requirePreset('exteriors', profile.exteriorPreset),
+    exteriorComposition: requirePreset('exteriorCompositions', room.exteriorCompositionPreset),
     sceneLife: requirePreset('sceneLife', profile.sceneLifePreset),
-    fixtures,
-    presentation: Object.freeze({ ...profile.presentation }),
-    hasTelevision: fixtures.includes('television')
+    presentation: Object.freeze({ ...profile.presentation })
   });
 }
 

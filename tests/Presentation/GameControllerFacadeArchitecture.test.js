@@ -26,6 +26,8 @@ describe('GameController façade architecture', () => {
     expect(interactionSource).toContain('moveItemUseCase.execute(');
     expect(interactionSource).toContain('rotateItemUseCase.execute(');
     expect(interactionSource).toContain('removeItemUseCase.execute(');
+    expect(interactionSource).toContain('configurePlacedItemUseCase.execute(');
+    expect(interactionSource).toContain('configureRoomSurfaceUseCase.execute(');
     expect(interactionSource).toContain('this.undoBuffer = new UndoBuffer();');
   });
 
@@ -37,7 +39,7 @@ describe('GameController façade architecture', () => {
   });
 
   it('constructs all room-session application boundaries in the composition root', () => {
-    expect(mainSource).toContain('new StartLevelSessionUseCase(loadLevelUseCase, roomRepository)');
+    expect(mainSource).toContain('new StartLevelSessionUseCase(loadLevelUseCase, roomRepository, getPlayerProfile)');
     expect(mainSource).toContain('new ReadRoomStateUseCase(roomRepository)');
     expect(mainSource).toContain('new ResetRoomAttemptUseCase(roomRepository)');
   });

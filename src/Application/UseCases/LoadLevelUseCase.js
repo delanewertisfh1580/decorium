@@ -1,101 +1,127 @@
 import LevelDTO from '../DTOs/LevelDTO.js';
 import { RoomState } from '../../Domain/Rooms/RoomState.js';
 import { RoomBounds } from '../../Domain/Rooms/RoomBounds.js';
+import RoomInteriorGenerator from '../../Domain/Rooms/RoomInteriorGenerator.js';
+import MinimumClearanceRule from '../../Domain/Ergonomics/MinimumClearanceRule.js';
+import PassageZone from '../../Domain/Ergonomics/PassageZone.js';
+import FunctionalLayoutRule from '../../Domain/Ergonomics/FunctionalLayoutRule.js';
+import RequiredFunctionalScenario from '../../Domain/Ergonomics/RequiredFunctionalScenario.js';
 import ClientBrief from '../../Domain/Briefs/ClientBrief.js';
 
+function createErgonomicsRules(data = {}, clientMultiplier = 1) {
+  const rules = {};
+  if (data.minimumClearance) rules.minimumClearance = new MinimumClearanceRule({ ...data.minimumClearance, clientMultiplier });
+  if (Array.isArray(data.passageZones)) rules.passageZones = Object.freeze(data.passageZones.map(zone => new PassageZone(zone)));
+  if (Array.isArray(data.functionalLayoutRules)) rules.functionalLayoutRules = Object.freeze(data.functionalLayoutRules.map(rule => new FunctionalLayoutRule(rule)));
+  if (Array.isArray(data.requiredFunctionalScenarios)) rules.requiredFunctionalScenarios = Object.freeze(data.requiredFunctionalScenarios.map(scenario => new RequiredFunctionalScenario(scenario)));
+  return Object.freeze(rules);
+}
+
+function createEvaluationSpec(clientBrief, styleTargets) {
+  return Object.freeze({
+    schemaVersion: 1,
+    styleTargets: Object.freeze(styleTargets),
+    clientPriorities: Object.freeze([...clientBrief.clientPriorities]),
+    spatialPreferences: clientBrief.spatialPreferences,
+    compositionRules: Object.freeze({ ...clientBrief.evaluationPolicy.compositionRules }),
+    ergonomicsRules: createErgonomicsRules(clientBrief.evaluationPolicy.ergonomicsRules, clientBrief.spatialPreferences.clearanceMultiplier),
+    completion: Object.freeze({ ...clientBrief.evaluationPolicy.completion })
+  });
+}
+
+function hasUnlocked(profile, unlockId) {
+  return Boolean(profile && typeof profile.hasUnlock === 'function' && profile.hasUnlock(unlockId));
+}
 export class LoadLevelUseCase {
-  constructor(levelRepository, itemCatalog, constraintCatalog, presentationEnvironmentRepository, clientBriefRepository) {
+  constructor(levelRepository, itemCatalog, constraintCatalog, presentationEnvironmentRepository, clientBriefRepository, {
+    interiorRecipeRepository = null,
+    surfaceFinishCatalog = null,
+    roomDesignRepository = null,
+    getPlayerProfile = () => null,
+    roomInteriorGenerator = new RoomInteriorGenerator()
+  } = {}) {
     if (!levelRepository) throw new Error('LoadLevelUseCase: levelRepository is required.');
     if (!itemCatalog) throw new Error('LoadLevelUseCase: itemCatalog is required.');
     if (!constraintCatalog) throw new Error('LoadLevelUseCase: constraintCatalog is required.');
     if (!presentationEnvironmentRepository) throw new Error('LoadLevelUseCase: presentationEnvironmentRepository is required.');
     if (!clientBriefRepository) throw new Error('LoadLevelUseCase: clientBriefRepository is required.');
+    if (typeof getPlayerProfile !== 'function') throw new Error('LoadLevelUseCase: getPlayerProfile must be a function.');
     this.levelRepository = levelRepository;
     this.itemCatalog = itemCatalog;
     this.constraintCatalog = constraintCatalog;
     this.presentationEnvironmentRepository = presentationEnvironmentRepository;
     this.clientBriefRepository = clientBriefRepository;
+    this.interiorRecipeRepository = interiorRecipeRepository;
+    this.surfaceFinishCatalog = surfaceFinishCatalog;
+    this.roomDesignRepository = roomDesignRepository;
+    this.getPlayerProfile = getPlayerProfile;
+    this.roomInteriorGenerator = roomInteriorGenerator;
   }
 
   async execute(levelId) {
-    if (!levelId || typeof levelId !== 'string' || levelId.trim() === '') {
-      return { success: false, error: 'INVALID_INPUT: Level ID must be a non-empty string.' };
-    }
-
+    if (!levelId || typeof levelId !== 'string' || levelId.trim() === '') return { success: false, error: 'INVALID_INPUT: Level ID must be a non-empty string.' };
     try {
       const raw = await this.levelRepository.loadLevel(levelId);
       if (!raw) return { success: false, error: `LEVEL_NOT_FOUND: Level with ID '${levelId}' not found.` };
-      if (!raw.id || !raw.roomId || !raw.roomDimensions || !Array.isArray(raw.availableItems)
-        || !raw.clientBriefId || !raw.presentationProfileId) {
+      if (raw.schemaVersion !== 2 || !raw.id || !raw.roomId || !raw.roomDimensions || !Array.isArray(raw.availableItems)
+        || !raw.clientBriefId || !raw.presentationProfileId || !raw.interiorRecipeId || !Number.isInteger(raw.generationSeed) || !raw.surfaceDefaults) {
         return { success: false, error: 'INVALID_LEVEL_DATA: Missing required V2 level references or topology.' };
       }
+      if (!this.interiorRecipeRepository || !this.surfaceFinishCatalog) return { success: false, error: 'LEVEL_LOADING_UNAVAILABLE: V2 interior repositories are required.' };
+      const profile = this.getPlayerProfile();
+      if (!profile?.profileId || !Array.isArray(profile.unlockedIds)) return { success: false, error: 'PROFILE_REQUIRED: Load a player profile before loading a level.' };
 
       const rawBrief = await this.clientBriefRepository.getById(raw.clientBriefId);
       if (!rawBrief) return { success: false, error: `INVALID_LEVEL_DATA: Unknown client brief ${raw.clientBriefId}` };
       const clientBrief = new ClientBrief(rawBrief);
-      if (clientBrief.schemaVersion !== 2) {
-        return { success: false, error: `INVALID_LEVEL_DATA: Client brief ${clientBrief.id} must use schemaVersion 2` };
-      }
-      if (clientBrief.levelId !== raw.id) {
-        return {
-          success: false,
-          error: `INVALID_LEVEL_DATA: Client brief ${clientBrief.id} belongs to ${clientBrief.levelId}, not ${raw.id}`
-        };
-      }
+      if (clientBrief.schemaVersion !== 2 || clientBrief.levelId !== raw.id) return { success: false, error: `INVALID_LEVEL_DATA: Client brief ${clientBrief.id} does not belong to ${raw.id}` };
 
       const bounds = new RoomBounds(raw.roomDimensions.width, raw.roomDimensions.depth);
-      const roomState = RoomState.createEmpty(bounds);
       const availableItems = await this.itemCatalog.getItemsByIds(raw.availableItems);
       if (availableItems.length !== raw.availableItems.length) {
         const missing = raw.availableItems.filter(id => !availableItems.some(item => item.id === id));
         return { success: false, error: `INVALID_LEVEL_DATA: Missing catalog items: ${missing.join(', ')}` };
       }
+      const itemsById = new Map(availableItems.map(item => [item.id, item]));
+      const interiorRecipe = await this.interiorRecipeRepository.getById(raw.interiorRecipeId);
+      if (!interiorRecipe) return { success: false, error: `INVALID_LEVEL_DATA: Unknown interior recipe ${raw.interiorRecipeId}` };
+
+      const surfaceFinishes = await this.surfaceFinishCatalog.listFinishes();
+      const finishesById = new Map(surfaceFinishes.map(finish => [finish.id, finish]));
+      for (const [surface, finishId] of Object.entries({ floor: raw.surfaceDefaults.floorFinishId, wall: raw.surfaceDefaults.wallFinishId })) {
+        const finish = finishesById.get(finishId);
+        if (!finish || finish.surface !== surface) return { success: false, error: `INVALID_LEVEL_DATA: Invalid default ${surface} finish ${finishId}` };
+        if (!hasUnlocked(profile, finish.unlockId)) return { success: false, error: `DEFAULT_SURFACE_LOCKED: ${finishId}` };
+      }
+
+      const generated = this.roomInteriorGenerator.generate({
+        recipe: interiorRecipe,
+        seed: raw.generationSeed,
+        bounds,
+        itemsById,
+        surfaceDefaults: raw.surfaceDefaults,
+        allowedItemIds: new Set(raw.availableItems),
+        unlockedIds: new Set(profile.unlockedIds)
+      });
+      if (!generated.success) return { success: false, error: `INVALID_LEVEL_DATA: ${generated.error}` };
+      const baselineRoomState = generated.data.roomState;
+      let roomState = baselineRoomState.clone();
+      const snapshot = this.roomDesignRepository ? await this.roomDesignRepository.load(profile.profileId, raw.id) : null;
+      if (snapshot) {
+        try {
+          roomState = RoomState.deserialize(snapshot, bounds, itemsById);
+        } catch (error) {
+          return { success: false, error: `INVALID_SAVED_DESIGN: ${error.message}` };
+        }
+      }
 
       const presentationEnvironment = await this.presentationEnvironmentRepository.getById(raw.presentationProfileId);
-      if (!presentationEnvironment) {
-        return { success: false, error: `INVALID_LEVEL_DATA: Unknown presentation profile ${raw.presentationProfileId}` };
-      }
-
-      const evaluationPolicy = clientBrief.evaluationPolicy;
+      if (!presentationEnvironment) return { success: false, error: `INVALID_LEVEL_DATA: Unknown presentation profile ${raw.presentationProfileId}` };
       const styleTargets = await Promise.all(clientBrief.styleTargets.map(async target => {
-        const profile = await this.constraintCatalog.getStyleProfileById(target.styleId);
-        if (!profile || !Array.isArray(profile.constraints) || profile.constraints.length === 0) {
-          throw new Error(`Unknown style constraint profile ${target.styleId}`);
-        }
-        return Object.freeze({
-          styleId: target.styleId,
-          label: profile.label,
-          role: target.role,
-          weight: target.weight,
-          constraints: Object.freeze([...profile.constraints])
-        });
+        const styleProfile = await this.constraintCatalog.getStyleProfileById(target.styleId);
+        if (!styleProfile || !Array.isArray(styleProfile.constraints) || styleProfile.constraints.length === 0) throw new Error(`Unknown style constraint profile ${target.styleId}`);
+        return Object.freeze({ styleId: target.styleId, label: styleProfile.label, role: target.role, weight: target.weight, constraints: Object.freeze([...styleProfile.constraints]) });
       }));
-      const evaluationSpec = Object.freeze({
-        schemaVersion: 1,
-        styleTargets: Object.freeze(styleTargets),
-        clientPriorities: Object.freeze([...clientBrief.clientPriorities]),
-        spatialPreferences: clientBrief.spatialPreferences,
-        evaluationPolicy,
-        compositionRules: evaluationPolicy.compositionRules,
-        ergonomicsRules: evaluationPolicy.ergonomicsRules,
-        completion: evaluationPolicy.completion
-      });
-
-      const itemsById = new Map(availableItems.map(item => [item.id, item]));
-      for (const placement of raw.initialPlacement ?? []) {
-        const item = itemsById.get(placement.itemId);
-        if (!item) return { success: false, error: `INVALID_LEVEL_DATA: Unknown initial item ${placement.itemId}` };
-        const result = roomState.placeItem(
-          item,
-          {
-            x: placement.position.x,
-            y: placement.position.y ?? 0,
-            z: placement.position.z
-          },
-          placement.rotation?.y ?? 0
-        );
-        if (!result.success) return { success: false, error: `INVALID_LEVEL_DATA: ${result.error}` };
-      }
 
       return {
         success: true,
@@ -104,12 +130,17 @@ export class LoadLevelUseCase {
           roomId: raw.roomId,
           name: raw.name ?? raw.id,
           roomState,
+          baselineRoomState,
           availableItems,
           styleId: clientBrief.primaryStyleTarget.styleId,
           targetScore: clientBrief.evaluationPolicy.completion.minimumStars,
           presentationEnvironment,
           clientBrief,
-          evaluationSpec
+          evaluationSpec: createEvaluationSpec(clientBrief, styleTargets),
+          interiorRecipe,
+          generationSeed: raw.generationSeed,
+          surfaceFinishes,
+          unlockedIds: profile.unlockedIds
         })
       };
     } catch (error) {

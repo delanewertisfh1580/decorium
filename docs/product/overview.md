@@ -1,7 +1,7 @@
 # Product overview
 
 **Статус:** Active production vision and current baseline
-**Обновлено:** 18 августа 2026 г.
+**Обновлено:** 22 августа 2026 г.
 
 Decorium — браузерная Three.js-игра о проектировании интерьеров **для конкретных заказчиков**. Игрок собирает комнату из authored catalog, размещает и поворачивает предметы, а затем получает детерминированную оценку того, насколько решение отвечает смешению эстетик, личным приоритетам и эргономическим требованиям `ClientBrief`.[1] [2]
 
@@ -13,10 +13,10 @@ Decorium — браузерная Three.js-игра о проектирован�
 |---|---|---|
 | 1 | Открывает профиль и выбирает заказ/уровень кампании. | Восстанавливаются settings, completed levels и session context. |
 | 2 | Читает brief: стили, запросы клиента, сценарии и ограничения. | Hydrated `ClientBrief v2` supplies versioned authored policy; UI displays it without interpretation. |
-| 3 | Выбирает, размещает и поворачивает предметы в 3D-комнате. | `RoomState` создаёт canonical stable instance IDs вида `catalogItemId#n`; move, rotate, remove и feedback focus принимают только этот ID, а catalog Item ID используется лишь для поиска всех экземпляров. |
+| 3 | Выбирает, размещает, поворачивает и настраивает предметы/поверхности в 3D-комнате. | `RoomState` создаёт canonical stable instance IDs вида `catalogItemId#n`; move, rotate, remove, variant configuration и feedback focus принимают только этот ID. Color/material/size выбираются только из unlocked authored V5 variants. |
 | 4 | Нажимает «Оценить». | Application вычисляет multi-style fit, composition, client-priority satisfaction и spatial ergonomics, затем калибрует scorecard. |
 | 5 | Читает результат и уточняет композицию. | UI показывает total score, calibrated stars, три канала, style targets и actionable explanation. |
-| 6 | Выполняет условия заказа. | Profile records completion только при `completionEligible`; campaign availability пересчитывается и открывает следующий brief. |
+| 6 | Выполняет условия заказа. | Profile records completion только при `completionEligible`, идемпотентно получает authored rewards и открывает следующие brief/variants/finishes. |
 
 ## Production vision: styles and client briefs
 
@@ -32,13 +32,13 @@ Decorium — браузерная Three.js-игра о проектирован�
 
 ## Current production baseline
 
-В репозитории существуют три authored levels, три `ClientBrief v2` records, exact profile catalog для Scandinavian, Japandi и Eclectic, а также V4 catalog из 34 предметов с explicit semantic roles и spatial behavior. Level владеет только topology, inventory и presentation reference; immutable `evaluationSpec` гидрирует client identity, style targets, priorities, spatial preferences, composition, ergonomics и completion в Application boundary.[1] [4] [10]
+В репозитории существуют три authored Level V2, три `ClientBrief v2` records, exact profile catalog для Scandinavian, Japandi и Eclectic, а также V5 catalog из 34 предметов с explicit semantic roles, spatial behavior и discrete authored variants. Level владеет topology, available catalog subset, recipe baseline, surface defaults, ClientBrief и V3 presentation reference; immutable `evaluationSpec` гидрирует client identity, style targets, priorities, spatial preferences, composition, ergonomics и completion в Application boundary.[1] [4] [10]
 
 Score имеет три независимых канала: **50% style**, **20% client priorities** и **30% ergonomics**. Style channel сочетает normalized weighted target fit и composition с весами **75% / 25%**. Client-priority channel нормализует положительные weights, а fixed `0.1 m` occupancy grid измеряет free-area ratio без двойного счёта перекрывающихся footprints. `ScorecardCalibrationPolicy` по-прежнему единолично выводит display stars и `completionEligible`; UI не сравнивает stars и не открывает уровни.[5] [6]
 
 `EvaluationExplanation v2` отражает source каждого active diagnostic: style, client priority или ergonomics. Card показывает supplied fact/desired value, severity, authored remediation, exact counterfactual recovery и—если applicable—priority label или live instance focus. Presentation форматирует только эти данные и не выводит policy из label, mesh или category.[6] [7]
 
-V4 catalog отделяет visual footprint от gameplay obstacle policy. Floor furniture, beds, storage и free-standing décor declare floor occupancy/clearance; rugs are floor overlays; wall, ceiling and surface-mounted artifacts are ignored by generic floor diagnostics. Эта классификация authored per item и делает компактность комнаты, passages и будущие functional rules воспроизводимыми без inference from `type` or mesh.[10]
+Semantic catalog contract отделяет visual footprint от gameplay obstacle policy. Floor furniture, beds, storage и free-standing décor declare floor occupancy/clearance; rugs are floor overlays; wall, ceiling and surface-mounted artifacts are ignored by generic floor diagnostics. Эта классификация authored per item и делает компактность комнаты, passages и будущие functional rules воспроизводимыми без inference from `type` or mesh.[10]
 
 | Текущий уровень | Функциональный сценарий | Клиентский акцент |
 |---|---|---|
@@ -48,9 +48,9 @@ V4 catalog отделяет visual footprint от gameplay obstacle policy. Floo
 
 ## Границы продукта
 
-Decorium является static web-приложением: ему не требуются backend, пользовательский аккаунт, environment variables или внешние API. Контент загружается вместе с приложением, а игровые решения воспроизводимы из authored versioned data и сохранённого `RoomState`.[4] [8]
+Decorium является static web-приложением: ему не требуются backend, пользовательский аккаунт, environment variables или внешние API. Контент загружается вместе с приложением, а игровые решения воспроизводимы из authored versioned data, profile-scoped browser-local design snapshot и сохранённого `RoomState`. Любой интерьерный предмет внутри комнаты — catalog instance, а floor/wall — player-owned surface slot; V3 environment оставляет неуправляемыми только shell/exterior/atmosphere.[4] [8]
 
-Cloud sync, multiplayer, платежи, runtime AI-judge, непрозрачная автоматическая расстановка, pathfinding, аудио и native packaging не входят в current baseline. Следующий отдельный production slice — authored level style labels, чтобы presentation использовала content-owned names for every style target; это не изменяет уже активный multi-style brief или V4 semantic catalog pipeline.[9]
+Cloud sync, multiplayer, платежи, runtime AI-judge, непрозрачная автоматическая расстановка, pathfinding, аудио и native packaging не входят в current baseline. Initial layout не является opaque automation: он детерминированно materialized из reviewable interior recipe и всегда остаётся player-editable.
 
 ## Продуктовые инварианты
 
@@ -60,6 +60,8 @@ Cloud sync, multiplayer, платежи, runtime AI-judge, непрозрачн�
 4. Все persisted, content и client-brief contracts имеют schema version и validation boundary.
 5. Functional proximity не должна ошибочно наказываться generic clearance rule.
 6. Style mixing и client preferences оцениваются только относительно explicit authored policy, а не global default aesthetic.
+7. Каждый player-visible object inside room является catalog instance или surface slot; Presentation V3 не создаёт fixtures, built-ins или interior composition assets.
+8. UI может показывать locked variant/finish, но unlock проверяется только Application against PlayerProfile V4.
 
 За структурами данных и authoring workflow обращайтесь к [Content model](../systems/content-model.md); за техническими зависимостями — к [Architecture overview](../architecture/overview.md).
 
@@ -74,4 +76,4 @@ Cloud sync, multiplayer, платежи, runtime AI-judge, непрозрачн�
 [7]: ../../src/Presentation/Views/EvaluationView.js "Evaluation result rendering"
 [8]: ../architecture/overview.md "Architecture overview"
 [9]: roadmap.md "Production roadmap"
-[10]: ../../data/items/catalog.v4.json "V4 semantic item catalog"
+[10]: ../../data/items/catalog.v5.json "V5 semantic item catalog and variants"

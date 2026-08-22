@@ -28,6 +28,7 @@ export class LevelSessionCoordinator {
     if (!result.success) throw new Error(result.error);
     this.level = result.data;
     this.getRoomView()?.setPresentationEnvironment(this.level.presentationEnvironment);
+    this.getRoomView()?.setSurfaceFinishes(this.level.surfaceFinishes);
     this.roomViewModel = new RoomViewModel(this.level);
     return this.getContext();
   }

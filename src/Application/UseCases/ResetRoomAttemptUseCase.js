@@ -10,16 +10,15 @@ export class ResetRoomAttemptUseCase {
   }
 
   async execute(roomId) {
-    if (!roomId || typeof roomId !== 'string') {
-      return RoomStateResultDTO.failure('INVALID_INPUT: RoomID is required.');
-    }
+    if (!roomId || typeof roomId !== 'string') return RoomStateResultDTO.failure('INVALID_INPUT: RoomID is required.');
     try {
       const currentState = await this.roomRepository.getState(roomId);
       if (!currentState) return RoomStateResultDTO.failure(`ROOM_NOT_FOUND: Room ${roomId} not found.`);
-      const emptyState = RoomState.createEmpty(currentState.bounds);
-      const saved = await this.roomRepository.saveState(roomId, emptyState);
+      const baselineState = this.roomRepository.getBaselineState?.(roomId) ?? null;
+      const resetState = baselineState ?? RoomState.createEmpty(currentState.bounds, currentState.surfaceConfiguration);
+      const saved = await this.roomRepository.saveState(roomId, resetState);
       if (!saved) return RoomStateResultDTO.failure('PERSISTENCE_ERROR: Failed to reset room state.');
-      return RoomStateResultDTO.success(emptyState);
+      return RoomStateResultDTO.success(resetState);
     } catch (error) {
       return RoomStateResultDTO.failure(`UNEXPECTED_ERROR: ${error.message}`);
     }

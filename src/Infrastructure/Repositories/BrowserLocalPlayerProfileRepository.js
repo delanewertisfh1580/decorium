@@ -31,16 +31,27 @@ function migrateToCurrent(data) {
       }
     : versionOneData;
 
-  if (versionTwoData.schemaVersion === 2) {
-    return {
-      migrated: true,
-      data: {
+  const versionThreeData = versionTwoData.schemaVersion === 2
+    ? {
         ...versionTwoData,
-        schemaVersion: PlayerProfile.schemaVersion,
+        schemaVersion: 3,
         settings: {
           reducedMotion: Boolean(versionTwoData.settings?.reducedMotion),
           uiScale: 'standard',
           qualityTier: 'balanced'
+        }
+      }
+    : versionTwoData;
+
+  if (versionThreeData.schemaVersion === 3) {
+    return {
+      migrated: true,
+      data: {
+        ...versionThreeData,
+        schemaVersion: PlayerProfile.schemaVersion,
+        inventory: {
+          unlockedIds: ['base-interior', 'floor-light-oak', 'wall-warm-plaster'],
+          grantedRewardIds: []
         }
       }
     };

@@ -1,6 +1,7 @@
 import { FeatureVector } from './FeatureVector.js';
 import InteractionProfile from './InteractionProfile.js';
 import SpatialBehavior from './SpatialBehavior.js';
+import ItemVariant from './ItemVariant.js';
 
 export class Item {
   constructor({
@@ -10,6 +11,8 @@ export class Item {
     featureVector,
     dimensions,
     price = 0,
+    baseVariantId = null,
+    variants = [],
     interactionProfile,
     spatialBehavior
   }) {
@@ -32,6 +35,14 @@ export class Item {
     if (dimensions !== undefined && (!dimensions || typeof dimensions.x !== 'number' || typeof dimensions.z !== 'number')) {
       throw new Error('Item dimensions must contain numeric x and z values');
     }
+    if (!Array.isArray(variants) || !variants.every(variant => variant instanceof ItemVariant)) {
+      throw new Error('Item variants must be an array of ItemVariant instances.');
+    }
+    const variantsById = new Map(variants.map(variant => [variant.id, variant]));
+    if (variantsById.size !== variants.length) throw new Error('Item variants must have unique ids.');
+    if (baseVariantId !== null && !variantsById.has(baseVariantId)) {
+      throw new Error('Item baseVariantId must reference one of its variants.');
+    }
 
     this._id = id.trim();
     this._name = name;
@@ -39,6 +50,8 @@ export class Item {
     this._featureVector = featureVector;
     this._dimensions = dimensions;
     this._price = price;
+    this._baseVariantId = baseVariantId;
+    this._variantsById = variantsById;
     this._interactionProfile = interactionProfile;
     this._spatialBehavior = spatialBehavior;
     Object.freeze(this);
@@ -51,8 +64,29 @@ export class Item {
   get featureVector() { return this._featureVector; }
   get dimensions() { return this._dimensions; }
   get price() { return this._price; }
+  get baseVariantId() { return this._baseVariantId; }
+  get variants() { return Object.freeze([...this._variantsById.values()]); }
   get interactionProfile() { return this._interactionProfile; }
   get spatialBehavior() { return this._spatialBehavior; }
+
+  getVariant(variantId) {
+    return this._variantsById.get(variantId) ?? null;
+  }
+
+  resolveConfiguration(configuration = null) {
+    const variantId = configuration?.variantId ?? this.baseVariantId;
+    if (variantId === null) {
+      return Object.freeze({
+        variantId: null,
+        visual: null,
+        dimensions: Object.freeze({ ...(this.dimensions ?? { x: 1, z: 1 }) }),
+        featureVector: this.featureVector
+      });
+    }
+    const variant = this.getVariant(variantId);
+    if (!variant) throw new Error(`Item ${this.id} has no variant ${variantId}.`);
+    return variant.resolve({ baseDimensions: this.dimensions, baseFeatureVector: this.featureVector });
+  }
 }
 
 export default Item;

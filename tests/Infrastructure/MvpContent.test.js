@@ -3,12 +3,12 @@ import { readFileSync } from 'node:fs';
 import Ajv from 'ajv';
 
 const readJson = path => JSON.parse(readFileSync(path, 'utf8'));
-const catalog = readJson('data/items/catalog.v4.json');
-const itemSchema = readJson('data/items/item.v4.schema.json');
+const catalog = readJson('data/items/catalog.v5.json');
+const itemSchema = readJson('data/items/item.v5.schema.json');
 const level = readJson('data/levels/level-001.json');
 const levelManifest = readJson('data/levels/manifest.json');
 const levels = levelManifest.levels.map(summary => readJson(`data/levels/${summary.id}.json`));
-const levelSchema = readJson('data/schemas/level.schema.json');
+const levelSchema = readJson('data/schemas/level.v2.schema.json');
 const clientBriefSchema = readJson('data/briefs/client-brief.v2.schema.json');
 const clientBriefCatalog = readJson('data/briefs/client-briefs.v2.json');
 const clientBriefsById = new Map(clientBriefCatalog.briefs.map(brief => [brief.id, brief]));
@@ -21,7 +21,7 @@ const itemIds = new Set(catalog.items.map(item => item.id));
 const feedbackIds = new Set(feedback.map(message => message.id));
 
 describe('Production content contracts', () => {
-  it('validates the V4 catalog and every authored level against their schemas', () => {
+  it('validates the V5 catalog and every authored level against their schemas', () => {
     const ajv = new Ajv();
     const validateItems = ajv.compile(itemSchema);
     const validateLevel = ajv.compile(levelSchema);

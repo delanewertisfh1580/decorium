@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "surface-finish.v1.json",
+  "title": "Decorium Surface Finish Catalog V1",
+  "type": "object",
+  "required": ["schemaVersion", "finishes"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "finishes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "surface", "unlockId", "visual"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "label": { "type": "string", "minLength": 1 },
+          "surface": { "enum": ["floor", "wall"] },
+          "unlockId": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "visual": {
+            "type": "object",
+            "required": ["color", "roughness"],
+            "properties": {
+              "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+              "roughness": { "type": "number", "minimum": 0, "maximum": 1 },
+              "metalness": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

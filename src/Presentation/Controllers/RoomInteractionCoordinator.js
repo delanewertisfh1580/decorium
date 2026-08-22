@@ -10,6 +10,8 @@ export class RoomInteractionCoordinator {
     moveItemUseCase = null,
     rotateItemUseCase = null,
     removeItemUseCase = null,
+    configurePlacedItemUseCase = null,
+    configureRoomSurfaceUseCase = null,
     refreshRoomState = async () => {},
     onEvaluationInvalidated = () => {},
     onStatus = () => {},
@@ -23,6 +25,8 @@ export class RoomInteractionCoordinator {
     this.moveItemUseCase = moveItemUseCase;
     this.rotateItemUseCase = rotateItemUseCase;
     this.removeItemUseCase = removeItemUseCase;
+    this.configurePlacedItemUseCase = configurePlacedItemUseCase;
+    this.configureRoomSurfaceUseCase = configureRoomSurfaceUseCase;
     this.refreshRoomState = refreshRoomState;
     this.onEvaluationInvalidated = onEvaluationInvalidated;
     this.onStatus = onStatus;
@@ -88,16 +92,6 @@ export class RoomInteractionCoordinator {
     if (!selectedItemId) return false;
     await this.move(selectedItemId, position);
     return true;
-  }
-
-  handleFixtureSelect(fixtureId) {
-    this.onStatus(fixtureId === 'ambient-mirror'
-      ? 'Зеркало выбрано · перетащите по стене'
-      : 'Полка выбрана · перетащите по стене');
-  }
-
-  handleFixtureMove(fixtureId) {
-    this.onStatus(fixtureId === 'ambient-mirror' ? 'Зеркало перемещено' : 'Полка перемещена');
   }
 
   async place(itemId, position, rotation = 0) {
@@ -193,6 +187,59 @@ export class RoomInteractionCoordinator {
       this.onRequestRender();
     }
     this.onStatus(result.success ? 'Предмет повернут · Z — отменить' : result.error);
+    return result;
+  }
+
+  async configureSelectedItem(variantId) {
+    const level = this.getLevel();
+    const roomViewModel = this.getRoomViewModel();
+    const instanceId = roomViewModel?.selectedItemId;
+    if (!level || !instanceId || !this.configurePlacedItemUseCase?.execute) return null;
+    const placed = roomViewModel.roomState.getItem(instanceId);
+    if (!placed) return null;
+    const previousConfiguration = placed.configuration ? { ...placed.configuration } : null;
+    const result = await this.configurePlacedItemUseCase.execute(level.roomId, instanceId, { variantId });
+    if (!result.success) {
+      this.onStatus(result.error);
+      return result;
+    }
+    this.undoBuffer.push({
+      label: 'Отменить вариант предмета',
+      undo: async () => {
+        const undoResult = await this.configurePlacedItemUseCase.execute(level.roomId, instanceId, previousConfiguration);
+        if (!undoResult.success) throw new Error(undoResult.error);
+        return undoResult;
+      }
+    });
+    await this._afterSuccessfulMutation({ selectedItemId: instanceId });
+    this.onStatus('Вариант предмета обновлён · Z — отменить');
+    this.onRequestRender();
+    return result;
+  }
+
+  async configureSurface(surface, finishId) {
+    const level = this.getLevel();
+    const roomViewModel = this.getRoomViewModel();
+    if (!level || !roomViewModel || !this.configureRoomSurfaceUseCase?.execute) return null;
+    const previousFinishId = surface === 'floor'
+      ? roomViewModel.roomState.surfaceConfiguration?.floorFinishId
+      : roomViewModel.roomState.surfaceConfiguration?.wallFinishId;
+    const result = await this.configureRoomSurfaceUseCase.execute(level.roomId, surface, finishId);
+    if (!result.success) {
+      this.onStatus(result.error);
+      return result;
+    }
+    this.undoBuffer.push({
+      label: `Отменить отделку ${surface === 'floor' ? 'пола' : 'стены'}`,
+      undo: async () => {
+        const undoResult = await this.configureRoomSurfaceUseCase.execute(level.roomId, surface, previousFinishId);
+        if (!undoResult.success) throw new Error(undoResult.error);
+        return undoResult;
+      }
+    });
+    await this._afterSuccessfulMutation();
+    this.onStatus('Отделка комнаты обновлена · Z — отменить');
+    this.onRequestRender();
     return result;
   }
 

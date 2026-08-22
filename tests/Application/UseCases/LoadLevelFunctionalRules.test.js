@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LoadLevelUseCase } from '../../../src/Application/UseCases/LoadLevelUseCase.js';
 import FunctionalLayoutRule from '../../../src/Domain/Ergonomics/FunctionalLayoutRule.js';
+import { asV2Level, loadLevelV2Dependencies } from '../../Fixtures/loadLevelV2Dependencies.js';
 
 const functionalRule = {
   schemaVersion: 1,
@@ -17,15 +18,14 @@ const functionalRule = {
 describe('LoadLevelUseCase V2 functional layout rules', () => {
   it('hydrates client-owned functionalLayoutRules into immutable Domain rules in EvaluationSpec', async () => {
     const levelRepository = {
-      loadLevel: async () => ({
+      loadLevel: async () => asV2Level({
         id: 'functional-room',
         roomId: 'functional-room',
         name: 'Functional room',
         roomDimensions: { width: 5, depth: 5 },
         availableItems: [],
         clientBriefId: 'brief-functional',
-        presentationProfileId: 'functional-environment',
-        initialPlacement: []
+        presentationProfileId: 'functional-environment'
       })
     };
     const clientBriefRepository = {
@@ -63,7 +63,8 @@ describe('LoadLevelUseCase V2 functional layout rules', () => {
       { getItemsByIds: async () => [] },
       { getStyleProfileById: async () => ({ id: 'scandinavian', label: 'Скандинавский', constraints: [{ id: 'constraint' }] }) },
       { getById: async () => ({ id: 'functional-environment' }) },
-      clientBriefRepository
+      clientBriefRepository,
+      loadLevelV2Dependencies()
     ).execute('functional-room');
 
     expect(result.success).toBe(true);

@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import MinimumClearanceRule from '../../../src/Domain/Ergonomics/MinimumClearanceRule.js';
 import PassageZone from '../../../src/Domain/Ergonomics/PassageZone.js';
 import LoadLevelUseCase from '../../../src/Application/UseCases/LoadLevelUseCase.js';
+import { asV2Level, loadLevelV2Dependencies } from '../../Fixtures/loadLevelV2Dependencies.js';
 
-const rawLevel = {
+const rawLevel = asV2Level({
   id: 'level-001',
   roomId: 'room-001',
   name: 'Test level',
@@ -11,8 +12,7 @@ const rawLevel = {
   availableItems: ['chair-001'],
   clientBriefId: 'brief-001',
   presentationProfileId: 'test-environment',
-  initialPlacement: []
-};
+});
 const rawBrief = {
   schemaVersion: 2,
   id: 'brief-001',
@@ -49,7 +49,8 @@ describe('LoadLevelUseCase V2 ergonomics rules', () => {
       { getItemsByIds: async () => [{ id: 'chair-001' }] },
       { getStyleProfileById: async () => ({ id: 'scandinavian', label: 'Скандинавский', constraints: [{ id: 'constraint' }] }) },
       { getById: async () => ({ id: 'test-environment' }) },
-      { getById: async () => rawBrief }
+      { getById: async () => rawBrief },
+      loadLevelV2Dependencies()
     );
 
     const result = await useCase.execute('level-001');

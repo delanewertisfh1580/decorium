@@ -6,7 +6,7 @@ export class SchemaLoader {
   }
 
   static async loadLevelSchema() {
-    return this.load('./data/schemas/level.schema.json');
+    return this.load('./data/schemas/level.v2.schema.json');
   }
 
   static async loadClientBriefSchema() {
@@ -18,11 +18,23 @@ export class SchemaLoader {
   }
 
   static async loadItemSchema() {
-    return this.load('./data/items/item.v4.schema.json');
+    return this.load('./data/items/item.v5.schema.json');
   }
 
   static async loadPresentationEnvironmentSchema() {
-    return this.load('./data/presentation/environment-profile.v2.schema.json');
+    return this.load('./data/presentation/environment-profile.v3.schema.json');
+  }
+
+  static async loadInteriorRecipeSchema() {
+    return this.load('./data/interior/interior-recipe.v1.schema.json');
+  }
+
+  static async loadSurfaceFinishSchema() {
+    return this.load('./data/interior/surface-finish.v1.schema.json');
+  }
+
+  static async loadProgressionRewardSchema() {
+    return this.load('./data/progression/reward-catalog.v1.schema.json');
   }
 }
 

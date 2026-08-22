@@ -4,7 +4,8 @@ import { RoomInteractionCoordinator } from '../../src/Presentation/Controllers/R
 function createCoordinator() {
   const item = { id: 'chair-001', name: 'Стул' };
   const roomState = {
-    getItem: vi.fn(id => id === item.id ? { id, item } : null),
+    surfaceConfiguration: { floorFinishId: 'floor-light-oak', wallFinishId: 'wall-warm-plaster' },
+    getItem: vi.fn(id => id === item.id ? { id, item, configuration: { variantId: 'base' } } : null),
     validatePlacement: vi.fn(() => ({ success: true })),
     validateMove: vi.fn(() => ({ success: true }))
   };
@@ -18,9 +19,12 @@ function createCoordinator() {
   const roomView = { beginPlacement: vi.fn(), cancelPlacement: vi.fn() };
   const catalogView = { close: vi.fn() };
   const moveItemUseCase = { execute: vi.fn(async () => ({ success: true, itemId: item.id })) };
+  const configurePlacedItemUseCase = { execute: vi.fn(async () => ({ success: true, data: { instanceId: item.id, configuration: { variantId: 'accent' } } })) };
+  const configureRoomSurfaceUseCase = { execute: vi.fn(async () => ({ success: true, data: { surface: 'floor', finishId: 'floor-dark-oak' } })) };
   const ports = {
     onStatus: vi.fn(),
-    onRequestRender: vi.fn()
+    onRequestRender: vi.fn(),
+    onEvaluationInvalidated: vi.fn()
   };
   const coordinator = new RoomInteractionCoordinator({
     getRoomView: () => roomView,
@@ -28,10 +32,12 @@ function createCoordinator() {
     getRoomViewModel: () => roomViewModel,
     getLevel: () => ({ roomId: 'room-001' }),
     moveItemUseCase,
+    configurePlacedItemUseCase,
+    configureRoomSurfaceUseCase,
     refreshRoomState: vi.fn(async () => {}),
     ...ports
   });
-  return { coordinator, item, roomState, roomViewModel, roomView, catalogView, moveItemUseCase, ports };
+  return { coordinator, item, roomState, roomViewModel, roomView, catalogView, moveItemUseCase, configurePlacedItemUseCase, configureRoomSurfaceUseCase, ports };
 }
 
 describe('RoomInteractionCoordinator', () => {
@@ -83,13 +89,15 @@ describe('RoomInteractionCoordinator', () => {
     expect(ports.onRequestRender).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps fixture interaction in presentation by emitting only status messages', () => {
-    const { coordinator, ports } = createCoordinator();
+  it('routes selected item variants and player-owned surface slots through application commands', async () => {
+    const { coordinator, roomViewModel, configurePlacedItemUseCase, configureRoomSurfaceUseCase, ports } = createCoordinator();
+    roomViewModel.selectedItemId = 'chair-001';
 
-    coordinator.handleFixtureSelect('ambient-mirror');
-    coordinator.handleFixtureMove('bookshelf');
+    await coordinator.configureSelectedItem('accent');
+    await coordinator.configureSurface('floor', 'floor-dark-oak');
 
-    expect(ports.onStatus).toHaveBeenNthCalledWith(1, 'Зеркало выбрано · перетащите по стене');
-    expect(ports.onStatus).toHaveBeenNthCalledWith(2, 'Полка перемещена');
+    expect(configurePlacedItemUseCase.execute).toHaveBeenCalledWith('room-001', 'chair-001', { variantId: 'accent' });
+    expect(configureRoomSurfaceUseCase.execute).toHaveBeenCalledWith('room-001', 'floor', 'floor-dark-oak');
+    expect(ports.onEvaluationInvalidated).toHaveBeenCalledTimes(2);
   });
 });

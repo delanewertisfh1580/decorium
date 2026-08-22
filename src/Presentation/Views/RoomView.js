@@ -5,7 +5,6 @@ import ItemVisualFactory from '../Scene/ItemVisualFactory.js';
 import SceneLifeSystem from '../Scene/SceneLifeSystem.js';
 import { getWallOpacities } from '../Scene/WallVisibility.js';
 import { getRoomOpenings } from '../Scene/RoomArchitecture.js';
-import { ROOM_SURFACE_CONFIG } from '../Scene/roomSurfaceConfig.js';
 import { resolveEnvironmentProfilePlan } from '../Scene/EnvironmentProfilePlan.js';
 
 const DRAG_THRESHOLD = 5;
@@ -59,10 +58,9 @@ function addRoomBox(group, size, position, color, options = {}) {
 }
 
 export class RoomView {
-  constructor(canvas, { furnitureAssetRepository = null, roomCompositionAssetRepository = null } = {}) {
+  constructor(canvas, { furnitureAssetRepository = null } = {}) {
     this.canvas = canvas;
     this.furnitureAssetRepository = furnitureAssetRepository;
-    this.roomCompositionAssetRepository = roomCompositionAssetRepository;
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0b121b);
     this.scene.fog = new THREE.Fog(0x0b121b, 14, 32);
@@ -113,6 +111,8 @@ export class RoomView {
     this.sceneLife = null;
     this.environmentPlan = null;
     this._presentationEnvironmentId = null;
+    this._surfaceSignature = null;
+    this.surfaceFinishesById = new Map();
     this.lights = {};
 
     this.onSelect = () => {};
@@ -121,8 +121,6 @@ export class RoomView {
     this.onFloorClick = () => {};
     this.onCancelMove = () => {};
     this.onDeselect = () => {};
-    this.onFixtureSelect = () => {};
-    this.onFixtureMove = () => {};
     this.onPreview = () => true;
   }
 
@@ -143,6 +141,20 @@ export class RoomView {
     this._applyEnvironmentLighting();
   }
 
+  setSurfaceFinishes(finishes) {
+    if (!Array.isArray(finishes)) throw new Error('RoomView surface finishes must be an array.');
+    this.surfaceFinishesById = new Map(finishes.map(finish => [finish.id, finish]));
+    this._surfaceSignature = null;
+  }
+
+  _resolveSurfacePlan(surfaceConfiguration) {
+    const floor = this.surfaceFinishesById.get(surfaceConfiguration?.floorFinishId) ?? { id: 'fallback-floor', visual: { color: '#9d9388', roughness: 0.95, metalness: 0 } };
+    const wall = this.surfaceFinishesById.get(surfaceConfiguration?.wallFinishId) ?? { id: 'fallback-wall', visual: { color: '#d5d2cb', roughness: 0.94, metalness: 0 } };
+    if (floor.surface && floor.surface !== 'floor') throw new Error(`Surface finish ${floor.id} cannot be applied to floor.`);
+    if (wall.surface && wall.surface !== 'wall') throw new Error(`Surface finish ${wall.id} cannot be applied to wall.`);
+    return Object.freeze({ floor, wall, signature: `${floor.id}/${wall.id}` });
+  }
+
   async init() {
     this._createLights();
     this.canvas.addEventListener('pointerdown', this._handlePointerDown);
@@ -154,15 +166,13 @@ export class RoomView {
     this._resize();
   }
 
-  setInteractionHandlers({ onSelect, onPlace, onMove, onFloorClick, onCancelMove, onDeselect, onFixtureSelect, onFixtureMove, onPreview }) {
+  setInteractionHandlers({ onSelect, onPlace, onMove, onFloorClick, onCancelMove, onDeselect, onPreview }) {
     this.onSelect = onSelect ?? (() => {});
     this.onPlace = onPlace ?? (() => {});
     this.onMove = onMove ?? (() => {});
     this.onFloorClick = onFloorClick ?? (() => {});
     this.onCancelMove = onCancelMove ?? (() => {});
     this.onDeselect = onDeselect ?? (() => {});
-    this.onFixtureSelect = onFixtureSelect ?? (() => {});
-    this.onFixtureMove = onFixtureMove ?? (() => {});
     this.onPreview = onPreview ?? (() => true);
   }
 
@@ -204,26 +214,28 @@ export class RoomView {
     this.lights.warm.intensity = lighting.warmIntensity;
   }
 
-  _buildRoom(width, depth) {
+  _buildRoom(width, depth, surfaceConfiguration = null) {
     if (!this.environmentPlan) throw new Error('RoomView requires a presentation environment before rendering.');
     const plan = this.environmentPlan;
+    const surfaces = this._resolveSurfacePlan(surfaceConfiguration);
     this._roomSize = { width, depth };
     this._presentationEnvironmentId = plan.id;
+    this._surfaceSignature = surfaces.signature;
     disposeObject(this.roomGroup);
     this.roomGroup.clear();
     this.walls = [];
     this.floor = new THREE.Mesh(
       new THREE.PlaneGeometry(width, depth),
-      makeMaterial(plan.surfaces.floor.color, { roughness: plan.surfaces.floor.roughness ?? ROOM_SURFACE_CONFIG.roughness })
+      makeMaterial(surfaces.floor.visual.color, { roughness: surfaces.floor.visual.roughness, metalness: surfaces.floor.visual.metalness ?? 0 })
     );
     this.floor.rotation.x = -Math.PI / 2;
     this.floor.position.set(width / 2, 0, depth / 2);
     this.floor.userData.kind = 'floor';
-    this.floor.userData.surfaceStyle = plan.surfaces.floor.style;
+    this.floor.userData.surfaceStyle = surfaces.floor.id;
     this.floor.receiveShadow = true;
     this.roomGroup.add(this.floor);
 
-    const wallMaterial = { color: plan.surfaces.wall.color, roughness: plan.surfaces.wall.roughness };
+    const wallMaterial = { color: surfaces.wall.visual.color, roughness: surfaces.wall.visual.roughness, metalness: surfaces.wall.visual.metalness ?? 0 };
     const wallHeight = 3.2;
     const openings = getRoomOpenings(width, depth, wallHeight, plan.openings);
     const windowOpening = openings.window;
@@ -243,15 +255,13 @@ export class RoomView {
       wall.userData.wallSide = side;
       this.walls.push(wall);
     }
-    this._addWallTreatment(width, depth, wallHeight, plan);
     this._addRoomDecor(width, depth, wallHeight, plan);
     this._updateWallVisibility();
     this.sceneLife?.destroy();
     this.sceneLife = new SceneLifeSystem(this.scene, this.roomGroup, {
       width,
       depth,
-      environmentPlan: this.environmentPlan,
-      roomCompositionAssetRepository: this.roomCompositionAssetRepository
+      environmentPlan: this.environmentPlan
     });
 
     this._cameraHome = {
@@ -361,8 +371,9 @@ export class RoomView {
 
   render(roomState, selectedItemId = null) {
     if (!roomState) return;
-    if (this._roomSize.width !== roomState.width || this._roomSize.depth !== roomState.depth || this._presentationEnvironmentId !== this.environmentPlan?.id || !this.floor) {
-      this._buildRoom(roomState.width, roomState.depth);
+    const surfaces = this._resolveSurfacePlan(roomState.surfaceConfiguration);
+    if (this._roomSize.width !== roomState.width || this._roomSize.depth !== roomState.depth || this._presentationEnvironmentId !== this.environmentPlan?.id || this._surfaceSignature !== surfaces.signature || !this.floor) {
+      this._buildRoom(roomState.width, roomState.depth, roomState.surfaceConfiguration);
     }
 
     const activeIds = new Set();
@@ -370,17 +381,20 @@ export class RoomView {
       activeIds.add(placed.id);
       let object = this.objectsById.get(placed.id);
       if (!object) {
-        object = ItemVisualFactory.create(placed.item);
+        object = ItemVisualFactory.create(placed.item, { configuration: placed.configuration });
         this._setObjectInstanceId(object, placed.id);
         object.position.set(placed.position.x, placed.position.y ?? 0, placed.position.z);
         object.rotation.y = THREE.MathUtils.degToRad(placed.rotation);
-        object.scale.setScalar(0.01);
+        object.scale.setScalar(0.01 * (object.userData.variantScale ?? 1));
         this.objectsById.set(placed.id, object);
         this.furnitureGroup.add(object);
         this._upgradeVisualWithAsset(object, placed.item);
-        this._animateScale(object, 1);
+        this._animateScale(object, object.userData.variantScale ?? 1);
       } else {
         this._setObjectInstanceId(object, placed.id);
+        const previousVariantScale = object.userData.variantScale ?? 1;
+        ItemVisualFactory.applyConfiguration(object, placed.item, placed.configuration);
+        if (previousVariantScale !== (object.userData.variantScale ?? 1)) this._animateScale(object, object.userData.variantScale ?? 1);
         this._animateTransform(object, placed.position, placed.rotation);
       }
       ItemVisualFactory.setPreviewValidity(object, true);
@@ -545,12 +559,11 @@ export class RoomView {
   _getItemHit(event) {
     this._setPointer(event);
     this.raycaster.setFromCamera(this.pointer, this.camera);
-    const fixtureObjects = this.sceneLife?.locationEnvironment?.getInteractableObjects?.() ?? [];
-    const hit = this.raycaster.intersectObjects([...this.furnitureGroup.children, ...fixtureObjects], true)[0];
+    const hit = this.raycaster.intersectObjects(this.furnitureGroup.children, true)[0];
     if (!hit) return null;
     let object = hit.object;
-    while (object && !object.userData.itemId && !object.userData.fixtureId) object = object.parent;
-    return object?.userData.itemId || object?.userData.fixtureId ? object : null;
+    while (object && !object.userData.itemId) object = object.parent;
+    return object?.userData.itemId ? object : null;
   }
 
   _handlePointerDown = event => {
@@ -577,13 +590,10 @@ export class RoomView {
     }
 
     if (itemHit) {
-      const fixtureId = itemHit.userData.fixtureId;
-      if (fixtureId) this.onFixtureSelect(fixtureId);
-      else this.onSelect(itemHit.userData.itemId);
+      this.onSelect(itemHit.userData.itemId);
       this.pointerState = {
-        mode: fixtureId ? 'fixture' : 'move',
+        mode: 'move',
         itemId: itemHit.userData.itemId,
-        fixtureId,
         pointerId: event.pointerId,
         start: point, moved: false, lastPosition: null
       };
@@ -621,10 +631,6 @@ export class RoomView {
         ItemVisualFactory.setPreviewValidity(object, true);
       }
     }
-    if (this.pointerState.mode === 'fixture' && this.pointerState.moved) {
-      this.pointerState.lastPosition = position;
-      this.sceneLife?.locationEnvironment?.moveFixture(this.pointerState.fixtureId, position.x);
-    }
   };
 
   _handlePointerUp = event => {
@@ -643,10 +649,6 @@ export class RoomView {
     }
     if (state.mode === 'move' && state.moved && state.lastPosition) {
       this.onMove(state.itemId, state.lastPosition);
-      return;
-    }
-    if (state.mode === 'fixture' && state.moved && state.lastPosition) {
-      this.onFixtureMove(state.fixtureId, state.lastPosition.x);
       return;
     }
     if (state.mode === 'floor' && !state.moved) this.onFloorClick(position);

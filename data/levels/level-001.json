@@ -1,30 +1,15 @@
 {
+  "schemaVersion": 2,
   "id": "level-001",
+  "roomId": "room-001",
   "name": "Гостиная: Первые шаги",
   "clientBriefId": "brief-warm-host-001",
   "presentationProfileId": "warm-starter-living",
-  "roomDimensions": {
-    "width": 8,
-    "height": 3,
-    "depth": 6
-  },
+  "roomDimensions": { "width": 8, "height": 3, "depth": 6 },
   "availableItems": [
-    "sofa-001",
-    "sofa-002",
-    "chair-001",
-    "chair-002",
-    "table-001",
-    "table-002",
-    "lamp-001",
-    "lamp-002",
-    "shelf-001",
-    "shelf-002",
-    "cabinet-001",
-    "desk-001",
-    "plant-001",
-    "mirror-001",
-    "rug-001",
-    "coffeetable-001"
+    "sofa-001", "sofa-002", "chair-001", "chair-002", "table-001", "table-002", "lamp-001", "lamp-002", "shelf-001", "shelf-002", "cabinet-001", "desk-001", "plant-001", "mirror-001", "rug-001", "coffeetable-001"
   ],
-  "initialPlacement": []
+  "interiorRecipeId": "starter-living-v1",
+  "generationSeed": 101,
+  "surfaceDefaults": { "floorFinishId": "floor-light-oak", "wallFinishId": "wall-warm-plaster" }
 }

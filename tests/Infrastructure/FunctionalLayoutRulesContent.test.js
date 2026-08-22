@@ -8,7 +8,7 @@ const readJson = relativePath => JSON.parse(readFileSync(new URL(relativePath, r
 describe('authored functional layout rules', () => {
   it('declares a schema-valid dining seating relationship in level-001 client policy', () => {
     const level = readJson('data/levels/level-001.json');
-    const levelSchema = readJson('data/schemas/level.schema.json');
+    const levelSchema = readJson('data/schemas/level.v2.schema.json');
     const briefSchema = readJson('data/briefs/client-brief.v2.schema.json');
     const catalog = readJson('data/briefs/client-briefs.v2.json');
     const brief = catalog.briefs.find(candidate => candidate.id === level.clientBriefId);

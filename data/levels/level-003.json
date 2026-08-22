@@ -1,26 +1,15 @@
 {
+  "schemaVersion": 2,
   "id": "level-003",
+  "roomId": "room-003",
   "name": "Светлая студия",
   "clientBriefId": "brief-open-studio-003",
   "presentationProfileId": "bright-studio",
-  "roomDimensions": {
-    "width": 9,
-    "height": 3,
-    "depth": 7
-  },
+  "roomDimensions": { "width": 9, "height": 3, "depth": 7 },
   "availableItems": [
-    "sofa-001",
-    "chair-002",
-    "chair-001",
-    "table-001",
-    "desk-001",
-    "cabinet-001",
-    "shelf-002",
-    "lamp-002",
-    "plant-001",
-    "mirror-001",
-    "rug-001",
-    "coffeetable-001"
+    "sofa-001", "chair-002", "chair-001", "table-001", "desk-001", "cabinet-001", "shelf-002", "lamp-002", "plant-001", "mirror-001", "rug-001", "coffeetable-001"
   ],
-  "initialPlacement": []
+  "interiorRecipeId": "studio-gallery-v1",
+  "generationSeed": 303,
+  "surfaceDefaults": { "floorFinishId": "floor-light-oak", "wallFinishId": "wall-warm-plaster" }
 }

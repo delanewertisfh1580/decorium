@@ -1,15 +1,19 @@
 import PlayerProfile from '../../Domain/Profile/PlayerProfile.js';
 
 export class RecordLevelCompletionUseCase {
-  constructor(savePlayerProfileUseCase, timestampProvider) {
+  constructor(savePlayerProfileUseCase, timestampProvider, grantProgressionRewardsUseCase = null) {
     if (!savePlayerProfileUseCase || typeof savePlayerProfileUseCase.execute !== 'function') {
       throw new Error('RecordLevelCompletionUseCase: savePlayerProfileUseCase is required.');
     }
     if (typeof timestampProvider !== 'function') {
       throw new Error('RecordLevelCompletionUseCase: timestampProvider is required.');
     }
+    if (grantProgressionRewardsUseCase !== null && typeof grantProgressionRewardsUseCase.execute !== 'function') {
+      throw new Error('RecordLevelCompletionUseCase: grantProgressionRewardsUseCase must expose execute when supplied.');
+    }
     this.savePlayerProfileUseCase = savePlayerProfileUseCase;
     this.timestampProvider = timestampProvider;
+    this.grantProgressionRewardsUseCase = grantProgressionRewardsUseCase;
   }
 
   async execute({ levelId, stars, targetScore, completionEligible, profile }) {
@@ -37,7 +41,10 @@ export class RecordLevelCompletionUseCase {
     const saved = await this.savePlayerProfileUseCase.execute(completedProfile);
     if (!saved.success) return { ...saved, didComplete: false };
 
-    return { success: true, data: saved.data, didComplete: true };
+    if (!this.grantProgressionRewardsUseCase) return { success: true, data: saved.data, didComplete: true, grantedRewardIds: [] };
+    const rewarded = await this.grantProgressionRewardsUseCase.execute({ profile: saved.data, levelId, stars });
+    if (!rewarded.success) return { success: false, error: rewarded.error, didComplete: true, data: saved.data, grantedRewardIds: [] };
+    return { success: true, data: rewarded.data, didComplete: true, grantedRewardIds: rewarded.grantedRewardIds };
   }
 }
 

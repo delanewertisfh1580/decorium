@@ -1,611 +1,95 @@
 import * as THREE from 'three';
 import LOCATION_LIFE_CONFIG from './locationLifeConfig.js';
-import { getFixtureLayout } from './FixtureLayout.js';
 import { getGaitPose, getRouteMotion } from './lifeAnimationConfig.js';
 
 function material(color, options = {}) {
-  return new THREE.MeshStandardMaterial({
-    color,
-    roughness: options.roughness ?? 0.78,
-    metalness: options.metalness ?? 0,
-    transparent: options.transparent ?? false,
-    opacity: options.opacity ?? 1,
-    emissive: options.emissive ?? 0x000000,
-    emissiveIntensity: options.emissiveIntensity ?? 0
-  });
+  return new THREE.MeshStandardMaterial({ color, roughness: options.roughness ?? 0.78, metalness: options.metalness ?? 0, emissive: options.emissive ?? 0x000000, emissiveIntensity: options.emissiveIntensity ?? 0 });
 }
-
 function box(width, height, depth, color, options = {}) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material(color, options));
-  mesh.castShadow = options.castShadow ?? true;
-  mesh.receiveShadow = options.receiveShadow ?? true;
-  return mesh;
+  mesh.castShadow = options.castShadow ?? true; mesh.receiveShadow = options.receiveShadow ?? true; return mesh;
 }
-
 function cylinder(radiusTop, radiusBottom, height, color, options = {}, segments = 16) {
-  const mesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(radiusTop, radiusBottom, height, segments),
-    material(color, options)
-  );
-  mesh.castShadow = options.castShadow ?? true;
-  mesh.receiveShadow = options.receiveShadow ?? true;
-  return mesh;
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, height, segments), material(color, options));
+  mesh.castShadow = options.castShadow ?? true; mesh.receiveShadow = options.receiveShadow ?? true; return mesh;
 }
-
 function sphere(radius, color, options = {}) {
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 14, 10), material(color, options));
-  mesh.castShadow = options.castShadow ?? true;
-  mesh.receiveShadow = options.receiveShadow ?? true;
-  return mesh;
+  mesh.castShadow = options.castShadow ?? true; mesh.receiveShadow = options.receiveShadow ?? true; return mesh;
 }
-
 function plane(width, depth, color, options = {}) {
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), material(color, options));
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.position.y = options.y ?? 0;
-  mesh.receiveShadow = options.receiveShadow ?? true;
-  return mesh;
+  mesh.rotation.x = -Math.PI / 2; mesh.position.y = options.y ?? 0; mesh.receiveShadow = options.receiveShadow ?? true; return mesh;
 }
-
 function addWindow(parent, x, y, z, width = 1.2, height = 0.9) {
-  const frame = box(width, height, 0.08, 0x473d3b, { roughness: 0.82 });
-  frame.position.set(x, y, z);
-  parent.add(frame);
-  const pane = box(width * 0.78, height * 0.7, 0.025, 0x8eb9bb, {
-    roughness: 0.2,
-    emissive: 0xf2bf75,
-    emissiveIntensity: 0.48
-  });
-  pane.position.set(x, y, z - 0.055);
-  parent.add(pane);
-  const mullion = box(0.035, height * 0.72, 0.035, 0x75604e, { castShadow: false });
-  mullion.position.set(x, y, z - 0.08);
-  parent.add(mullion);
+  const frame = box(width, height, 0.08, 0x473d3b, { roughness: 0.82 }); frame.position.set(x, y, z); parent.add(frame);
+  const pane = box(width * .78, height * .7, .025, 0x8eb9bb, { roughness: .2, emissive: 0xf2bf75, emissiveIntensity: .48 }); pane.position.set(x, y, z - .055); parent.add(pane);
+  const mullion = box(.035, height * .72, .035, 0x75604e, { castShadow: false }); mullion.position.set(x, y, z - .08); parent.add(mullion);
 }
-
 function createPedestrian(variant) {
-  const colors = variant === 'green-coat' ? [0x658778, 0xc4a47b] : [0x9b766b, 0xe4c79b];
-  const person = new THREE.Group();
-  const body = box(0.22, 0.46, 0.16, colors[0], { roughness: 0.86 });
-  body.position.y = 0.58;
-  person.add(body);
-  const head = sphere(0.12, 0xd6a37a);
-  head.position.y = 0.94;
-  person.add(head);
-  const legs = [];
-  for (const z of [-0.055, 0.055]) {
-    const leg = box(0.065, 0.4, 0.07, 0x374655);
-    leg.position.set(0, 0.2, z);
-    person.add(leg);
-    legs.push(leg);
-  }
-  const arms = [];
-  for (const z of [-0.14, 0.14]) {
-    const arm = new THREE.Group();
-    arm.position.set(0, 0.79, z);
-    const sleeve = box(0.07, 0.22, 0.07, colors[0], { roughness: 0.86 });
-    sleeve.position.y = -0.1;
-    arm.add(sleeve);
-    const hand = sphere(0.045, 0xd6a37a, { roughness: 0.82 });
-    hand.position.y = -0.25;
-    arm.add(hand);
-    person.add(arm);
-    arms.push(arm);
-  }
-  const bag = box(0.13, 0.2, 0.08, colors[1]);
-  bag.position.set(-0.16, 0.55, 0.05);
-  person.add(bag);
-  person.userData.kind = 'street-pedestrian';
-  person.userData.legs = legs;
-  person.userData.arms = arms;
-  return person;
+  const colors = variant === 'green-coat' ? [0x658778, 0xc4a47b] : [0x9b766b, 0xe4c79b]; const person = new THREE.Group();
+  const body = box(.22, .46, .16, colors[0], { roughness: .86 }); body.position.y = .58; person.add(body);
+  const head = sphere(.12, 0xd6a37a); head.position.y = .94; person.add(head); const legs = []; const arms = [];
+  for (const z of [-.055, .055]) { const leg = box(.065, .4, .07, 0x374655); leg.position.set(0, .2, z); person.add(leg); legs.push(leg); }
+  for (const z of [-.14, .14]) { const arm = new THREE.Group(); arm.position.set(0, .79, z); const sleeve = box(.07, .22, .07, colors[0], { roughness: .86 }); sleeve.position.y = -.1; arm.add(sleeve); const hand = sphere(.045, 0xd6a37a, { roughness: .82 }); hand.position.y = -.25; arm.add(hand); person.add(arm); arms.push(arm); }
+  const bag = box(.13, .2, .08, colors[1]); bag.position.set(-.16, .55, .05); person.add(bag); person.userData = { kind: 'street-pedestrian', legs, arms }; return person;
 }
-
 function createCar(variant) {
-  const colors = { sage: 0x6e958d, ochre: 0xc08a55 };
-  const car = new THREE.Group();
-  const body = box(1.05, 0.26, 0.52, colors[variant] ?? colors.sage, { roughness: 0.42, metalness: 0.18 });
-  body.position.y = 0.28;
-  car.add(body);
-  const cabin = box(0.54, 0.22, 0.42, 0x526979, { roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.88 });
-  cabin.position.set(-0.05, 0.5, 0);
-  car.add(cabin);
-  const wheels = [];
-  for (const x of [-0.34, 0.34]) {
-    for (const z of [-0.25, 0.25]) {
-      const wheel = cylinder(0.1, 0.1, 0.07, 0x202832, { roughness: 0.92 }, 12);
-      wheel.rotation.z = Math.PI / 2;
-      wheel.position.set(x, 0.13, z);
-      car.add(wheel);
-      wheels.push(wheel);
-    }
-  }
-  const headlight = box(0.06, 0.06, 0.14, 0xffe7ad, { emissive: 0xffbd61, emissiveIntensity: 0.9, castShadow: false });
-  headlight.position.set(0.53, 0.31, -0.16);
-  car.add(headlight);
-  car.userData.kind = 'street-car';
-  car.userData.wheels = wheels;
-  return car;
+  const colors = { sage: 0x6e958d, ochre: 0xc08a55 }; const car = new THREE.Group(); const body = box(1.05, .26, .52, colors[variant] ?? colors.sage, { roughness: .42, metalness: .18 }); body.position.y = .28; car.add(body);
+  const cabin = box(.54, .22, .42, 0x526979, { roughness: .25, metalness: .1 }); cabin.position.set(-.05, .5, 0); car.add(cabin); const wheels = [];
+  for (const x of [-.34, .34]) for (const z of [-.25, .25]) { const wheel = cylinder(.1, .1, .07, 0x202832, { roughness: .92 }, 12); wheel.rotation.z = Math.PI / 2; wheel.position.set(x, .13, z); car.add(wheel); wheels.push(wheel); }
+  car.userData = { kind: 'street-car', wheels }; return car;
 }
-
 function createStreetAnimal() {
-  const animal = new THREE.Group();
-  const body = sphere(0.16, 0xb97a55);
-  body.scale.set(1.5, 0.8, 0.75);
-  body.position.y = 0.2;
-  animal.add(body);
-  const head = sphere(0.12, 0xc78c62);
-  head.position.set(0.2, 0.29, 0);
-  animal.add(head);
-  for (const z of [-0.07, 0.07]) {
-    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.11, 4), material(0x825244));
-    ear.position.set(0.2, 0.41, z);
-    ear.castShadow = true;
-    animal.add(ear);
-  }
-  const legs = [];
-  for (const x of [-0.12, 0.12]) {
-    for (const z of [-0.08, 0.08]) {
-      const leg = box(0.045, 0.18, 0.045, 0x825244);
-      leg.position.set(x, 0.09, z);
-      animal.add(leg);
-      legs.push(leg);
-    }
-  }
-  const tail = cylinder(0.025, 0.04, 0.25, 0x825244, {}, 8);
-  tail.position.set(-0.26, 0.3, 0);
-  tail.rotation.z = -0.85;
-  animal.add(tail);
-  animal.userData.kind = 'street-animal';
-  animal.userData.legs = legs;
-  animal.userData.tail = tail;
-  return animal;
+  const animal = new THREE.Group(); const body = sphere(.16, 0xb97a55); body.scale.set(1.5, .8, .75); body.position.y = .2; animal.add(body); const head = sphere(.12, 0xc78c62); head.position.set(.2, .29, 0); animal.add(head); const legs = [];
+  for (const x of [-.12, .12]) for (const z of [-.08, .08]) { const leg = box(.045, .18, .045, 0x825244); leg.position.set(x, .09, z); animal.add(leg); legs.push(leg); }
+  const tail = cylinder(.025, .04, .25, 0x825244, {}, 8); tail.position.set(-.26, .3, 0); tail.rotation.z = -.85; animal.add(tail); animal.userData = { kind: 'street-animal', legs, tail }; return animal;
 }
+function routeZ(lane, depth) { if (lane === 'road-near') return depth + 2.25; if (lane === 'road-far') return depth + 2.9; return depth + 1.05; }
 
-function createRestingCat() {
-  const cat = new THREE.Group();
-  const body = sphere(0.18, 0x8a7a73);
-  body.scale.set(1.25, 0.68, 0.9);
-  body.position.y = 0.2;
-  cat.add(body);
-  const head = sphere(0.14, 0x9a8980);
-  head.position.set(0.16, 0.3, 0);
-  cat.add(head);
-  for (const z of [-0.07, 0.07]) {
-    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.12, 4), material(0x665b58));
-    ear.position.set(0.14, 0.45, z);
-    cat.add(ear);
-  }
-  const tail = cylinder(0.025, 0.035, 0.3, 0x665b58, {}, 8);
-  tail.position.set(-0.2, 0.27, 0.04);
-  tail.rotation.z = -1.1;
-  cat.add(tail);
-  cat.userData.kind = 'interior-resting-cat';
-  cat.userData.tail = tail;
-  return cat;
-}
-
-function routeZ(lane, depth) {
-  if (lane === 'road-near') return depth + 2.25;
-  if (lane === 'road-far') return depth + 2.9;
-  return depth + (lane === 'sidewalk' ? 1.05 : 1.05);
-}
-
+/** Owns only non-interactive exterior and atmosphere. Player interior belongs to RoomState. */
 export class LocationEnvironmentSystem {
-  constructor(scene, { width, depth, environmentPlan, config = LOCATION_LIFE_CONFIG, roomCompositionAssetRepository = null, onCompositionAssetReady = null, onCompositionAssetFallback = null }) {
+  constructor(scene, { width, depth, environmentPlan, config = LOCATION_LIFE_CONFIG }) {
     if (!environmentPlan) throw new Error('LocationEnvironmentSystem requires an environmentPlan.');
-    this.scene = scene;
-    this.width = width;
-    this.depth = depth;
-    this.environmentPlan = environmentPlan;
-    this.config = config;
-    this.roomCompositionAssetRepository = roomCompositionAssetRepository;
-    this.onCompositionAssetReady = onCompositionAssetReady;
-    this.onCompositionAssetFallback = onCompositionAssetFallback;
-    this.fixtureLayout = getFixtureLayout(width, depth);
-    this.root = new THREE.Group();
-    this.root.userData.kind = 'location-environment';
-    this.root.userData.compositionAssetState = 'fallback';
-    this.compositionFallbackRoot = new THREE.Group();
-    this.compositionFallbackRoot.userData.kind = 'room-composition-procedural-fallback';
-    this.compositionAssetRoot = null;
-    this.destroyed = false;
-    this.root.add(this.compositionFallbackRoot);
-    this.routeEntities = [];
-    this.interactiveFixtures = new Map();
-    this.restingCat = null;
-    this._buildEnvironment();
-    this._buildInteriorDetails();
-    this._buildRoutes();
-    this.scene.add(this.root);
-    this._loadRoomCompositionAsset();
+    this.scene = scene; this.width = width; this.depth = depth; this.environmentPlan = environmentPlan; this.config = config; this.destroyed = false;
+    this.root = new THREE.Group(); this.root.userData.kind = 'location-environment'; this.root.userData.interiorOwnership = 'none'; this.routeEntities = [];
+    this._buildEnvironment(); this._buildRoutes(); this.scene.add(this.root);
   }
 
   _buildEnvironment() {
-    const exterior = this.environmentPlan.exterior;
-    const streetWidth = this.width + 8;
-    const streetCenter = this.width / 2;
-    const sidewalk = plane(streetWidth, 1.4, exterior.sidewalkColor, { y: -0.018, roughness: 0.96 });
-    sidewalk.position.set(streetCenter, -0.018, this.depth + 1.02);
-    this.root.add(sidewalk);
-    const road = plane(streetWidth, 2.45, exterior.roadColor, { y: -0.025, roughness: 0.96 });
-    road.position.set(streetCenter, -0.025, this.depth + 2.78);
-    this.root.add(road);
-
-    const curb = box(streetWidth, 0.12, 0.14, 0xc0a184, { roughness: 0.86 });
-    curb.position.set(streetCenter, 0.045, this.depth + 1.7);
-    this.root.add(curb);
-    for (let index = -2; index < 8; index += 1) {
-      const marking = box(0.75, 0.012, 0.06, 0xe1c889, { castShadow: false, receiveShadow: false });
-      marking.position.set(index * 1.8, 0.012, this.depth + 2.78);
-      this.root.add(marking);
-    }
-
-    const facadeZ = this.depth + 4.25;
-    const facade = box(this.width + 2.2, 3.4, 0.2, exterior.facadeColor, { roughness: 0.9 });
-    facade.position.set(streetCenter, 1.7, facadeZ);
-    this.root.add(facade);
-    const trim = box(this.width + 2.35, 0.14, 0.27, 0xc4a983, { roughness: 0.65 });
-    trim.position.set(streetCenter, 3.34, facadeZ - 0.03);
-    this.root.add(trim);
-    addWindow(this.root, this.width * 0.26, 2.1, facadeZ - 0.14, 1.1, 0.84);
-    addWindow(this.root, this.width * 0.74, 2.1, facadeZ - 0.14, 1.1, 0.84);
-    const door = box(0.72, 1.65, 0.05, 0x394b52, { roughness: 0.48 });
-    door.position.set(streetCenter, 0.83, facadeZ - 0.14);
-    this.root.add(door);
-    const doorLight = new THREE.PointLight(0xffca82, 1.2, 3.5);
-    doorLight.position.set(streetCenter, 1.8, facadeZ - 0.5);
-    this.root.add(doorLight);
-    const awning = box(1.25, 0.08, 0.52, 0x6c9287, { roughness: 0.62 });
-    awning.position.set(streetCenter, 1.8, facadeZ - 0.35);
-    awning.rotation.x = -0.12;
-    this.root.add(awning);
-
-    for (const x of [0.4, this.width - 0.4]) {
-      const pole = cylinder(0.025, 0.025, 1.9, 0x35434a, { metalness: 0.4 });
-      pole.position.set(x, 0.95, this.depth + 1.18);
-      this.root.add(pole);
-      const lamp = sphere(0.09, 0xffd08a, { emissive: 0xffb85c, emissiveIntensity: 0.8, castShadow: false });
-      lamp.position.set(x, 1.92, this.depth + 1.18);
-      this.root.add(lamp);
-      const light = new THREE.PointLight(0xffbf70, 1.2, 3.5);
-      light.position.copy(lamp.position);
-      this.root.add(light);
-    }
-
-    for (const x of [0.25, this.width + 0.35]) {
-      const trunk = cylinder(0.09, 0.12, 1.15, 0x6e5547, { roughness: 0.95 });
-      trunk.position.set(x, 0.57, this.depth + 0.75);
-      this.root.add(trunk);
-      const crown = sphere(0.45 * this.environmentPlan.identity.exteriorComposition.foliageScale, exterior.foliageColor, { roughness: 0.95 });
-      crown.position.set(x, 1.35, this.depth + 0.75);
-      this.root.add(crown);
-    }
-    this._buildExteriorComposition(exterior, this.environmentPlan.identity.exteriorComposition, facadeZ);
+    const exterior = this.environmentPlan.exterior; const composition = this.environmentPlan.exteriorComposition; const streetWidth = this.width + 8; const streetCenter = this.width / 2;
+    const sidewalk = plane(streetWidth, 1.4, exterior.sidewalkColor, { y: -.018, roughness: .96 }); sidewalk.position.set(streetCenter, -.018, this.depth + 1.02); this.root.add(sidewalk);
+    const road = plane(streetWidth, 2.45, exterior.roadColor, { y: -.025, roughness: .96 }); road.position.set(streetCenter, -.025, this.depth + 2.78); this.root.add(road);
+    const curb = box(streetWidth, .12, .14, 0xc0a184, { roughness: .86 }); curb.position.set(streetCenter, .045, this.depth + 1.7); this.root.add(curb);
+    for (let index = -2; index < 8; index += 1) { const marking = box(.75, .012, .06, 0xe1c889, { castShadow: false, receiveShadow: false }); marking.position.set(index * 1.8, .012, this.depth + 2.78); this.root.add(marking); }
+    const facadeZ = this.depth + 4.25; const facade = box(this.width + 2.2, 3.4, .2, exterior.facadeColor, { roughness: .9 }); facade.position.set(streetCenter, 1.7, facadeZ); this.root.add(facade);
+    addWindow(this.root, this.width * .26, 2.1, facadeZ - .14, 1.1, .84); addWindow(this.root, this.width * .74, 2.1, facadeZ - .14, 1.1, .84);
+    for (const x of [.25, this.width + .35]) { const trunk = cylinder(.09, .12, 1.15, 0x6e5547, { roughness: .95 }); trunk.position.set(x, .57, this.depth + .75); this.root.add(trunk); const crown = sphere(.45 * composition.foliageScale, exterior.foliageColor, { roughness: .95 }); crown.position.set(x, 1.35, this.depth + .75); this.root.add(crown); }
+    this._buildExteriorComposition(exterior, composition, facadeZ);
   }
 
   _buildExteriorComposition(exterior, composition, facadeZ) {
-    const root = new THREE.Group();
-    root.userData.kind = 'authored-exterior-composition';
-    root.userData.exteriorComposition = composition.kind;
-    this.compositionFallbackRoot.add(root);
-    const add = mesh => { root.add(mesh); return mesh; };
-    const streetCenter = this.width / 2;
-
-    if (composition.kind === 'residential-porch') {
-      const canopy = add(box(1.62, 0.12, 0.65, composition.accentColor, { roughness: 0.62 }));
-      canopy.position.set(streetCenter, 1.92, facadeZ - 0.38);
-      canopy.rotation.x = -0.12;
-      for (const x of [-0.62, 0.62]) {
-        const post = add(cylinder(0.035, 0.04, 1.36, composition.facadeInsetColor, { roughness: 0.82 }));
-        post.position.set(streetCenter + x, 0.68, facadeZ - 0.34);
-      }
-      const planter = add(box(0.74, 0.26, 0.28, composition.facadeInsetColor, { roughness: 0.88 }));
-      planter.position.set(streetCenter - 1.18, 0.18, facadeZ - 0.32);
-      for (const x of [-.2, 0, .2]) {
-        const bloom = add(sphere(.14, exterior.foliageColor, { roughness: .94 }));
-        bloom.position.set(streetCenter - 1.18 + x, .42, facadeZ - .32);
-      }
-    }
-
-    if (composition.kind === 'urban-cinema-block') {
-      const marquee = add(box(this.width * .64, .18, .22, composition.accentColor, { roughness: .38, metalness: .25, emissive: composition.accentColor, emissiveIntensity: .12 }));
-      marquee.position.set(streetCenter, 2.82, facadeZ - .25);
-      const screen = add(box(this.width * .42, .72, .04, composition.facadeInsetColor, { roughness: .44, emissive: 0x293a5f, emissiveIntensity: .12 }));
-      screen.position.set(streetCenter, 2.18, facadeZ - .17);
-      for (let index = 0; index < 7; index += 1) {
-        const bulb = add(sphere(.035, 0xffcf8a, { emissive: 0xffa95f, emissiveIntensity: .7, castShadow: false }));
-        bulb.position.set(streetCenter - this.width * .27 + index * this.width * .09, 2.82, facadeZ - .39);
-      }
-      for (const x of [-this.width * .36, this.width * .36]) {
-        const banner = add(box(.16, 1.15, .03, composition.accentColor, { roughness: .62 }));
-        banner.position.set(streetCenter + x, 1.85, facadeZ - .19);
-      }
-    }
-
-    if (composition.kind === 'courtyard-workshop') {
-      const arch = add(box(this.width * .54, .16, .26, composition.accentColor, { roughness: .7 }));
-      arch.position.set(streetCenter, 2.7, facadeZ - .31);
-      for (const x of [-this.width * .27, this.width * .27]) {
-        const post = add(box(.13, 2.0, .18, composition.facadeInsetColor, { roughness: .86 }));
-        post.position.set(streetCenter + x, 1.0, facadeZ - .3);
-      }
-      for (const x of [streetCenter - this.width * .18, streetCenter + this.width * .18]) {
-        const bench = add(box(.56, .34, .22, composition.facadeInsetColor, { roughness: .82 }));
-        bench.position.set(x, .23, facadeZ - .36);
-        const pot = add(cylinder(.16, .2, .24, composition.accentColor, { roughness: .9 }, 16));
-        pot.position.set(x, .5, facadeZ - .4);
-        const plant = add(sphere(.22, exterior.foliageColor, { roughness: .95 }));
-        plant.position.set(x, .73, facadeZ - .4);
-      }
-    }
+    const root = new THREE.Group(); root.userData = { kind: 'authored-exterior-composition', exteriorComposition: composition.kind }; this.root.add(root); const add = mesh => { root.add(mesh); return mesh; }; const center = this.width / 2;
+    if (composition.kind === 'residential-porch') { const canopy = add(box(1.62, .12, .65, composition.accentColor, { roughness: .62 })); canopy.position.set(center, 1.92, facadeZ - .38); canopy.rotation.x = -.12; for (const x of [-.62, .62]) { const post = add(cylinder(.035, .04, 1.36, composition.facadeInsetColor, { roughness: .82 })); post.position.set(center + x, .68, facadeZ - .34); } }
+    if (composition.kind === 'urban-cinema-block') { const marquee = add(box(this.width * .64, .18, .22, composition.accentColor, { roughness: .38, metalness: .25, emissive: composition.accentColor, emissiveIntensity: .12 })); marquee.position.set(center, 2.82, facadeZ - .25); }
+    if (composition.kind === 'courtyard-workshop') { const arch = add(box(this.width * .54, .16, .26, composition.accentColor, { roughness: .7 })); arch.position.set(center, 2.7, facadeZ - .31); for (const x of [-this.width * .27, this.width * .27]) { const post = add(box(.13, 2, .18, composition.facadeInsetColor, { roughness: .86 })); post.position.set(center + x, 1, facadeZ - .3); } }
+    void exterior;
   }
 
-  _hasFixture(fixtureId) {
-    return this.environmentPlan.fixtures.includes(fixtureId);
-  }
-
-  _buildInteriorDetails() {
-    if (this._hasFixture('mirror')) {
-    const mirror = new THREE.Group();
-    mirror.userData.fixtureId = 'ambient-mirror';
-    mirror.userData.kind = 'ambient-fixture';
-    mirror.userData.homeX = this.fixtureLayout.mirror.centerX;
-    const artFrame = box(0.95, 0.7, 0.04, 0x5b4d46, { roughness: 0.72 });
-    artFrame.position.set(0, 2.05, 0);
-    mirror.add(artFrame);
-    const art = box(0.62, 0.42, 0.018, 0x9fc4d5, { roughness: 0.16, transparent: true, opacity: 0.46, emissive: 0x17352e, emissiveIntensity: 0.08, castShadow: false });
-    art.position.set(0, 2.05, -0.03);
-    mirror.add(art);
-    mirror.position.set(this.fixtureLayout.mirror.centerX, 0, this.fixtureLayout.mirror.z);
-    this.root.add(mirror);
-    this.interactiveFixtures.set(mirror.userData.fixtureId, mirror);
-    }
-
-    if (this._hasFixture('bookshelf')) {
-    const bookshelf = new THREE.Group();
-    bookshelf.userData.fixtureId = 'ambient-bookshelf';
-    bookshelf.userData.kind = 'ambient-fixture';
-    bookshelf.userData.homeX = this.fixtureLayout.bookshelf.centerX;
-    const shelf = box(1.15, 0.08, 0.22, 0x987252, { roughness: 0.82 });
-    shelf.position.set(0, 1.28, 0);
-    bookshelf.add(shelf);
-    for (let index = 0; index < 4; index += 1) {
-      const book = box(0.12, 0.28 + (index % 2) * 0.08, 0.18, [0x9d7167, 0x6e8f83, 0xc39a62, 0x75889a][index], { roughness: 0.88 });
-      book.position.set(-0.36 + index * 0.2, 1.47 + (index % 2) * 0.04, 0);
-      book.rotation.z = (index - 1.5) * 0.04;
-      bookshelf.add(book);
-    }
-    const mug = cylinder(0.09, 0.09, 0.12, 0xd9d0bc, { roughness: 0.5 }, 16);
-    mug.position.set(0.4, 1.38, 0);
-    bookshelf.add(mug);
-    bookshelf.position.set(this.fixtureLayout.bookshelf.centerX, 0, this.fixtureLayout.bookshelf.z);
-    this.root.add(bookshelf);
-    this.interactiveFixtures.set(bookshelf.userData.fixtureId, bookshelf);
-    }
-
-    if (this._hasFixture('resting-cat')) {
-    const bedBase = cylinder(0.42, 0.42, 0.11, 0x836c62, { roughness: 0.9 }, 24);
-    bedBase.position.set(this.width * 0.14, 0.07, this.depth * 0.24);
-    this.root.add(bedBase);
-    const cushion = cylinder(0.33, 0.33, 0.07, 0xc29b88, { roughness: 0.96 }, 24);
-    cushion.position.set(this.width * 0.14, 0.15, this.depth * 0.24);
-    this.root.add(cushion);
-    for (const x of [this.width * 0.04, this.width * 0.24]) {
-      const bowl = cylinder(0.09, 0.11, 0.045, 0xd3a458, { metalness: 0.18, roughness: 0.52 }, 16);
-      bowl.position.set(x, 0.025, this.depth * 0.32);
-      this.root.add(bowl);
-    }
-    this.restingCat = createRestingCat();
-    this.restingCat.position.set(this.width * 0.14, 0.16, this.depth * 0.24);
-    this.root.add(this.restingCat);
-    }
-
-    this._buildIdentityBuiltIn();
-    this._buildProfileDecor();
-  }
-
-  _buildIdentityBuiltIn() {
-    const builtIn = this.environmentPlan.identity.builtIn;
-    const root = new THREE.Group();
-    root.userData.kind = 'authored-room-built-in';
-    root.userData.builtInPreset = builtIn.kind;
-    root.userData.semantic = builtIn.semantic;
-    this.compositionFallbackRoot.add(root);
-    const add = mesh => { root.add(mesh); return mesh; };
-    const backZ = this.depth - .24;
-
-    if (builtIn.kind === 'living-library-nook') {
-      const cabinet = add(box(1.46, 1.22, .26, builtIn.woodColor, { roughness: .72 }));
-      cabinet.position.set(this.width * .24, .61, backZ);
-      for (const z of [.28, .67, 1.04]) {
-        const shelf = add(box(1.34, .055, .33, builtIn.accentColor, { roughness: .62 }));
-        shelf.position.set(this.width * .24, z, backZ - .15);
-      }
-      for (let index = 0; index < 6; index += 1) {
-        const book = add(box(.11, .24 + (index % 2) * .08, .14, index % 2 ? builtIn.fabricColor : builtIn.accentColor, { roughness: .86 }));
-        book.position.set(this.width * .24 - .52 + index * .19, 1.2 + (index % 2) * .03, backZ - .18);
-      }
-      const pendant = add(cylinder(.012, .012, .64, 0x28323e, { roughness: .7 }, 8));
-      pendant.position.set(this.width * .52, 2.82, this.depth * .46);
-      const shade = add(new THREE.Mesh(new THREE.ConeGeometry(.33, .26, 20), material(builtIn.accentColor, { emissive: builtIn.accentColor, emissiveIntensity: .12 })));
-      shade.position.set(this.width * .52, 2.45, this.depth * .46);
-      shade.rotation.x = Math.PI;
-    }
-
-    if (builtIn.kind === 'media-wall-screen') {
-      const wallPanel = add(box(2.3, 1.72, .12, builtIn.woodColor, { roughness: .62 }));
-      wallPanel.position.set(this.width * .68, 1.2, backZ);
-      for (let index = 0; index < 6; index += 1) {
-        const slat = add(box(.045, 1.5, .04, builtIn.accentColor, { roughness: .54, metalness: .12 }));
-        slat.position.set(this.width * .68 - .9 + index * .36, 1.26, backZ - .09);
-      }
-      const screenFrame = add(box(1.46, .9, .05, 0x101724, { roughness: .34, metalness: .28 }));
-      screenFrame.position.set(this.width * .68, 1.66, backZ - .13);
-      const screen = add(box(1.31, .74, .022, builtIn.fabricColor, { roughness: .22, emissive: builtIn.fabricColor, emissiveIntensity: .16, castShadow: false }));
-      screen.position.set(this.width * .68, 1.66, backZ - .17);
-      screen.userData.kind = 'decorative-media-screen';
-      screen.userData.semantic = false;
-      const console = add(box(1.88, .34, .28, builtIn.woodColor, { roughness: .68 }));
-      console.position.set(this.width * .68, .26, backZ - .12);
-      for (const x of [-.48, .48]) {
-        const sconce = add(sphere(.075, builtIn.accentColor, { emissive: builtIn.accentColor, emissiveIntensity: .6, castShadow: false }));
-        sconce.position.set(this.width * .68 + x, 2.42, backZ - .14);
-      }
-    }
-
-    if (builtIn.kind === 'studio-gallery-rail') {
-      const rail = add(box(2.25, .055, .08, builtIn.woodColor, { roughness: .54, metalness: .14 }));
-      rail.position.set(this.width * .34, 2.36, backZ);
-      for (let index = 0; index < 3; index += 1) {
-        const cable = add(cylinder(.01, .01, .55 + (index % 2) * .12, builtIn.accentColor, { roughness: .45, metalness: .22 }, 8));
-        cable.position.set(this.width * .34 - .65 + index * .65, 2.05, backZ - .04);
-        const frame = add(box(.42, .52, .038, index === 1 ? builtIn.fabricColor : builtIn.accentColor, { roughness: .76 }));
-        frame.position.set(this.width * .34 - .65 + index * .65, 1.65 - (index % 2) * .1, backZ - .08);
-      }
-      const workbench = add(box(1.55, .68, .34, builtIn.woodColor, { roughness: .74 }));
-      workbench.position.set(this.width * .75, .34, backZ - .1);
-      for (const x of [-.6, .6]) {
-        const leg = add(box(.08, .58, .08, builtIn.accentColor, { roughness: .52, metalness: .18 }));
-        leg.position.set(this.width * .75 + x, .29, backZ - .1);
-      }
-    }
-  }
-
-  _buildProfileDecor() {
-    if (this._hasFixture('accent-wall-art')) {
-      const frame = box(1.25, 0.82, 0.05, 0x302c35, { roughness: 0.7 });
-      frame.position.set(this.width * 0.75, 1.85, this.depth - 0.12);
-      this.compositionFallbackRoot.add(frame);
-      const panel = box(1.02, 0.6, 0.02, 0x9c6a74, { emissive: 0x3c1728, emissiveIntensity: 0.12, castShadow: false });
-      panel.position.set(this.width * 0.75, 1.85, this.depth - 0.16);
-      this.compositionFallbackRoot.add(panel);
-    }
-    if (this._hasFixture('low-bookshelf')) {
-      const shelf = box(1.45, 0.62, 0.28, 0x4b3f3d, { roughness: 0.8 });
-      shelf.position.set(this.width * 0.2, 0.31, this.depth - 0.26);
-      this.compositionFallbackRoot.add(shelf);
-    }
-    if (this._hasFixture('studio-planter')) {
-      const pot = cylinder(0.28, 0.34, 0.5, 0xc7ad86, { roughness: 0.9 }, 20);
-      pot.position.set(this.width - 0.56, 0.25, this.depth - 0.48);
-      this.compositionFallbackRoot.add(pot);
-      for (const [x, y] of [[-0.16, 0.82], [0.1, 1.08], [0.16, 0.76]]) {
-        const leaf = sphere(0.22, this.environmentPlan.exterior.foliageColor, { roughness: 0.94 });
-        leaf.scale.set(0.75, 1.55, 0.42);
-        leaf.position.set(this.width - 0.56 + x, y, this.depth - 0.48);
-        this.compositionFallbackRoot.add(leaf);
-      }
-    }
-    if (this._hasFixture('gallery-shelf')) {
-      const shelf = box(1.7, 0.09, 0.25, 0x8f8273, { roughness: 0.86 });
-      shelf.position.set(this.width * 0.28, 1.48, this.depth - 0.12);
-      this.compositionFallbackRoot.add(shelf);
-    }
-  }
-
-  _loadRoomCompositionAsset() {
-    if (!this.roomCompositionAssetRepository?.hasEnvironmentProfile(this.environmentPlan.id)) return;
-    this.root.userData.compositionAssetState = 'loading';
-    this.roomCompositionAssetRepository.createForEnvironmentProfile(this.environmentPlan.id)
-      .then(asset => {
-        if (!asset || this.destroyed) return;
-        // Blender exports forward Y as negative glTF Z. Mirror depth only to align the room-local authored composition.
-        asset.scale.z = -1;
-        asset.userData.kind = 'room-composition-asset';
-        this.compositionAssetRoot = asset;
-        this.root.add(asset);
-        this.compositionFallbackRoot.visible = false;
-        this.root.userData.compositionAssetState = 'ready';
-        this.onCompositionAssetReady?.(asset);
-      })
-      .catch(() => {
-        if (this.destroyed) return;
-        this.root.userData.compositionAssetState = 'fallback';
-        this.compositionFallbackRoot.visible = true;
-        this.onCompositionAssetFallback?.();
-      });
-  }
-
-  getInteractableObjects() {
-    return [...this.interactiveFixtures.values()];
-  }
-
-  moveFixture(fixtureId, x) {
-    const fixture = this.interactiveFixtures.get(fixtureId);
-    if (!fixture) return false;
-    const halfWidth = fixtureId === 'ambient-bookshelf' ? this.fixtureLayout.bookshelf.width / 2 : this.fixtureLayout.mirror.width / 2;
-    const boundedX = THREE.MathUtils.clamp(x, halfWidth, this.width - halfWidth);
-    fixture.position.x = boundedX - fixture.userData.homeX;
-    return true;
-  }
+  getInteractableObjects() { return []; }
+  moveFixture() { return false; }
 
   _buildRoutes() {
     const routeCount = Math.max(1, Math.ceil(this.config.routes.length * this.environmentPlan.exterior.routeScale));
-    for (const route of this.config.routes.slice(0, routeCount)) {
-      let entity;
-      if (route.kind === 'pedestrian') entity = createPedestrian(route.variant);
-      if (route.kind === 'car') entity = createCar(route.variant);
-      if (route.kind === 'animal') entity = createStreetAnimal();
-      if (!entity) continue;
-      entity.userData.route = route;
-      entity.position.y = 0.02;
-      entity.position.z = routeZ(route.lane, this.depth);
-      entity.scale.setScalar(route.kind === 'pedestrian' ? 0.78 : route.kind === 'animal' ? 0.8 : 0.92);
-      this.routeEntities.push(entity);
-      this.root.add(entity);
-    }
+    for (const route of this.config.routes.slice(0, routeCount)) { let entity; if (route.kind === 'pedestrian') entity = createPedestrian(route.variant); if (route.kind === 'car') entity = createCar(route.variant); if (route.kind === 'animal') entity = createStreetAnimal(); if (!entity) continue; entity.userData.route = route; entity.position.y = .02; entity.position.z = routeZ(route.lane, this.depth); entity.scale.setScalar(route.kind === 'pedestrian' ? .78 : route.kind === 'animal' ? .8 : .92); this.routeEntities.push(entity); this.root.add(entity); }
   }
 
   update(time) {
-    const seconds = time * 0.001;
-    for (const entity of this.routeEntities) {
-      const route = entity.userData.route;
-      const motion = getRouteMotion(seconds, route);
-      const normalizedX = route.start + (route.end - route.start) * motion.progress;
-      const gait = route.kind === 'pedestrian' || route.kind === 'animal'
-        ? getGaitPose(seconds, route.phase, route.kind)
-        : null;
-      entity.position.x = normalizedX * this.width;
-      entity.position.z = routeZ(route.lane, this.depth) + (route.kind === 'animal' ? gait.bodySway : 0);
-      entity.rotation.y = motion.direction < 0 ? Math.PI : 0;
-
-      if (route.kind === 'pedestrian') {
-        entity.userData.legs.forEach((leg, index) => {
-          leg.rotation.z = gait.legs[index];
-        });
-        entity.userData.arms.forEach((arm, index) => {
-          arm.rotation.z = gait.arms[index];
-        });
-        entity.position.y = 0.02 + gait.bodyBob;
-      }
-      if (route.kind === 'car') {
-        const wheelAngle = -seconds * route.speed * 34;
-        entity.userData.wheels.forEach(wheel => { wheel.rotation.z = wheelAngle; });
-      }
-      if (route.kind === 'animal') {
-        entity.userData.legs.forEach((leg, index) => {
-          leg.rotation.z = gait.legs[index];
-        });
-        entity.userData.tail.rotation.z = -0.85 + gait.tailSwing;
-        entity.position.y = 0.02 + gait.bodyBob;
-      }
-    }
-    if (this.restingCat) {
-      this.restingCat.userData.tail.rotation.z = -1.1 + Math.sin(seconds * 1.7) * 0.12;
-      this.restingCat.position.y = 0.16 + Math.sin(seconds * 0.8) * 0.008;
-    }
+    const seconds = time * .001;
+    for (const entity of this.routeEntities) { const route = entity.userData.route; const motion = getRouteMotion(seconds, route); const gait = route.kind === 'pedestrian' || route.kind === 'animal' ? getGaitPose(seconds, route.phase, route.kind) : null; entity.position.x = (route.start + (route.end - route.start) * motion.progress) * this.width; entity.position.z = routeZ(route.lane, this.depth) + (route.kind === 'animal' ? gait.bodySway : 0); entity.rotation.y = motion.direction < 0 ? Math.PI : 0; if (route.kind === 'pedestrian') { entity.userData.legs.forEach((leg, index) => { leg.rotation.z = gait.legs[index]; }); entity.userData.arms.forEach((arm, index) => { arm.rotation.z = gait.arms[index]; }); entity.position.y = .02 + gait.bodyBob; } if (route.kind === 'car') { const wheelAngle = -seconds * route.speed * 34; entity.userData.wheels.forEach(wheel => { wheel.rotation.z = wheelAngle; }); } if (route.kind === 'animal') { entity.userData.legs.forEach((leg, index) => { leg.rotation.z = gait.legs[index]; }); entity.userData.tail.rotation.z = -.85 + gait.tailSwing; entity.position.y = .02 + gait.bodyBob; } }
   }
 
-  destroy() {
-    this.destroyed = true;
-    this.root.traverse(child => {
-      child.geometry?.dispose();
-      if (Array.isArray(child.material)) child.material.forEach(value => value.dispose());
-      else child.material?.dispose();
-    });
-    this.scene.remove(this.root);
-  }
+  destroy() { this.destroyed = true; this.root.traverse(child => { child.geometry?.dispose(); if (Array.isArray(child.material)) child.material.forEach(value => value.dispose()); else child.material?.dispose(); }); this.scene.remove(this.root); }
 }
 
 export default LocationEnvironmentSystem;

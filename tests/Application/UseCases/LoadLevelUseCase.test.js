@@ -3,18 +3,18 @@ import { describe, expect, it } from 'vitest';
 import LoadLevelUseCase from '../../../src/Application/UseCases/LoadLevelUseCase.js';
 import LevelDTO from '../../../src/Application/DTOs/LevelDTO.js';
 import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
+import { asV2Level, loadLevelV2Dependencies } from '../../Fixtures/loadLevelV2Dependencies.js';
 
 const briefCatalog = JSON.parse(readFileSync('data/briefs/client-briefs.v2.json', 'utf8'));
 const activeBrief = briefCatalog.briefs.find(brief => brief.id === 'brief-warm-host-001');
-const activeLevel = {
+const activeLevel = asV2Level({
   id: 'level-001',
   roomId: 'room-001',
   roomDimensions: { width: 5, depth: 5 },
   availableItems: ['chair-001'],
   clientBriefId: 'brief-warm-host-001',
-  presentationProfileId: 'warm-starter-living',
-  initialPlacement: []
-};
+  presentationProfileId: 'warm-starter-living'
+});
 
 function createUseCase({ level = activeLevel } = {}) {
   return new LoadLevelUseCase(
@@ -28,7 +28,8 @@ function createUseCase({ level = activeLevel } = {}) {
       })
     },
     { getById: async id => id === 'warm-starter-living' ? { id } : null },
-    { getById: async id => id === activeBrief.id ? activeBrief : null }
+    { getById: async id => id === activeBrief.id ? activeBrief : null },
+    loadLevelV2Dependencies()
   );
 }
 

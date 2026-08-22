@@ -4,6 +4,7 @@ import { ToolbarView } from '../Views/ToolbarView.js';
 import { EvaluationView } from '../Views/EvaluationView.js';
 import { GameDashboardView } from '../Views/GameDashboardView.js';
 import { TransientStatusView } from '../Views/TransientStatusView.js';
+import DesignInspectorView from '../Views/DesignInspectorView.js';
 import { INPUT_INTENTS } from './InputIntent.js';
 import KeyboardIntentRouter from './KeyboardIntentRouter.js';
 import EvaluationCoordinator from './EvaluationCoordinator.js';
@@ -16,19 +17,22 @@ export class GameController {
     moveItemUseCase,
     rotateItemUseCase,
     removeItemUseCase,
+    configurePlacedItemUseCase = null,
+    configureRoomSurfaceUseCase = null,
     evaluateRoomUseCase,
     recordLevelCompletionUseCase,
     startLevelSessionUseCase = null,
     readRoomStateUseCase = null,
     resetRoomAttemptUseCase = null,
     playerProfile = null,
-    furnitureAssetRepository = null,
-    roomCompositionAssetRepository = null
+    furnitureAssetRepository = null
   }) {
     this.placeItemUseCase = placeItemUseCase;
     this.moveItemUseCase = moveItemUseCase;
     this.rotateItemUseCase = rotateItemUseCase;
     this.removeItemUseCase = removeItemUseCase;
+    this.configurePlacedItemUseCase = configurePlacedItemUseCase;
+    this.configureRoomSurfaceUseCase = configureRoomSurfaceUseCase;
     this.evaluateRoomUseCase = evaluateRoomUseCase;
     this.recordLevelCompletionUseCase = recordLevelCompletionUseCase;
     this.startLevelSessionUseCase = startLevelSessionUseCase;
@@ -37,7 +41,6 @@ export class GameController {
     this.playerProfile = playerProfile;
     this.playerSettings = playerProfile?.settings ?? null;
     this.furnitureAssetRepository = furnitureAssetRepository;
-    this.roomCompositionAssetRepository = roomCompositionAssetRepository;
     this.roomView = null;
     this.sessionCoordinator = new LevelSessionCoordinator({
       startLevelSessionUseCase: this.startLevelSessionUseCase,
@@ -54,6 +57,8 @@ export class GameController {
       moveItemUseCase: this.moveItemUseCase,
       rotateItemUseCase: this.rotateItemUseCase,
       removeItemUseCase: this.removeItemUseCase,
+      configurePlacedItemUseCase: this.configurePlacedItemUseCase,
+      configureRoomSurfaceUseCase: this.configureRoomSurfaceUseCase,
       refreshRoomState: () => this._refreshRoomState(),
       onEvaluationInvalidated: () => this._invalidateEvaluation(),
       onStatus: message => this._showStatus(message),
@@ -76,10 +81,9 @@ export class GameController {
     this.completionProfileListener = null;
   }
 
-  async init(canvas, catalogContainer, toolbarContainer, evaluationContainer, dashboardContainer = null, statusContainer = null) {
+  async init(canvas, catalogContainer, toolbarContainer, evaluationContainer, dashboardContainer = null, statusContainer = null, designInspectorContainer = null) {
     this.roomView = new RoomView(canvas, {
-      furnitureAssetRepository: this.furnitureAssetRepository,
-      roomCompositionAssetRepository: this.roomCompositionAssetRepository
+      furnitureAssetRepository: this.furnitureAssetRepository
     });
     if (this.playerSettings) this.roomView.setRenderSettings(this.playerSettings);
     this.catalogView = new ItemCatalogView(catalogContainer, itemId => this.roomInteraction.beginCatalogPlacement(itemId));
@@ -100,11 +104,16 @@ export class GameController {
       renderContextActions: container => this.toolbarView?.renderContextActions(container)
     });
     this.statusView = new TransientStatusView(statusContainer);
+    this.designInspectorView = new DesignInspectorView(designInspectorContainer, {
+      onVariant: variantId => this.roomInteraction.configureSelectedItem(variantId),
+      onSurface: (surface, finishId) => this.roomInteraction.configureSurface(surface, finishId)
+    });
 
     await this.roomView.init();
     await this.catalogView.init();
     await this.toolbarView.init();
     await this.evaluationView.init();
+    await this.designInspectorView.init();
     this.roomView.setInteractionHandlers({
       onSelect: itemId => this.roomInteraction.selectRoomItem(itemId),
       onPlace: (itemId, position, rotation) => this._onPlace(itemId, position, rotation),
@@ -112,8 +121,6 @@ export class GameController {
       onCancelMove: () => this._render(),
       onDeselect: () => this.roomInteraction.cancelSelection(),
       onFloorClick: position => this.roomInteraction.handleFloorClick(position),
-      onFixtureSelect: fixtureId => this.roomInteraction.handleFixtureSelect(fixtureId),
-      onFixtureMove: fixtureId => this.roomInteraction.handleFixtureMove(fixtureId),
       onPreview: (itemId, position, mode, rotation) => this.roomInteraction.preview(itemId, position, mode, rotation)
     });
     // Capture phase keeps shortcuts active even when a catalog/toolbar control owns focus.
@@ -133,6 +140,7 @@ export class GameController {
 
   setPlayerProfile(profile) {
     this.playerProfile = profile;
+    if (this.level && Array.isArray(profile?.unlockedIds)) this.level.unlockedIds = Object.freeze([...profile.unlockedIds]);
     if (profile?.settings) this.setPlayerSettings(profile.settings);
   }
 
@@ -149,6 +157,12 @@ export class GameController {
   _render() {
     this.roomView.render(this.roomViewModel.roomState, this.roomViewModel.selectedItemId);
     this.catalogView.render(this.roomViewModel.availableItems, this.pendingItemId);
+    this.designInspectorView?.render({
+      roomState: this.roomViewModel.roomState,
+      selectedItemId: this.roomViewModel.selectedItemId,
+      surfaceFinishes: this.level.surfaceFinishes,
+      unlockedIds: this.level.unlockedIds
+    });
     this._renderDashboard();
     this.toolbarView.setSelectionState(Boolean(this.roomViewModel.selectedItemId));
     this.toolbarView.setUndoState(this.undoBuffer.canUndo, this.undoBuffer.nextLabel);

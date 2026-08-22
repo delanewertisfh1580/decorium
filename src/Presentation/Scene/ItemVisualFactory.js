@@ -593,7 +593,7 @@ function updateFeedback(group, state, { ghost = false } = {}) {
 }
 
 export class ItemVisualFactory {
-  static create(item, { ghost = false } = {}) {
+  static create(item, { ghost = false, configuration = null } = {}) {
     const group = new THREE.Group();
     const profile = profileFor(item);
     group.userData.itemId = item.id;
@@ -627,9 +627,31 @@ export class ItemVisualFactory {
       if (object.userData.kind === 'item-part' && object.material?.color) object.userData.baseColor = object.material.color.getHex();
     });
     group.userData.detailCount = group.children.filter(child => child.userData.kind === 'item-part').length;
+    ItemVisualFactory.applyConfiguration(group, item, configuration);
 
     if (ghost) ItemVisualFactory.setGhost(group, true);
     return group;
+  }
+
+  static applyConfiguration(group, item, configuration = null) {
+    if (!group || !item) return;
+    if (typeof item.resolveConfiguration !== 'function') {
+      group.userData.variantId = null;
+      group.userData.variantVisual = null;
+      group.userData.variantScale = 1;
+      return;
+    }
+    const resolved = item.resolveConfiguration(configuration);
+    group.userData.variantId = resolved.variantId;
+    group.userData.variantVisual = resolved.visual;
+    group.userData.variantScale = resolved.visual?.scale ?? 1;
+    if (!resolved.visual?.color) return;
+    const color = new THREE.Color(resolved.visual.color).getHex();
+    group.traverse(object => {
+      if (!object.isMesh || !['item-part', 'item-asset-part'].includes(object.userData.kind) || !object.material?.color) return;
+      object.material.color.setHex(color);
+      object.userData.baseColor = color;
+    });
   }
 
   static attachAsset(group, asset) {
@@ -647,6 +669,13 @@ export class ItemVisualFactory {
     group.add(asset);
     group.userData.assetId = asset.userData.assetId ?? null;
     group.userData.assetState = 'ready';
+    const visual = group.userData.variantVisual;
+    if (visual?.color) {
+      const color = new THREE.Color(visual.color).getHex();
+      asset.traverse(object => {
+        if (object.isMesh && object.material?.color) { object.material.color.setHex(color); object.userData.baseColor = color; }
+      });
+    }
     const state = group.userData.feedbackState ?? 'idle';
     updateFeedback(group, state, { ghost: state === 'valid' || state === 'invalid' || state === 'warning' });
   }

@@ -12,7 +12,7 @@ function createMemoryStorage(initial = {}) {
 }
 
 describe('BrowserLocalPlayerProfileRepository settings migration', () => {
-  it('migrates schema v2 settings to v3 defaults and persists the versioned replacement', async () => {
+  it('migrates schema v2 settings to V4 defaults and persists the versioned replacement', async () => {
     const storage = createMemoryStorage({
       'decorium.player-profile': JSON.stringify({
         schemaVersion: 2,
@@ -30,12 +30,13 @@ describe('BrowserLocalPlayerProfileRepository settings migration', () => {
     const result = await repository.load();
 
     expect(result.status).toBe('migrated');
-    expect(result.profile.schemaVersion).toBe(3);
+    expect(result.profile.schemaVersion).toBe(4);
     expect(result.profile.settings).toEqual({
       reducedMotion: true,
       uiScale: 'standard',
       qualityTier: 'balanced'
     });
-    expect(JSON.parse(storage.read('decorium.player-profile')).schemaVersion).toBe(3);
+    expect(result.profile.inventory).toEqual({ unlockedIds: ['base-interior', 'floor-light-oak', 'wall-warm-plaster'], grantedRewardIds: [] });
+    expect(JSON.parse(storage.read('decorium.player-profile')).schemaVersion).toBe(4);
   });
 });

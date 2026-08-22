@@ -52,7 +52,7 @@ describe('BrowserLocalPlayerProfileRepository', () => {
     expect(restored.profile.toJSON()).toEqual(profile.toJSON());
   });
 
-  it('migrates supported v0 data to v3 and persists the migrated contract', async () => {
+  it('migrates supported v0 data to v4 and persists the migrated contract', async () => {
     const storage = new MemoryStorage({
       [PROFILE_KEY]: JSON.stringify({
         schemaVersion: 0,
@@ -69,16 +69,17 @@ describe('BrowserLocalPlayerProfileRepository', () => {
 
     expect(result.status).toBe('migrated');
     expect(result.profile.toJSON()).toMatchObject({
-      schemaVersion: 3,
+      schemaVersion: 4,
       profileId: 'legacy-profile-001',
       settings: { reducedMotion: true, uiScale: 'standard', qualityTier: 'balanced' },
       lastSession: { levelId: 'level-001' },
-      progress: { completedLevels: {} }
+      progress: { completedLevels: {} },
+      inventory: { unlockedIds: ['base-interior', 'floor-light-oak', 'wall-warm-plaster'], grantedRewardIds: [] }
     });
-    expect(JSON.parse(storage.getItem(PROFILE_KEY)).schemaVersion).toBe(3);
+    expect(JSON.parse(storage.getItem(PROFILE_KEY)).schemaVersion).toBe(4);
   });
 
-  it('migrates persisted v1 data to v3 without losing settings or last session', async () => {
+  it('migrates persisted v1 data to v4 without losing settings or last session', async () => {
     const storage = new MemoryStorage({
       [PROFILE_KEY]: JSON.stringify({
         schemaVersion: 1,
@@ -96,11 +97,12 @@ describe('BrowserLocalPlayerProfileRepository', () => {
 
     expect(result.status).toBe('migrated');
     expect(result.profile.toJSON()).toMatchObject({
-      schemaVersion: 3,
+      schemaVersion: 4,
       profileId: 'profile-v1',
       settings: { reducedMotion: true, uiScale: 'standard', qualityTier: 'balanced' },
       lastSession: { levelId: 'level-002' },
-      progress: { completedLevels: {} }
+      progress: { completedLevels: {} },
+      inventory: { unlockedIds: ['base-interior', 'floor-light-oak', 'wall-warm-plaster'], grantedRewardIds: [] }
     });
   });
 
@@ -115,7 +117,7 @@ describe('BrowserLocalPlayerProfileRepository', () => {
   it('rejects data that does not satisfy the current profile contract', async () => {
     const storage = new MemoryStorage({
       [PROFILE_KEY]: JSON.stringify({
-        schemaVersion: 3,
+        schemaVersion: 4,
         profileId: '',
         createdAt: timestamp,
         updatedAt: timestamp,

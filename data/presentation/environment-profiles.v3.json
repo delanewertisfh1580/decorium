@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 3,
+  "profiles": [
+    {
+      "schemaVersion": 3,
+      "id": "warm-starter-living",
+      "label": "Тёплая стартовая гостиная",
+      "room": { "openingsPreset": "living-window-and-door", "cameraPreset": "compact-living", "exteriorCompositionPreset": "residential-porch" },
+      "lightingPreset": "warm-evening",
+      "exteriorPreset": "quiet-residential-street",
+      "sceneLifePreset": "calm-indoor-evening",
+      "presentation": { "title": "Гостиная: Первые шаги", "subtitle": "Освойте композицию и обеденную зону" }
+    },
+    {
+      "schemaVersion": 3,
+      "id": "urban-media-corner",
+      "label": "Городской медиа-уголок",
+      "room": { "openingsPreset": "media-narrow-window", "cameraPreset": "intimate-media", "exteriorCompositionPreset": "urban-cinema-block" },
+      "lightingPreset": "media-dusk",
+      "exteriorPreset": "urban-evening",
+      "sceneLifePreset": "quiet-media-dusk",
+      "presentation": { "title": "Уютный уголок", "subtitle": "Соберите продуманную зону отдыха и просмотра" }
+    },
+    {
+      "schemaVersion": 3,
+      "id": "bright-studio",
+      "label": "Светлая студия",
+      "room": { "openingsPreset": "studio-wide-window", "cameraPreset": "open-studio", "exteriorCompositionPreset": "courtyard-workshop" },
+      "lightingPreset": "bright-daylight",
+      "exteriorPreset": "courtyard-daylight",
+      "sceneLifePreset": "studio-daylight",
+      "presentation": { "title": "Светлая студия", "subtitle": "Сбалансируйте свет, хранение и открытое пространство" }
+    }
+  ]
+}

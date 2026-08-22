@@ -10,8 +10,10 @@ describe('PROD-004 progression composition root', () => {
     expect(mainSource).toContain("import ProgressionPolicy from './Domain/Progression/ProgressionPolicy.js';");
     expect(mainSource).toContain("import GetCampaignLevelsUseCase from './Application/UseCases/GetCampaignLevelsUseCase.js';");
     expect(mainSource).toContain("import RecordLevelCompletionUseCase from './Application/UseCases/RecordLevelCompletionUseCase.js';");
+    expect(mainSource).toContain("import GrantProgressionRewardsUseCase from './Application/UseCases/GrantProgressionRewardsUseCase.js';");
     expect(mainSource).toContain('const progressionPolicy = new ProgressionPolicy();');
     expect(mainSource).toContain('const getCampaignLevelsUseCase = new GetCampaignLevelsUseCase(levelRepository, progressionPolicy);');
+    expect(mainSource).toContain('const grantProgressionRewardsUseCase = new GrantProgressionRewardsUseCase(');
     expect(mainSource).toContain('const recordLevelCompletionUseCase = new RecordLevelCompletionUseCase(');
   });
 
@@ -20,6 +22,8 @@ describe('PROD-004 progression composition root', () => {
     expect(mainSource).toContain('playerProfile,');
     expect(mainSource).toContain('getCampaignLevelsUseCase,');
     expect(mainSource).toContain('controller.setPlayerProfile(playerProfile);');
-    expect(mainSource).toContain('controller.setCompletionProfileListener(levelSelection.refresh);');
+    expect(mainSource).toContain('controller.setCompletionProfileListener(async profile => {');
+    expect(mainSource).toContain('playerProfile = profile;');
+    expect(mainSource).toContain('return levelSelection.refresh(profile);');
   });
 });

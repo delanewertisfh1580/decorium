@@ -2,6 +2,7 @@ import { FeatureVector } from './FeatureVector.js';
 import { Item } from './Item.js';
 import InteractionProfile from './InteractionProfile.js';
 import SpatialBehavior from './SpatialBehavior.js';
+import ItemVariant from './ItemVariant.js';
 
 export class CatalogValidator {
   validate(items) {
@@ -22,6 +23,18 @@ export class CatalogValidator {
       new InteractionProfile(item.interactionProfile);
       if (item.spatialBehavior === undefined) throw new Error(`Item ${item.id}: missing spatialBehavior`);
       new SpatialBehavior(item.spatialBehavior);
+      if (item.variants !== undefined) {
+        if (!Array.isArray(item.variants) || item.variants.length === 0 || typeof item.baseVariantId !== 'string') {
+          throw new Error(`Item ${item.id}: variants and baseVariantId are required together`);
+        }
+        const ids = new Set();
+        for (const variant of item.variants) {
+          const hydrated = new ItemVariant({ ...variant, featureVector: variant.featureVector ? new FeatureVector(variant.featureVector) : null });
+          if (ids.has(hydrated.id)) throw new Error(`Item ${item.id}: duplicate variant ${hydrated.id}`);
+          ids.add(hydrated.id);
+        }
+        if (!ids.has(item.baseVariantId)) throw new Error(`Item ${item.id}: unknown baseVariantId ${item.baseVariantId}`);
+      }
     }
   }
 
@@ -34,6 +47,11 @@ export class CatalogValidator {
       dimensions: data.dimensions,
       price: data.price,
       featureVector: new FeatureVector(data.featureVector),
+      baseVariantId: data.baseVariantId ?? null,
+      variants: (data.variants ?? []).map(variant => new ItemVariant({
+        ...variant,
+        featureVector: variant.featureVector ? new FeatureVector(variant.featureVector) : null
+      })),
       interactionProfile: new InteractionProfile(data.interactionProfile),
       spatialBehavior: new SpatialBehavior(data.spatialBehavior)
     }));

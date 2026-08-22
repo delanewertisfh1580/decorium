@@ -4,7 +4,7 @@ import PlayerProfile from '../../../src/Domain/Profile/PlayerProfile.js';
 const createdAt = '2026-08-14T10:00:00.000Z';
 const completedAt = '2026-08-14T10:05:00.000Z';
 
-describe('PlayerProfile progression v3', () => {
+describe('PlayerProfile progression v4', () => {
   it('creates a versioned empty completion record and records level completion immutably', () => {
     const profile = PlayerProfile.create({ profileId: 'profile-001', timestamp: createdAt });
     const completed = profile.recordLevelCompletion({
@@ -13,7 +13,7 @@ describe('PlayerProfile progression v3', () => {
       updatedAt: completedAt
     });
 
-    expect(profile.schemaVersion).toBe(3);
+    expect(profile.schemaVersion).toBe(4);
     expect(profile.progress).toEqual({ completedLevels: {} });
     expect(completed.progress).toEqual({
       completedLevels: {
