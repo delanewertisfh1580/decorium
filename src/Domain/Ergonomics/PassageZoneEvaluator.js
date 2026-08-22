@@ -6,6 +6,11 @@ function dimensionsFor(placedItem) {
   return placedItem.rotation % 180 === 0 ? dimensions : { x: dimensions.z, z: dimensions.x };
 }
 
+function participatesInPassage(placedItem) {
+  const behavior = placedItem?.item?.spatialBehavior ?? placedItem?.spatialBehavior;
+  return behavior?.isFloorObstacle === true;
+}
+
 function itemRectangle(placedItem) {
   const dimensions = dimensionsFor(placedItem);
   return {
@@ -73,7 +78,7 @@ export class PassageZoneEvaluator {
     const violations = [];
     for (const zone of zones) {
       const zoneRect = zoneRectangle(zone);
-      for (const item of roomState.getItems()) {
+      for (const item of roomState.getItems().filter(participatesInPassage)) {
         const area = overlapArea(itemRectangle(item), zoneRect);
         if (area > 0) violations.push(new PassageZoneViolation(zone, item, area));
       }

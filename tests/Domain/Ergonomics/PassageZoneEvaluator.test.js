@@ -15,13 +15,13 @@ const featureVector = new FeatureVector({
   priceNorm: 0.5, lightingFunctionShare: 0, storageFunctionShare: 0
 });
 
-function createItem(id, dimensions = { x: 1, z: 1 }) {
+function createItem(id, dimensions = { x: 1, z: 1 }, spatialBehavior = new SpatialBehavior({
+  schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
+})) {
   return new Item({
     id, name: id, type: 'seating', dimensions, featureVector,
     interactionProfile: new InteractionProfile({ schemaVersion: 1, affordances: ['lounge-seat'] }),
-    spatialBehavior: new SpatialBehavior({
-      schemaVersion: 1, placementKind: 'floor', occupancyMode: 'occupies', clearanceMode: 'obstacle', supportMode: 'none'
-    })
+    spatialBehavior
   });
 }
 
@@ -68,5 +68,14 @@ describe('PassageZoneEvaluator', () => {
     const room = roomWith([createItem('bench-001', { x: 2, z: 0.4 }), { x: 1.1, z: 3 }, 90]);
 
     expect(new PassageZoneEvaluator().evaluate(room, [entrance])).toHaveLength(1);
+  });
+
+  it('ignores non-floor artifacts even when their visual footprint overlaps a passage zone', () => {
+    const overlay = new SpatialBehavior({
+      schemaVersion: 1, placementKind: 'floor-overlay', occupancyMode: 'ignored', clearanceMode: 'ignored', supportMode: 'none'
+    });
+    const room = roomWith([createItem('rug-001', { x: 1.2, z: 2 }, overlay), { x: 0.6, z: 2.5 }]);
+
+    expect(new PassageZoneEvaluator().evaluate(room, [entrance])).toEqual([]);
   });
 });
