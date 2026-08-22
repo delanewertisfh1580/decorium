@@ -142,6 +142,13 @@ export class ItemCatalogView {
     grid.scrollTop = this.scrollTop;
   }
 
+  open() {
+    this.isOpen = true;
+    this.container.classList.add('is-open');
+    const spoiler = this.container.querySelector('[data-catalog-spoiler]');
+    if (spoiler) spoiler.open = true;
+  }
+
   close() {
     this._captureContinuityState();
     this.isOpen = false;

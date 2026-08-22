@@ -285,7 +285,9 @@ async function bootstrap() {
       document.getElementById('evaluation-container'),
       document.getElementById('dashboard-container'),
       document.getElementById('boot-status'),
-      document.getElementById('design-inspector-container')
+      document.getElementById('design-inspector-container'),
+      document.getElementById('brief-container'),
+      document.getElementById('workspace-shell')
     );
     const settingsInitialization = await initializePlayerSettingsForApp({
       updatePlayerSettingsUseCase,
@@ -306,7 +308,7 @@ async function bootstrap() {
     });
     playerProfile = mainMenu.profile;
     controller.setPlayerProfile(playerProfile);
-    controller.setMainMenuListener(() => mainMenu.show());
+    controller.setMainMenuListener(() => mainMenu.showCampaign());
     controller.setCompletionProfileListener(async profile => {
       playerProfile = profile;
       return mainMenu.refresh(profile);

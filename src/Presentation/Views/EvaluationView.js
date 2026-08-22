@@ -23,21 +23,24 @@ function severityLabel(severity) {
   return ({ high: 'Высокая важность', medium: 'Средняя важность', low: 'Низкая важность' })[severity?.level] ?? 'Требует внимания';
 }
 
-function completionStatus(explanation) {
+function severityRank(violation) {
+  if (violation.severity?.critical) return 4;
+  return ({ high: 3, medium: 2, low: 1 })[violation.severity?.level] ?? 0;
+}
+
+function completionMarkup(explanation, result) {
   const scorecard = explanation?.scorecard;
-  if (!scorecard) return '';
-  const state = scorecard.completionEligible === false ? 'blocked' : 'eligible';
-  const title = state === 'blocked' ? 'Выполнение заказа заблокировано' : 'Условия завершения выполнены';
-  const detail = state === 'blocked'
+  const blocked = scorecard?.completionEligible === false;
+  const title = blocked ? 'Выполнение заказа заблокировано' : 'Условия завершения выполнены';
+  const detail = blocked
     ? 'Исправьте критичные пункты, чтобы подтвердить выполнение заказа.'
     : 'Оценка соответствует условиям брифа клиента.';
-  return `
-    <aside class="completion-status ${state}" data-completion-status="${state}" aria-live="polite">
-      <strong>${title}</strong>
-      <span>Исходно: ${formatNumber(scorecard.rawScore * 100)}/100 · ${scorecard.rawStars} ★; отображается: ${scorecard.displayStars} ★.</span>
-      <p>${detail}</p>
-    </aside>
-  `;
+  const sourceScore = scorecard?.rawScore ?? result.score;
+  const sourceStars = scorecard?.displayStars ?? result.stars;
+  return `<section class="review-hero ${blocked ? 'blocked' : 'eligible'}" data-review-hero data-completion-status="${blocked ? 'blocked' : 'eligible'}">
+    <div class="review-score"><span class="stars" aria-label="${sourceStars} из 5 звёзд">${'★'.repeat(sourceStars)}${'☆'.repeat(5 - sourceStars)}</span><strong>${Math.round(sourceScore * 100)}<small>/100</small></strong></div>
+    <div><span class="eyebrow">Итог проверки</span><h2>${title}</h2><p>${detail}</p></div>
+  </section>`;
 }
 
 function impactText(impact) {
@@ -55,99 +58,142 @@ function impactText(impact) {
   return `Улучшение при исправлении: ${scoreDelta}${starsDelta}${completion}.`;
 }
 
-function explanationCard(violation) {
+function instanceActions(violation) {
   const instances = Array.isArray(violation.instances) ? violation.instances : [];
-  const instanceActions = instances.length > 0
-    ? `<ul class="explanation-instance-list">${instances.map(instance => `
-        <li><button type="button" data-focus-instance="${escapeHtml(instance.instanceId)}" aria-label="Показать ${escapeHtml(instance.displayName)} в комнате">Показать: ${escapeHtml(instance.displayName)}</button></li>
-      `).join('')}</ul>`
-    : '<p class="explanation-room-scope">Нет размещённых предметов для выбора.</p>';
-
-  return `
-    <article class="explanation-card severity-${escapeHtml(violation.severity?.level)}" data-violation-id="${escapeHtml(violation.id)}">
-      <header>
-        <span class="explanation-severity">${escapeHtml(severityLabel(violation.severity))}</span>
-        <span class="explanation-channel">${escapeHtml(channelLabel(violation.channel))}</span>
-      </header>
-      ${violation.priority ? `<p class="explanation-priority">Запрос клиента: ${escapeHtml(violation.priority.label)}</p>` : ''}
-      <h3>${escapeHtml(violation.rule?.description)}</h3>
-      <dl class="explanation-facts">
-        <div><dt>Фактически</dt><dd>${escapeHtml(formatNumber(violation.fact?.actual))}</dd></div>
-        <div><dt>Требуется</dt><dd>${escapeHtml(formatNumber(violation.fact?.desired))}</dd></div>
-      </dl>
-      <p class="explanation-impact">${escapeHtml(impactText(violation.impact))}</p>
-      <p class="explanation-remediation">${escapeHtml(violation.remediation)}</p>
-      ${instanceActions}
-    </article>
-  `;
+  if (instances.length === 0) return '<p class="explanation-room-scope">Нет размещённых предметов для выбора.</p>';
+  return `<ul class="explanation-instance-list">${instances.map(instance => (
+    `<li><button type="button" data-focus-instance="${escapeHtml(instance.instanceId)}" aria-label="Показать ${escapeHtml(instance.displayName)} в комнате">Показать: ${escapeHtml(instance.displayName)}</button></li>`
+  )).join('')}</ul>`;
 }
 
-function explanationList(explanation) {
-  if (!explanation || ![1, 2].includes(explanation.schemaVersion) || !Array.isArray(explanation.violations) || explanation.violations.length === 0) {
-    return '';
-  }
-  return `<ol class="explanation-list" data-explanation-list>${explanation.violations.map(violation => (
-    `<li>${explanationCard(violation)}</li>`
-  )).join('')}</ol>`;
+function issueFacts(violation) {
+  return `<dl class="explanation-facts"><div><dt>Фактически</dt><dd>${escapeHtml(formatNumber(violation.fact?.actual))}</dd></div><div><dt>Требуется</dt><dd>${escapeHtml(formatNumber(violation.fact?.desired))}</dd></div></dl>`;
+}
+
+function issueRow(violation, selected) {
+  return `<li><article class="review-issue severity-${escapeHtml(violation.severity?.level)}${selected ? ' is-selected' : ''}" data-review-issue="${escapeHtml(violation.id)}" data-violation-id="${escapeHtml(violation.id)}">
+    <button type="button" class="review-issue-select" data-select-issue="${escapeHtml(violation.id)}" aria-pressed="${selected}">
+      <span class="explanation-severity">${escapeHtml(severityLabel(violation.severity))}</span>
+      <span class="explanation-channel">${escapeHtml(channelLabel(violation.channel))}</span>
+      <strong>${escapeHtml(violation.priority?.label ?? violation.rule?.description)}</strong>
+      <span>${escapeHtml(violation.remediation)}</span>
+    </button>
+    ${issueFacts(violation)}
+    ${instanceActions(violation)}
+  </article></li>`;
+}
+
+function issueDetail(violation) {
+  if (!violation) return '<aside class="review-issue-detail empty" data-review-detail><p>Для выбранного фильтра нет рекомендаций.</p></aside>';
+  return `<aside class="review-issue-detail explanation-card severity-${escapeHtml(violation.severity?.level)}" data-review-detail>
+    <header><span class="explanation-severity">${escapeHtml(severityLabel(violation.severity))}</span><span class="explanation-channel">${escapeHtml(channelLabel(violation.channel))}</span></header>
+    ${violation.priority ? `<p class="explanation-priority">Запрос клиента: ${escapeHtml(violation.priority.label)}</p>` : ''}
+    <h3>${escapeHtml(violation.rule?.description)}</h3>
+    ${issueFacts(violation)}
+    <p class="explanation-impact">${escapeHtml(impactText(violation.impact))}</p>
+    <p class="explanation-remediation">${escapeHtml(violation.remediation)}</p>
+    ${instanceActions(violation)}
+  </aside>`;
+}
+
+function scoreChannels(result) {
+  const hasSubScores = typeof result.styleScore === 'number' && typeof result.ergonomicsScore === 'number';
+  if (!hasSubScores) return '';
+  const clientPriorityChannel = typeof result.clientPriorityScore === 'number'
+    ? `<div data-score-channel="client-priority"><dt>Запросы клиента</dt><dd>${Math.round(result.clientPriorityScore * 100)}<small>/100</small></dd></div>`
+    : '';
+  const targetRows = Array.isArray(result.scoreBreakdown?.style?.targets) && result.scoreBreakdown.style.targets.length > 0
+    ? `<ul class="style-target-breakdown" aria-label="Целевые стили клиента">${result.scoreBreakdown.style.targets.map(target => (
+      `<li data-style-target="${escapeHtml(target.styleId)}"><span>${escapeHtml(target.label ?? target.styleId)} · ${escapeHtml(target.role)}</span><strong>${Math.round(target.score * 100)}/100</strong></li>`
+    )).join('')}</ul>`
+    : '';
+  return `<div class="review-metrics"><dl class="score-channels" aria-label="Состав оценки">
+    <div data-score-channel="style"><dt>Стиль</dt><dd>${Math.round(result.styleScore * 100)}<small>/100</small></dd></div>
+    ${clientPriorityChannel}
+    <div data-score-channel="ergonomics"><dt>Эргономика</dt><dd>${Math.round(result.ergonomicsScore * 100)}<small>/100</small></dd></div>
+  </dl>${targetRows}</div>`;
+}
+
+function orderedViolations(explanation) {
+  if (!explanation || ![1, 2].includes(explanation.schemaVersion) || !Array.isArray(explanation.violations)) return [];
+  return [...explanation.violations].sort((left, right) => {
+    const severity = severityRank(right) - severityRank(left);
+    if (severity !== 0) return severity;
+    return (right.impact?.totalScoreDelta ?? 0) - (left.impact?.totalScoreDelta ?? 0);
+  });
+}
+
+function matchesFilter(violation, filter) {
+  if (filter === 'all') return true;
+  if (filter === 'critical') return violation.severity?.critical === true;
+  return violation.channel === filter;
 }
 
 export class EvaluationView {
-  constructor(container, { onFocusInstance = null } = {}) {
+  constructor(container, { onFocusInstance = null, onClose = null } = {}) {
     this.container = container;
-    if (onFocusInstance !== null && typeof onFocusInstance !== 'function') {
-      throw new Error('EvaluationView onFocusInstance must be a function or null');
-    }
+    if (onFocusInstance !== null && typeof onFocusInstance !== 'function') throw new Error('EvaluationView onFocusInstance must be a function or null');
+    if (onClose !== null && typeof onClose !== 'function') throw new Error('EvaluationView onClose must be a function or null');
     this.onFocusInstance = onFocusInstance;
+    this.onClose = onClose;
+    this.selectedViolationId = null;
+    this.filter = 'all';
+    this.result = null;
   }
 
   async init() {}
 
   render(result) {
-    const feedback = Array.isArray(result.feedback) ? result.feedback : [result.feedback];
-    const feedbackItems = feedback.filter(Boolean).map(message => `<li>${escapeHtml(message)}</li>`).join('');
-    const violations = result.violations?.length
-      ? `<p class="score-label">${result.violations.length} подсказок для следующей попытки</p>`
-      : '<p class="score-label success-note">Комната собрана гармонично</p>';
-    const hasSubScores = typeof result.styleScore === 'number' && typeof result.ergonomicsScore === 'number';
-    const targetRows = Array.isArray(result.scoreBreakdown?.style?.targets) && result.scoreBreakdown.style.targets.length > 0
-      ? `<ul class="style-target-breakdown" aria-label="Целевые стили клиента">${result.scoreBreakdown.style.targets.map(target => (
-        `<li data-style-target="${escapeHtml(target.styleId)}"><span>${escapeHtml(target.label ?? target.styleId)} · ${escapeHtml(target.role)}</span><strong>${Math.round(target.score * 100)}/100</strong></li>`
-      )).join('')}</ul>`
+    this.result = result;
+    this.filter = 'all';
+    this.selectedViolationId = null;
+    this._render();
+  }
+
+  _render() {
+    const result = this.result;
+    const feedback = (Array.isArray(result.feedback) ? result.feedback : [result.feedback]).filter(Boolean);
+    const allIssues = orderedViolations(result.explanation);
+    const issues = allIssues.filter(issue => matchesFilter(issue, this.filter));
+    if (!issues.some(issue => issue.id === this.selectedViolationId)) this.selectedViolationId = issues[0]?.id ?? null;
+    const selected = issues.find(issue => issue.id === this.selectedViolationId) ?? null;
+    const feedbackMarkup = feedback.length && allIssues.length === 0
+      ? `<ul class="feedback">${feedback.map(message => `<li>${escapeHtml(message)}</li>`).join('')}</ul>`
       : '';
-    const clientPriorityChannel = typeof result.clientPriorityScore === 'number'
-      ? `<div data-score-channel="client-priority"><dt>Запросы клиента</dt><dd>${Math.round(result.clientPriorityScore * 100)}<small>/100</small></dd></div>`
-      : '';
-    const subScores = hasSubScores ? `
-      <dl class="score-channels" aria-label="Состав оценки">
-        <div data-score-channel="style"><dt>Стиль</dt><dd>${Math.round(result.styleScore * 100)}<small>/100</small></dd></div>
-        ${clientPriorityChannel}
-        <div data-score-channel="ergonomics"><dt>Эргономика</dt><dd>${Math.round(result.ergonomicsScore * 100)}<small>/100</small></dd></div>
-      </dl>
-      ${targetRows}
-    ` : '';
-    const explanation = result.explanation;
-    this.container.innerHTML = `
-      <section class="evaluation-card panel" aria-labelledby="evaluation-title">
-        <button class="close" type="button" data-close aria-label="Закрыть результат">×</button>
-        <span class="eyebrow">Итоги комнаты</span>
-        <h2 id="evaluation-title">Результат расстановки</h2>
-        <div class="evaluation-result-row">
-          <div class="stars" aria-label="${result.stars} из 5 звёзд">${'★'.repeat(result.stars)}${'☆'.repeat(5 - result.stars)}</div>
-          <div class="evaluation-score">${Math.round(result.score * 100)}<small>/100</small></div>
-        </div>
-        ${completionStatus(explanation)}
-        ${subScores}
-        ${violations}
-        ${explanationList(explanation)}
-        <ul class="feedback">${feedbackItems}</ul>
+    const reportedIssueCount = allIssues.length || (Array.isArray(result.violations) ? result.violations.length : 0);
+    const prompt = reportedIssueCount > 0 ? `${reportedIssueCount} подсказок для следующей попытки` : 'Комната собрана гармонично';
+    const filters = [['all', 'Все'], ['critical', 'Критичные'], ['style', 'Стиль'], ['client-priority', 'Клиент'], ['ergonomics', 'Эргономика']];
+
+    this.container.innerHTML = `<section class="review-workspace" data-review-workspace aria-labelledby="evaluation-title">
+      <header class="review-topbar"><div><span class="eyebrow">Результат расстановки</span><h1 id="evaluation-title">Проверка комнаты</h1></div><button class="close" type="button" data-close aria-label="Вернуться к редактированию">×</button></header>
+      ${completionMarkup(result.explanation, result)}
+      ${scoreChannels(result)}
+      <section class="review-repairs" aria-labelledby="review-repairs-title">
+        <header class="review-repairs-header"><div><h2 id="review-repairs-title">Что исправить</h2><p class="score-label${allIssues.length ? '' : ' success-note'}">${prompt}</p></div><div class="review-filters" role="toolbar" aria-label="Фильтр рекомендаций">${filters.map(([id, label]) => `<button type="button" data-review-filter="${id}" aria-pressed="${this.filter === id}">${label}</button>`).join('')}</div></header>
+        <div class="review-body"><ol class="review-issue-list" data-review-issue-list data-explanation-list>${issues.map(issue => issueRow(issue, issue.id === this.selectedViolationId)).join('')}</ol>${issueDetail(selected)}</div>
       </section>
-    `;
-    this.container.querySelector('[data-close]').onclick = () => this.hide();
-    this.container.querySelectorAll('[data-focus-instance]').forEach(button => {
-      button.onclick = () => this.onFocusInstance?.(button.dataset.focusInstance);
+      ${feedbackMarkup}
+      <footer class="review-footer"><button type="button" class="review-continue" data-close>Вернуться к редактированию</button></footer>
+    </section>`;
+
+    this.container.querySelectorAll('[data-close]').forEach(button => { button.onclick = () => { this.hide(); this.onClose?.(); }; });
+    this.container.querySelectorAll('[data-focus-instance]').forEach(button => { button.onclick = () => this.onFocusInstance?.(button.dataset.focusInstance); });
+    this.container.querySelectorAll('[data-select-issue]').forEach(button => {
+      button.onclick = () => { this.selectedViolationId = button.dataset.selectIssue; this._render(); };
+    });
+    this.container.querySelectorAll('[data-review-filter]').forEach(button => {
+      button.onclick = () => { this.filter = button.dataset.reviewFilter; this._render(); };
     });
   }
 
-  hide() { this.container.replaceChildren(); }
+  hide() {
+    this.container.replaceChildren();
+    this.result = null;
+    this.selectedViolationId = null;
+    this.filter = 'all';
+  }
+
   destroy() { this.hide(); }
 }
+
+export default EvaluationView;

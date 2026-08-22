@@ -96,6 +96,11 @@ export async function initializeMainMenuForApp({
     screen = 'home';
     render();
   };
+  const showCampaign = async () => {
+    await loadCampaign();
+    screen = 'campaign';
+    render();
+  };
   const refresh = async updatedProfile => {
     if (!updatedProfile) throw new Error('initializeMainMenuForApp: updated profile is required.');
     currentProfile = updatedProfile;
@@ -104,7 +109,7 @@ export async function initializeMainMenuForApp({
     return campaignLevels;
   };
 
-  return { profile: currentProfile, refresh, show, destroy: () => view.destroy() };
+  return { profile: currentProfile, refresh, show, showCampaign, destroy: () => view.destroy() };
 }
 
 export default initializeMainMenuForApp;

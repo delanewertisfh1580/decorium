@@ -5,6 +5,9 @@ import { EvaluationView } from '../Views/EvaluationView.js';
 import { GameDashboardView } from '../Views/GameDashboardView.js';
 import { TransientStatusView } from '../Views/TransientStatusView.js';
 import DesignInspectorView from '../Views/DesignInspectorView.js';
+import BriefView from '../Views/BriefView.js';
+import WorkspaceShellView from '../Views/WorkspaceShellView.js';
+import WorkspaceState, { WORKSPACE_DRAWERS, WORKSPACE_SCREENS } from '../UI/WorkspaceState.js';
 import { INPUT_INTENTS } from './InputIntent.js';
 import KeyboardIntentRouter from './KeyboardIntentRouter.js';
 import EvaluationCoordinator from './EvaluationCoordinator.js';
@@ -79,18 +82,34 @@ export class GameController {
       onFocusItem: instanceId => this.roomInteraction.focusExistingItem(instanceId)
     });
     this.dashboardView = null;
+    this.briefView = null;
+    this.briefDrawerView = null;
+    this.workspaceShellView = null;
+    this.workspaceState = WorkspaceState.edit();
     this.statusView = null;
     this.keyboardRouter = null;
     this.completionProfileListener = null;
     this.mainMenuListener = null;
   }
 
-  async init(canvas, catalogContainer, toolbarContainer, evaluationContainer, dashboardContainer = null, statusContainer = null, designInspectorContainer = null) {
+  async init(canvas, catalogContainer, toolbarContainer, evaluationContainer, dashboardContainer = null, statusContainer = null, designInspectorContainer = null, briefContainer = null, workspaceShellContainer = null) {
     this.roomView = new RoomView(canvas, {
       furnitureAssetRepository: this.furnitureAssetRepository
     });
     if (this.playerSettings) this.roomView.setRenderSettings(this.playerSettings);
-    this.catalogView = new ItemCatalogView(catalogContainer, itemId => this.roomInteraction.beginCatalogPlacement(itemId));
+    this.workspaceShellView = new WorkspaceShellView(workspaceShellContainer, {
+      onCatalog: () => this._openCatalogDrawer(),
+      onBrief: () => this._openBriefDrawer(),
+      onUndo: () => this._dispatchIntent(INPUT_INTENTS.UNDO),
+      onEvaluate: () => this._dispatchIntent(INPUT_INTENTS.EVALUATE),
+      onCampaign: () => this.openMainMenu(),
+      onRoom: () => this._openRoomInspector(),
+    });
+    this.workspaceShellView.render({ state: this.workspaceState });
+    this.catalogView = new ItemCatalogView(this.workspaceShellView.catalogContainer ?? catalogContainer, itemId => this.roomInteraction.beginCatalogPlacement(itemId));
+    this.briefDrawerView = new BriefView(this.workspaceShellView.briefContainer, {
+      onClose: () => this._closeWorkspaceDrawer()
+    });
     this.toolbarView = new ToolbarView(toolbarContainer, {
       onRotate: () => this._dispatchIntent(INPUT_INTENTS.ROTATE),
       onDelete: () => this._dispatchIntent(INPUT_INTENTS.DELETE),
@@ -103,15 +122,25 @@ export class GameController {
       onMenu: () => this.openMainMenu()
     });
     this.evaluationView = new EvaluationView(evaluationContainer, {
-      onFocusInstance: instanceId => this._onExplainabilityFocus(instanceId)
+      onFocusInstance: instanceId => this._onExplainabilityFocus(instanceId),
+      onClose: () => this._exitReviewWorkspace()
     });
     this.dashboardView = new GameDashboardView(dashboardContainer, {
       renderContextActions: container => this.toolbarView?.renderContextActions(container)
     });
     this.statusView = new TransientStatusView(statusContainer);
-    this.designInspectorView = new DesignInspectorView(designInspectorContainer, {
+    this.briefView = new BriefView(briefContainer, {
+      onStartEditing: () => this._enterEditWorkspace(),
+      onClose: () => this._enterEditWorkspace()
+    });
+    this.designInspectorView = new DesignInspectorView(this.workspaceShellView.inspectorContainer ?? designInspectorContainer, {
       onVariant: variantId => this.roomInteraction.configureSelectedItem(variantId),
-      onSurface: (surface, finishId) => this.roomInteraction.configureSurface(surface, finishId)
+      onSurface: (surface, finishId) => this.roomInteraction.configureSurface(surface, finishId),
+      onRaise: () => this._dispatchIntent(INPUT_INTENTS.RAISE),
+      onLower: () => this._dispatchIntent(INPUT_INTENTS.LOWER),
+      onRotate: () => this._dispatchIntent(INPUT_INTENTS.ROTATE),
+      onDelete: () => this._dispatchIntent(INPUT_INTENTS.DELETE),
+      onClose: () => this._closeWorkspaceDrawer()
     });
 
     await this.roomView.init();
@@ -169,23 +198,104 @@ export class GameController {
 
   async loadLevel(levelId) {
     await this.sessionCoordinator.load(levelId);
+    this.workspaceState = this.workspaceState.openBrief();
+    this._render();
+    this._renderBrief();
+  }
+
+  _enterEditWorkspace() {
+    this.workspaceState = WorkspaceState.edit();
+    this.briefView?.hide();
+    this.briefDrawerView?.hide();
+    this._renderWorkspaceShell();
+  }
+
+  _closeWorkspaceDrawer() {
+    this.workspaceState = this.workspaceState.dismiss();
+    this.briefDrawerView?.hide();
+    this.catalogView?.close();
+    this._renderWorkspaceShell();
+  }
+
+  _openCatalogDrawer() {
+    this.workspaceState = this.workspaceState.openDrawer(WORKSPACE_DRAWERS.CATALOG);
+    this.briefDrawerView?.hide();
+    this.catalogView?.open();
     this._render();
   }
 
   async loadEndlessRun(seed) {
     await this.sessionCoordinator.loadEndless(seed);
+    this.workspaceState = WorkspaceState.edit();
     this._render();
   }
 
-  _render() {
-    this.roomView.render(this.roomViewModel.roomState, this.roomViewModel.selectedItemId);
-    this.catalogView.render(this.roomViewModel.availableItems, this.pendingItemId);
-    this.designInspectorView?.render({
-      roomState: this.roomViewModel.roomState,
-      selectedItemId: this.roomViewModel.selectedItemId,
-      surfaceFinishes: this.level.surfaceFinishes,
-      unlockedIds: this.level.unlockedIds
+  _openBriefDrawer() {
+    this.workspaceState = this.workspaceState.openDrawer(WORKSPACE_DRAWERS.BRIEF);
+    this.catalogView?.close();
+    this._renderWorkspaceShell();
+    this._renderBriefDrawer();
+  }
+
+  _openRoomInspector() {
+    this.workspaceState = this.workspaceState.openDrawer(WORKSPACE_DRAWERS.INSPECTOR_ROOM);
+    this.catalogView?.close();
+    this.briefDrawerView?.hide();
+    this._render();
+  }
+
+  _renderWorkspaceShell() {
+    this.workspaceShellView?.render({
+      state: this.workspaceState,
+      levelLabel: this.roomViewModel?.name ?? this.level?.id ?? 'Комната',
+      placedCount: this.roomViewModel?.placedItems?.length ?? 0,
+      canUndo: this.undoBuffer?.canUndo ?? false
     });
+  }
+
+  _renderBrief() {
+    if (this.workspaceState.screen !== WORKSPACE_SCREENS.BRIEF || !this.level?.clientBrief) return;
+    this.briefView?.render({
+      brief: this.level.clientBrief,
+      mode: 'launch',
+      levelLabel: this.roomViewModel?.name ?? this.level.id
+    });
+  }
+
+  _renderBriefDrawer() {
+    if (this.workspaceState.activeDrawer !== WORKSPACE_DRAWERS.BRIEF || !this.level?.clientBrief) return;
+    this.briefDrawerView?.render({
+      brief: this.level.clientBrief,
+      mode: 'drawer',
+      levelLabel: this.roomViewModel?.name ?? this.level.id
+    });
+  }
+
+  _render() {
+    const selectedItemId = this.roomViewModel.selectedItemId;
+    if (this.workspaceState.screen === WORKSPACE_SCREENS.EDIT && selectedItemId) {
+      this.workspaceState = this.workspaceState.openDrawer(WORKSPACE_DRAWERS.INSPECTOR_ITEM);
+      this.catalogView?.close();
+      this.briefDrawerView?.hide();
+    }
+    if (this.workspaceState.activeDrawer === WORKSPACE_DRAWERS.INSPECTOR_ITEM && !selectedItemId) {
+      this.workspaceState = this.workspaceState.dismiss();
+    }
+    this.roomView.render(this.roomViewModel.roomState, selectedItemId);
+    this._renderWorkspaceShell();
+    if (this.workspaceState.activeDrawer === WORKSPACE_DRAWERS.CATALOG) {
+      this.catalogView.render(this.roomViewModel.availableItems, this.pendingItemId);
+    } else if (this.workspaceState.activeDrawer === WORKSPACE_DRAWERS.BRIEF) {
+      this._renderBriefDrawer();
+    }
+    if ([WORKSPACE_DRAWERS.INSPECTOR_ITEM, WORKSPACE_DRAWERS.INSPECTOR_ROOM].includes(this.workspaceState.activeDrawer)) {
+      this.designInspectorView?.render({
+        roomState: this.roomViewModel.roomState,
+        selectedItemId: this.workspaceState.activeDrawer === WORKSPACE_DRAWERS.INSPECTOR_ITEM ? selectedItemId : null,
+        surfaceFinishes: this.level.surfaceFinishes,
+        unlockedIds: this.level.unlockedIds
+      });
+    }
     this._renderDashboard();
     this.toolbarView.setSelectionState(Boolean(this.roomViewModel.selectedItemId));
     this.toolbarView.setUndoState(this.undoBuffer.canUndo, this.undoBuffer.nextLabel);
@@ -255,11 +365,20 @@ export class GameController {
   }
 
   async _onEvaluate() {
-    return this.evaluationCoordinator.evaluate({
+    this.workspaceState = this.workspaceState.openReview();
+    this._renderWorkspaceShell();
+    const result = await this.evaluationCoordinator.evaluate({
       level: this.level,
       roomViewModel: this.roomViewModel,
       profile: this.playerProfile
     });
+    if (!result.success) this._exitReviewWorkspace();
+    return result;
+  }
+
+  _exitReviewWorkspace() {
+    this.workspaceState = WorkspaceState.edit();
+    this._renderWorkspaceShell();
   }
 
 
@@ -342,6 +461,9 @@ export class GameController {
     this.toolbarView?.destroy();
     this.evaluationView?.destroy();
     this.dashboardView?.destroy();
+    this.briefView?.destroy();
+    this.briefDrawerView?.destroy();
+    this.workspaceShellView?.destroy();
     this.statusView?.destroy();
   }
 }

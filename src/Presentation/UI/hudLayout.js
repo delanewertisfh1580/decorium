@@ -1,40 +1,38 @@
 const freeze = value => Object.freeze(value);
 
 export const HUD_LAYOUT = freeze({
-  referenceSurface: 'scene-first',
+  referenceSurface: 'workspace',
   regions: freeze({
-    brand: 'top-left',
-    summary: 'top-right',
-    inventory: 'bottom-left',
-    actions: 'bottom-right'
+    appBar: 'top',
+    drawer: 'contextual',
+    commandDock: 'bottom',
+    review: 'modal'
   }),
-  maxPanelOpacity: 0.88,
+  maxPanelOpacity: 0.96,
   controlMinHeight: 44,
   actionLabelSize: 16,
-  inventoryCardWidth: 144,
   mobileBreakpoint: 720,
   safeAreaPadding: 12,
-  catalogCollapsedByDefault: true,
-  scoreCollapsedByDefault: true,
-  helpCollapsedByDefault: true,
-  contextualHintsOnly: true
+  singleActiveDrawer: true,
+  briefIsStandalone: true,
+  reviewIsStandalone: true,
+  contextualInspector: true
 });
 
 export function validateHudLayout(layout) {
   const errors = [];
-  const requiredRegions = ['brand', 'summary', 'inventory', 'actions'];
+  const requiredRegions = ['appBar', 'drawer', 'commandDock', 'review'];
 
-  if (layout?.referenceSurface !== 'scene-first') errors.push('referenceSurface');
+  if (layout?.referenceSurface !== 'workspace') errors.push('referenceSurface');
   if (!layout?.regions || requiredRegions.some(region => !layout.regions[region])) errors.push('regions');
-  if (!Number.isFinite(layout?.maxPanelOpacity) || layout.maxPanelOpacity > 0.9) errors.push('maxPanelOpacity');
+  if (!Number.isFinite(layout?.maxPanelOpacity) || layout.maxPanelOpacity < 0.92 || layout.maxPanelOpacity > 1) errors.push('maxPanelOpacity');
   if (!Number.isFinite(layout?.controlMinHeight) || layout.controlMinHeight < 44) errors.push('controlMinHeight');
   if (!Number.isFinite(layout?.actionLabelSize) || layout.actionLabelSize > 16) errors.push('actionLabelSize');
-  if (!Number.isFinite(layout?.inventoryCardWidth) || layout.inventoryCardWidth < 132) errors.push('inventoryCardWidth');
   if (!Number.isFinite(layout?.mobileBreakpoint) || layout.mobileBreakpoint < 560) errors.push('mobileBreakpoint');
-  if (layout?.catalogCollapsedByDefault !== true) errors.push('catalogCollapsedByDefault');
-  if (layout?.scoreCollapsedByDefault !== true) errors.push('scoreCollapsedByDefault');
-  if (layout?.helpCollapsedByDefault !== true) errors.push('helpCollapsedByDefault');
-  if (layout?.contextualHintsOnly !== true) errors.push('contextualHintsOnly');
+  if (layout?.singleActiveDrawer !== true) errors.push('singleActiveDrawer');
+  if (layout?.briefIsStandalone !== true) errors.push('briefIsStandalone');
+  if (layout?.reviewIsStandalone !== true) errors.push('reviewIsStandalone');
+  if (layout?.contextualInspector !== true) errors.push('contextualInspector');
 
   return errors;
 }
