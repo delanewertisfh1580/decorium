@@ -15,7 +15,7 @@ const rawLevel = asV2Level({
   availableItems: ['chair-001']
 });
 const rawBrief = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   id: 'brief-warm-host-001',
   levelId: 'level-001',
   client: { id: 'client-warm-host', displayName: 'Марина и Алексей' },
@@ -35,6 +35,7 @@ const rawBrief = {
   },
   evaluationPolicy: {
     styleMode: 'weighted-targets-v1',
+    functionalSatisfactionPolicy: { schemaVersion: 1, mode: 'demand-weighted-coverage' },
     completion: { minimumStars: 4, criticalRuleMode: 'block-completion' },
     compositionRules: { minItems: 4, requiredAffordances: ['dining-seat', 'light-source'] },
     ergonomicsRules: {
@@ -71,7 +72,7 @@ function createUseCase({ brief = rawBrief, profiles = null } = {}) {
   );
 }
 
-describe('LoadLevelUseCase ClientBrief V2 hydration', () => {
+describe('LoadLevelUseCase ClientBrief V3 hydration', () => {
   it('derives current scoring inputs and completion target exclusively from immutable client policy', async () => {
     const result = await createUseCase().execute('level-001');
 
@@ -83,13 +84,14 @@ describe('LoadLevelUseCase ClientBrief V2 hydration', () => {
       styleTargets: [{ styleId: 'scandinavian', label: 'Скандинавский', role: 'primary', weight: 1 }],
       clientPriorities: rawBrief.clientPriorities,
       spatialPreferences: rawBrief.spatialPreferences,
+      functionalSatisfactionPolicy: expect.objectContaining({ schemaVersion: 1, mode: 'demand-weighted-coverage' }),
       completion: rawBrief.evaluationPolicy.completion
     });
     expect(result.data.evaluationSpec.ergonomicsRules.requiredFunctionalScenarios[0]).toBeInstanceOf(RequiredFunctionalScenario);
     expect(Object.isFrozen(result.data.evaluationSpec)).toBe(true);
   });
 
-  it('hydrates every authored V2 style target through exact style-profile lookup', async () => {
+  it('hydrates every authored V3 style target through exact style-profile lookup', async () => {
     const mixedBrief = {
       ...rawBrief,
       styleTargets: [
@@ -118,7 +120,7 @@ describe('LoadLevelUseCase ClientBrief V2 hydration', () => {
     });
     await expect(createUseCase({ brief: { ...rawBrief, levelId: 'level-002' } }).execute('level-001')).resolves.toEqual({
       success: false,
-      error: 'INVALID_LEVEL_DATA: Client brief brief-warm-host-001 does not belong to level-001'
+      error: 'INVALID_LEVEL_DATA: Client brief brief-warm-host-001 belongs to level-002, not level-001'
     });
   });
 });

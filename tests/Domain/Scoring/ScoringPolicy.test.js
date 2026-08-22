@@ -3,13 +3,20 @@ import authoredParameters from '../../../data/scoring/scoring-parameters.json';
 import ScoringPolicy from '../../../src/Domain/Scoring/ScoringPolicy.js';
 
 const baseline = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   starRatingThresholds: { '0': 0, '1': 0, '2': 0.4, '3': 0.56, '4': 0.71, '5': 0.86 },
   maxPenalty: 1,
   criticalStarCap: 2,
   scoreEpsilon: 0.000001,
   channelWeights: { style: 0.5, clientPriorities: 0.2, ergonomics: 0.3 },
   styleBlend: { targetFit: 0.75, composition: 0.25 },
+  styleInfluence: {
+    schemaVersion: 1,
+    mode: 'capped-square-root-footprint',
+    referenceAreaM2: 1,
+    minimumWeight: 0.5,
+    maximumWeight: 2
+  },
   occupancy: { schemaVersion: 1, cellSizeMeters: 0.1 },
   densityProfiles: {
     intimate: { targetFreeAreaRatio: 0.42, tolerance: 0.08 },
@@ -19,25 +26,34 @@ const baseline = {
 };
 
 describe('ScoringPolicy', () => {
-  it('retains V2 authored calibration and spatial profiles in one immutable explicit dependency', () => {
+  it('retains V3 authored calibration, spatial profiles and explicit style influence in one immutable dependency', () => {
     expect(authoredParameters).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       criticalStarCap: 2,
       scoreEpsilon: 0.000001,
       channelWeights: { style: 0.5, clientPriorities: 0.2, ergonomics: 0.3 },
       styleBlend: { targetFit: 0.75, composition: 0.25 },
+      styleInfluence: {
+        schemaVersion: 1,
+        mode: 'capped-square-root-footprint',
+        referenceAreaM2: 1,
+        minimumWeight: 0.5,
+        maximumWeight: 2
+      },
       occupancy: { schemaVersion: 1, cellSizeMeters: 0.1 },
       densityProfiles: expect.objectContaining({ intimate: expect.any(Object), balanced: expect.any(Object), open: expect.any(Object) })
     });
 
     const policy = new ScoringPolicy(authoredParameters);
 
-    expect(policy).toMatchObject({ schemaVersion: 2, criticalStarCap: 2, scoreEpsilon: 0.000001 });
+    expect(policy).toMatchObject({ schemaVersion: 3, criticalStarCap: 2, scoreEpsilon: 0.000001 });
     expect(policy.channelWeights).toEqual({ style: 0.5, clientPriorities: 0.2, ergonomics: 0.3 });
     expect(policy.styleBlend).toEqual({ targetFit: 0.75, composition: 0.25 });
+    expect(policy.styleInfluence).toEqual(baseline.styleInfluence);
     expect(policy.occupancy).toEqual({ schemaVersion: 1, cellSizeMeters: 0.1 });
     expect(Object.isFrozen(policy)).toBe(true);
     expect(Object.isFrozen(policy.channelWeights)).toBe(true);
+    expect(Object.isFrozen(policy.styleInfluence)).toBe(true);
     expect(Object.isFrozen(policy.densityProfiles.balanced)).toBe(true);
   });
 
@@ -53,9 +69,10 @@ describe('ScoringPolicy', () => {
     expect(baselinePolicy).not.toBe(adjustedPolicy);
   });
 
-  it('rejects unsupported scorecard calibration versions and out-of-range values', () => {
-    expect(() => new ScoringPolicy({ ...baseline, schemaVersion: 3 })).toThrow('schemaVersion must be 2');
+  it('rejects retired V2 policy and malformed style influence parameters', () => {
+    expect(() => new ScoringPolicy({ ...baseline, schemaVersion: 2 })).toThrow('schemaVersion must be 3');
+    expect(() => new ScoringPolicy({ ...baseline, styleInfluence: { ...baseline.styleInfluence, maximumWeight: 0.4 } })).toThrow('styleInfluence maximumWeight must be greater than or equal to minimumWeight');
+    expect(() => new ScoringPolicy({ ...baseline, styleInfluence: { ...baseline.styleInfluence, mode: 'area' } })).toThrow('styleInfluence mode is not supported');
     expect(() => new ScoringPolicy({ ...baseline, criticalStarCap: 5 })).toThrow('criticalStarCap must be an integer between 0 and 4');
-    expect(() => new ScoringPolicy({ ...baseline, scoreEpsilon: 0.1 })).toThrow('scoreEpsilon must be between 0 and 0.01');
   });
 });

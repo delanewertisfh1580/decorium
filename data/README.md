@@ -9,8 +9,8 @@
 | Area | Active files | Runtime owner |
 |---|---|---|
 | Items | `items/catalog.v4.json`, `items/item.v4.schema.json` | `JsonItemCatalog`, `SchemaLoader.loadItemSchema()` |
-| Client briefs | `briefs/client-briefs.v2.json`, `briefs/client-brief.v2.schema.json` | `JsonClientBriefRepository`, `SchemaLoader.loadClientBriefSchema()` |
-| Style profiles | `styles/style-constraint-catalog.v1.json`, `styles/style-constraint-catalog.v1.schema.json` | `JsonConstraintCatalog`, exact V2 brief hydration |
+| Client briefs | `briefs/client-briefs.v3.json`, `briefs/client-brief.v3.schema.json` | `JsonClientBriefRepository`, `SchemaLoader.loadClientBriefSchema()` |
+| Style profiles | `styles/style-constraint-catalog.v1.json`, `styles/style-constraint-catalog.v1.schema.json` | `JsonConstraintCatalog`, exact V3 brief hydration |
 | Scoring | `scoring/scoring-parameters.json` | Scoring parameter initialization and Domain policies |
 | Levels | `levels/manifest.json`, `levels/level-*.json`, `schemas/level.schema.json` | `JsonLevelRepository` and `LoadLevelUseCase` |
 | Presentation environments | `presentation/environment-profiles.v2.json`, `presentation/environment-profile.v2.schema.json` | Presentation environment repository |

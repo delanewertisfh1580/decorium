@@ -10,8 +10,8 @@ const readJson = relativePath => readFile(path.join(root, relativePath), 'utf8')
 describe('Required functional scenario content', () => {
   it('ships one schema-valid, client-owned and inventory-satisfiable scenario for every level', async () => {
     const [schema, briefCatalog, itemCatalog, manifest] = await Promise.all([
-      readJson('data/briefs/client-brief.v2.schema.json'),
-      readJson('data/briefs/client-briefs.v2.json'),
+      readJson('data/briefs/client-brief.v3.schema.json'),
+      readJson('data/briefs/client-briefs.v3.json'),
       readJson('data/items/catalog.v4.json'),
       readJson('data/levels/manifest.json')
     ]);

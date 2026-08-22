@@ -53,23 +53,23 @@ describe('Documentation requirements', () => {
     }
   });
 
-  it('defines an active multi-style, client-brief-driven V2 production baseline', () => {
+  it('defines an active multi-style, client-brief-driven V3 production baseline', () => {
     const productOverview = readFileSync(join(ROOT, 'docs', 'product', 'overview.md'), 'utf8');
     const contentModel = readFileSync(join(ROOT, 'docs', 'systems', 'content-model.md'), 'utf8');
 
     expect(productOverview).toContain('мультистил');
-    expect(productOverview).toContain('ClientBrief v2');
+    expect(productOverview).toContain('ClientBrief v3');
     expect(productOverview).toContain('50% style');
-    expect(contentModel).toContain('ClientBrief v2');
+    expect(contentModel).toContain('ClientBrief v3');
     expect(contentModel).toContain('style-constraint-catalog.v1');
   });
 
-  it('keeps public entry points aligned with the active V4/V2 runtime and versioned data lifecycle', () => {
+  it('keeps public entry points aligned with the active V4/V3 runtime and versioned data lifecycle', () => {
     const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
     const changelog = readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8');
     const dataGuidePath = join(ROOT, 'data', 'README.md');
 
-    expect(readme).toContain('ClientBrief v2');
+    expect(readme).toContain('ClientBrief v3');
     expect(readme).toContain('50% style');
     expect(readme).toContain('20% client priorities');
     expect(readme).toContain('30% ergonomics');
@@ -77,14 +77,14 @@ describe('Documentation requirements', () => {
     expect(readme).not.toContain('70% / 30%');
     expect(readme).not.toContain('Следующий content/scoring foundation');
     expect(readme).not.toContain('Catalog V3');
-    expect(changelog).toContain('ClientBrief V2');
+    expect(changelog).toContain('ClientBrief V3');
     expect(changelog).toContain('catalog V4');
     expect(existsSync(dataGuidePath)).toBe(true);
 
     const dataGuide = readFileSync(dataGuidePath, 'utf8');
     expect(dataGuide).toContain('staticDataAssets.js');
     expect(dataGuide).toContain('catalog.v4.json');
-    expect(dataGuide).toContain('client-briefs.v2.json');
+    expect(dataGuide).toContain('client-briefs.v3.json');
   });
 
   it('keeps every local Markdown link resolvable after documentation moves', () => {

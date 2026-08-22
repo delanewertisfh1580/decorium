@@ -126,7 +126,7 @@ function normalizeSpatialPreferences(value) {
 
 export class ClientBrief {
   constructor({ schemaVersion, id, levelId, client, title, summary, styleTargets, clientPriorities, spatialPreferences, evaluationPolicy } = {}) {
-    if (schemaVersion !== 2) throw new Error('ClientBrief schemaVersion must be 2');
+    if (schemaVersion !== 3) throw new Error('ClientBrief schemaVersion must be 3');
     this._schemaVersion = schemaVersion;
     this._id = requiredString(id, 'id');
     this._levelId = requiredString(levelId, 'levelId');

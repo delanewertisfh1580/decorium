@@ -3,7 +3,7 @@
 **Статус:** Active production reference
 **Обновлено:** 22 августа 2026 г.
 
-Этот документ — canonical guide для authored JSON Decorium. Content policy не должна копироваться в Presentation и не выводится из display label, visual mesh, asset family или UI category. `ClientBrief v2` — единственный источник style, functional и client-priority policy.[1]
+Этот документ — canonical guide для authored JSON Decorium. Content policy не должна копироваться в Presentation и не выводится из display label, visual mesh, asset family или UI category. `ClientBrief v3` — единственный источник style, functional и client-priority policy.[1]
 
 ## Runtime inventory
 
@@ -15,8 +15,8 @@
 | Surface finishes | `data/interior/surface-finishes.v1.json`, `surface-finish.v1.schema.json` | Floor/wall slots with visual data and `unlockId`. |
 | Progression rewards | `data/progression/rewards.v1.json`, `reward-catalog.v1.schema.json` | Idempotent grants after authored completion. |
 | Presentation environments | `data/presentation/environment-profiles.v3.json`, `environment-profile.v3.schema.json` | Shell, openings, camera, light, exterior and atmosphere only. |
-| Client briefs | `data/briefs/client-briefs.v2.json`, `client-brief.v2.schema.json` | Identity, style targets, priorities, spatial preferences and typed evaluation policy. |
-| Style/scoring/feedback | `data/styles/style-constraint-catalog.v1.json`, `data/scoring/scoring-parameters.json`, `data/feedback` | Exact styles, validated `ScoringPolicy` V2 and authored remediation. |
+| Client briefs | `data/briefs/client-briefs.v3.json`, `client-brief.v3.schema.json` | Identity, style targets, priorities, spatial preferences and typed evaluation policy. |
+| Style/scoring/feedback | `data/styles/style-constraint-catalog.v1.json`, `data/scoring/scoring-parameters.json`, `data/feedback` | Exact styles, validated `ScoringPolicy` V3 and authored remediation. |
 | Release | `public/release-manifest.json` | Generated/validated operational build identity. |
 
 `src/Infrastructure/DataLoaders/staticDataAssets.js` is the deployment inventory. Every runtime JSON/schema must be registered there or Vite will not publish it next to `dist/index.html`.[2]
@@ -102,20 +102,21 @@ Every level resolves one V3 profile. It may define `openingsPreset`, `cameraPres
 
 The sole authoring path for initial TV, shelf, decor, rug or media item is a V5 catalog record in an interior recipe.
 
-## ClientBrief V2, function and scoring
+## ClientBrief V3, function and scoring
 
-`ClientBrief v2` is validated in Infrastructure, normalized by a Domain value object and owns a typed immutable `EvaluationPolicy` graph. The graph contains completion, composition and hydrated ergonomics rules; `LoadLevelUseCase` resolves exact style profiles without deriving nested policy from topology/UI.[1]
+`ClientBrief v3` is validated in Infrastructure, normalized by a Domain value object and owns a typed immutable `EvaluationPolicy` graph. The graph contains completion, composition, hydrated ergonomics rules and mandatory `functionalSatisfactionPolicy`; `LoadLevelUseCase` resolves exact style profiles without deriving nested policy from topology/UI.[1]
 
 | Field group | Active policy |
 |---|---|
 | Style targets | Unique weighted primary/secondary/accent profiles; each receives independent target fit. |
 | Client priorities | Stable label/weight plus explicit `functional-scenario` or `spatial-preferences` rule. |
 | Spatial preferences | Density, client clearance multiplier and directional empty-space policy. |
-| Evaluation policy | Completion, composition, passages, function and required scenarios. |
+| Evaluation policy | Completion, composition, passages, function, required scenarios and typed `functionalSatisfactionPolicy`. |
+| Functional satisfaction | `{ schemaVersion: 1, mode: "demand-weighted-coverage" }`. | Priority satisfaction is `Σ min(actualCount, requiredCount) / Σ requiredCount`; hard required-scenario completion remains separate. |
 
 Composition selects explicit affordances, never item `type`. `adjacency` and `front-adjacency` rules consume semantic selectors, partner count, distance and authored message keys. Required scenarios independently declare role/cardinality even if no anchor exists.
 
-`ScoringPolicy` V2 validates and freezes numeric parameters before explicit bootstrap injection—there is no mutable module-global scoring singleton. The deterministic evaluator remains three-channel: style, client priorities and ergonomics. Visual assets, profile labels and ambient scene never enter a scorer. `EvaluationExplanation v2` carries diagnostic/remediation/canonical instance references to Presentation; UI does not infer score or unlock.[8]
+`ScoringPolicy` V3 validates and freezes numeric parameters, including capped-square-root style influence constants, before explicit bootstrap injection—there is no mutable module-global scoring singleton. The deterministic evaluator remains three-channel: style, client priorities and ergonomics. Visual assets, profile labels and ambient scene never enter a scorer. `EvaluationExplanation v2` carries diagnostic/remediation/canonical instance references to Presentation; UI does not infer score or unlock.[8]
 
 ## Authoring checklist
 
@@ -131,7 +132,7 @@ See [Architecture overview](../architecture/overview.md) for ownership/persisten
 
 ## References
 
-[1]: ../../data/briefs/client-brief.v2.schema.json "ClientBrief V2 schema"
+[1]: ../../data/briefs/client-brief.v3.schema.json "ClientBrief V3 schema"
 [2]: ../../src/Infrastructure/DataLoaders/staticDataAssets.js "Static runtime inventory"
 [3]: ../../data/items/item.v5.schema.json "Item V5 schema"
 [4]: ../../data/interior/interior-recipe.v1.schema.json "Interior recipe V1 schema"

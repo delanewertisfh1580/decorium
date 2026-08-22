@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "briefs": [
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "id": "brief-warm-host-001",
       "levelId": "level-001",
       "client": {
@@ -119,11 +119,15 @@
               "messageKey": "scenario-dining-hosting-required"
             }
           ]
+        },
+        "functionalSatisfactionPolicy": {
+          "schemaVersion": 1,
+          "mode": "demand-weighted-coverage"
         }
       }
     },
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "id": "brief-intimate-media-002",
       "levelId": "level-002",
       "client": {
@@ -274,11 +278,15 @@
               "messageKey": "scenario-evening-media-required"
             }
           ]
+        },
+        "functionalSatisfactionPolicy": {
+          "schemaVersion": 1,
+          "mode": "demand-weighted-coverage"
         }
       }
     },
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "id": "brief-open-studio-003",
       "levelId": "level-003",
       "client": {
@@ -377,6 +385,10 @@
               "messageKey": "scenario-focused-work-required"
             }
           ]
+        },
+        "functionalSatisfactionPolicy": {
+          "schemaVersion": 1,
+          "mode": "demand-weighted-coverage"
         }
       }
     }

@@ -5,7 +5,7 @@ const schema = {
   type: 'object',
   required: ['schemaVersion', 'briefs'],
   properties: {
-    schemaVersion: { const: 2 },
+    schemaVersion: { const: 3 },
     briefs: {
       type: 'array',
       items: {
@@ -17,9 +17,9 @@ const schema = {
 };
 
 const catalog = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   briefs: [{
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: 'brief-warm-host-001',
     levelId: 'level-001',
     client: { id: 'client-warm-host', displayName: 'Марина и Алексей' },
@@ -34,6 +34,7 @@ const catalog = {
     },
     evaluationPolicy: {
       styleMode: 'weighted-targets-v1',
+      functionalSatisfactionPolicy: { schemaVersion: 1, mode: 'demand-weighted-coverage' },
       completion: { minimumStars: 3, criticalRuleMode: 'block-completion' },
       compositionRules: {},
       ergonomicsRules: {}
@@ -47,7 +48,7 @@ describe('JsonClientBriefRepository', () => {
   it('loads a schema-valid catalog once and returns an immutable isolated authored brief by ID', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => structuredClone(catalog) });
     vi.stubGlobal('fetch', fetchMock);
-    const repository = new JsonClientBriefRepository('./data/briefs/client-briefs.v2.json', schema);
+    const repository = new JsonClientBriefRepository('./data/briefs/client-briefs.v3.json', schema);
 
     const first = await repository.getById('brief-warm-host-001');
     const second = await repository.getById('brief-warm-host-001');
@@ -61,8 +62,8 @@ describe('JsonClientBriefRepository', () => {
   });
 
   it('rejects invalid authored data rather than inferring a default client or style', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ schemaVersion: 2, briefs: [{}] }) }));
-    const repository = new JsonClientBriefRepository('./data/briefs/client-briefs.v2.json', schema);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ schemaVersion: 3, briefs: [{}] }) }));
+    const repository = new JsonClientBriefRepository('./data/briefs/client-briefs.v3.json', schema);
 
     await expect(repository.getById('brief-warm-host-001')).rejects.toThrow('ClientBrief schema validation failed');
   });

@@ -9,8 +9,8 @@ describe('authored functional layout rules', () => {
   it('declares a schema-valid dining seating relationship in level-001 client policy', () => {
     const level = readJson('data/levels/level-001.json');
     const levelSchema = readJson('data/schemas/level.v2.schema.json');
-    const briefSchema = readJson('data/briefs/client-brief.v2.schema.json');
-    const catalog = readJson('data/briefs/client-briefs.v2.json');
+    const briefSchema = readJson('data/briefs/client-brief.v3.schema.json');
+    const catalog = readJson('data/briefs/client-briefs.v3.json');
     const brief = catalog.briefs.find(candidate => candidate.id === level.clientBriefId);
     const validateLevel = new Ajv().compile(levelSchema);
     const validateBrief = new Ajv().compile(briefSchema);

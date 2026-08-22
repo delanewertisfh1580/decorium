@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import clientBriefCatalog from '../../../data/briefs/client-briefs.v2.json';
+import clientBriefCatalog from '../../../data/briefs/client-briefs.v3.json';
 import { LoadLevelUseCase } from '../../../src/Application/UseCases/LoadLevelUseCase.js';
 import { asV2Level, loadLevelV2Dependencies } from '../../Fixtures/loadLevelV2Dependencies.js';
 
@@ -36,7 +36,7 @@ function createUseCase(presentationEnvironmentRepository) {
 }
 
 describe('LoadLevelUseCase presentation environment hydration', () => {
-  it('hydrates an immutable presentation environment without changing RoomState or V2 evaluation inputs', async () => {
+  it('hydrates an immutable presentation environment without changing RoomState or V3 evaluation inputs', async () => {
     const presentationEnvironmentRepository = { getById: vi.fn().mockResolvedValue(profile) };
     const result = await createUseCase(presentationEnvironmentRepository).execute('level-001');
 

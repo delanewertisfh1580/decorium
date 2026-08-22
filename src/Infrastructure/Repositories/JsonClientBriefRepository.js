@@ -7,7 +7,7 @@ function freezeDeep(value) {
 }
 
 export class JsonClientBriefRepository {
-  constructor(catalogPath = './data/briefs/client-briefs.v2.json', schema = null) {
+  constructor(catalogPath = './data/briefs/client-briefs.v3.json', schema = null) {
     this.catalogPath = catalogPath;
     this.validate = schema ? new Ajv().compile(schema) : null;
     this.catalogPromise = null;

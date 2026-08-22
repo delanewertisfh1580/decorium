@@ -6,15 +6,15 @@ Decorium использует [Semantic Versioning](https://semver.org/). Это
 
 ### Added
 
-- `ClientBrief V2` стал active runtime policy для трёх shipped orders: weighted multi-style targets, explicit client priorities, spatial preferences, functional scenarios and completion criteria.
-- Three-channel evaluation: **50% style**, **20% client priorities**, **30% ergonomics**, with once-only `75% / 25%` target-fit/composition blend and Explanation V2.
+- `ClientBrief V3` стал active runtime policy для трёх shipped orders: versioned `demand-weighted-coverage` policy отделяет partial client-priority satisfaction от hard functional scenario completion criteria; retired V2 catalog/schema removed from active runtime.
+- Three-channel evaluation: **50% style**, **20% client priorities**, **30% ergonomics**, with once-only `75% / 25%` target-fit/composition blend, V3 `capped-square-root-footprint` style influence policy and Explanation V2.
 - Item `catalog V4` and schema V4: every one of 34 shipped items now declares semantic role and `SpatialBehavior`; only authored floor obstacles enter generic occupancy and clearance.
 
 ### Changed
 
 - Product canon уточнён: Decorium развивается как мультистилевая client-brief-driven игра; Scandinavian является shipped profile, а не global style.
 - Документация консолидирована в active guides для продукта, architecture, content authoring и operations; historical MVP/slice materials remain traceability evidence rather than current policy.
-- Корневой README приведён к active V4/V2 baseline и ведёт в единый documentation hub; data lifecycle guide separates active runtime files from retained historical versions.
+- Корневой README приведён к active V4/V3 baseline и ведёт в единый documentation hub; data lifecycle guide separates active runtime files from retained historical versions.
 
 ## [1.0.0] — 2026-08-15
 

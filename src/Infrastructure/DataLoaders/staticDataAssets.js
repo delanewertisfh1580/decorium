@@ -1,6 +1,6 @@
 export const STATIC_DATA_FILES = Object.freeze([
-  'data/briefs/client-brief.v2.schema.json',
-  'data/briefs/client-briefs.v2.json',
+  'data/briefs/client-brief.v3.schema.json',
+  'data/briefs/client-briefs.v3.json',
   'data/feedback/scandinavian-feedback.json',
   'data/items/catalog.v5.json',
   'data/items/item.v5.schema.json',

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "starRatingThresholds": {
     "0": 0.0,
     "1": 0.0,
@@ -20,6 +20,13 @@
   "styleBlend": {
     "targetFit": 0.75,
     "composition": 0.25
+  },
+  "styleInfluence": {
+    "schemaVersion": 1,
+    "mode": "capped-square-root-footprint",
+    "referenceAreaM2": 1.0,
+    "minimumWeight": 0.5,
+    "maximumWeight": 2.0
   },
   "occupancy": {
     "schemaVersion": 1,

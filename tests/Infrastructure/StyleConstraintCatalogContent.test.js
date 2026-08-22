@@ -6,10 +6,10 @@ import { describe, expect, it } from 'vitest';
 const root = resolve(process.cwd());
 const schemaPath = resolve(root, 'data/styles/style-constraint-catalog.v1.schema.json');
 const catalogPath = resolve(root, 'data/styles/style-constraint-catalog.v1.json');
-const briefsPath = resolve(root, 'data/briefs/client-briefs.v2.json');
+const briefsPath = resolve(root, 'data/briefs/client-briefs.v3.json');
 
 describe('PROD-023 multi-style constraint content', () => {
-  it('ships a schema-valid profile for every authored ClientBrief V2 style target', () => {
+  it('ships a schema-valid profile for every authored ClientBrief V3 style target', () => {
     expect(existsSync(schemaPath)).toBe(true);
     expect(existsSync(catalogPath)).toBe(true);
     const schema = JSON.parse(readFileSync(schemaPath, 'utf8'));

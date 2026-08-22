@@ -17,7 +17,7 @@ describe('presentation environment production wiring', () => {
     expect(schemaLoaderSource).toContain('loadClientBriefSchema');
     expect(mainSource).toContain('JsonClientBriefRepository');
     expect(mainSource).toContain('SchemaLoader.loadClientBriefSchema()');
-    expect(mainSource).toContain("'./data/briefs/client-briefs.v2.json'");
+    expect(mainSource).toContain("'./data/briefs/client-briefs.v3.json'");
     expect(mainSource).toContain('clientBriefRepository');
     expect(mainSource).toContain('JsonInteriorRecipeRepository');
     expect(mainSource).toContain('JsonSurfaceFinishCatalog');

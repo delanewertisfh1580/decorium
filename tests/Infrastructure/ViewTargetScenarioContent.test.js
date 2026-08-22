@@ -10,7 +10,7 @@ describe('authored view-target lounge scenario', () => {
     const catalog = readJson('data/items/catalog.v5.json');
     const level = readJson('data/levels/level-002.json');
     const schema = readJson('data/schemas/level.v2.schema.json');
-    const briefCatalog = readJson('data/briefs/client-briefs.v2.json');
+    const briefCatalog = readJson('data/briefs/client-briefs.v3.json');
     const recipeCatalog = readJson('data/interior/interior-recipes.v1.json');
     const brief = briefCatalog.briefs.find(candidate => candidate.id === level.clientBriefId);
     const recipe = recipeCatalog.recipes.find(candidate => candidate.id === level.interiorRecipeId);

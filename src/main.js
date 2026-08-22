@@ -117,7 +117,7 @@ async function bootstrap() {
       presentationEnvironmentSchema
     );
     const clientBriefRepository = new JsonClientBriefRepository(
-      './data/briefs/client-briefs.v2.json',
+      './data/briefs/client-briefs.v3.json',
       clientBriefSchema
     );
     const savePlayerProfileUseCase = new SavePlayerProfileUseCase(profileRepository);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import clientBriefCatalog from '../../data/briefs/client-briefs.v2.json';
+import clientBriefCatalog from '../../data/briefs/client-briefs.v3.json';
 import styleConstraintCatalog from '../../data/styles/style-constraint-catalog.v1.json';
 import feedbackEntries from '../../data/feedback/scandinavian-feedback.json';
 

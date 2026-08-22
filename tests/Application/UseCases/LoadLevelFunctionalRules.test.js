@@ -30,7 +30,7 @@ describe('LoadLevelUseCase V2 functional layout rules', () => {
     };
     const clientBriefRepository = {
       getById: async () => ({
-        schemaVersion: 2,
+        schemaVersion: 3,
         id: 'brief-functional',
         levelId: 'functional-room',
         client: { id: 'client-functional', displayName: 'Клиент' },
@@ -47,6 +47,7 @@ describe('LoadLevelUseCase V2 functional layout rules', () => {
         },
         evaluationPolicy: {
           styleMode: 'weighted-targets-v1',
+          functionalSatisfactionPolicy: { schemaVersion: 1, mode: 'demand-weighted-coverage' },
           completion: { minimumStars: 3, criticalRuleMode: 'informational' },
           compositionRules: {},
           ergonomicsRules: {

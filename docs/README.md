@@ -27,7 +27,7 @@
 
 ### Контент и геймплей
 
-[Content model](systems/content-model.md) описывает versioned JSON contracts: item catalog V4 with complete `InteractionProfile` and `SpatialBehavior`, topology-only authored levels, ClientBrief V2, exact style profiles, three-channel scoring, functional-layout rules и required client scenarios. Он является единственным current reference для content authors.
+[Content model](systems/content-model.md) описывает versioned JSON contracts: item catalog V4 with complete `InteractionProfile` and `SpatialBehavior`, topology-only authored levels, ClientBrief V3, exact style profiles, three-channel scoring, functional-layout rules и required client scenarios. Он является единственным current reference для content authors.
 
 ### Операции
 

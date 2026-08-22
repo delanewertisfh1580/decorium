@@ -48,6 +48,40 @@ function normalizeWeights(value, label, keys) {
   return Object.freeze(normalized);
 }
 
+function normalizeStyleInfluence(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || value.schemaVersion !== 1) {
+    throw new Error('ScoringPolicy: styleInfluence schemaVersion must be 1');
+  }
+  if (value.mode !== 'capped-square-root-footprint') {
+    throw new Error('ScoringPolicy: styleInfluence mode is not supported');
+  }
+  const referenceAreaM2 = requireBoundedNumber(value.referenceAreaM2, 'styleInfluence.referenceAreaM2', {
+    min: 0,
+    max: 100,
+    exclusiveMin: true
+  });
+  const minimumWeight = requireBoundedNumber(value.minimumWeight, 'styleInfluence.minimumWeight', {
+    min: 0,
+    max: 100,
+    exclusiveMin: true
+  });
+  const maximumWeight = requireBoundedNumber(value.maximumWeight, 'styleInfluence.maximumWeight', {
+    min: 0,
+    max: 100,
+    exclusiveMin: true
+  });
+  if (maximumWeight < minimumWeight) {
+    throw new Error('ScoringPolicy: styleInfluence maximumWeight must be greater than or equal to minimumWeight');
+  }
+  return Object.freeze({
+    schemaVersion: 1,
+    mode: value.mode,
+    referenceAreaM2,
+    minimumWeight,
+    maximumWeight
+  });
+}
+
 function normalizeOccupancy(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || value.schemaVersion !== 1) {
     throw new Error('ScoringPolicy: occupancy schemaVersion must be 1');
@@ -81,12 +115,12 @@ export class ScoringPolicy {
     if (!params || typeof params !== 'object' || Array.isArray(params)) {
       throw new Error('ScoringPolicy: params must be a valid object');
     }
-    if (params.schemaVersion !== 2) {
-      throw new Error('ScoringPolicy: schemaVersion must be 2');
+    if (params.schemaVersion !== 3) {
+      throw new Error('ScoringPolicy: schemaVersion must be 3');
     }
 
     const shared = validateSharedParameters(params);
-    this._schemaVersion = 2;
+    this._schemaVersion = 3;
     this._starRatingThresholds = shared.starRatingThresholds;
     this._maxPenalty = shared.maxPenalty;
     this._defaultWeight = shared.defaultWeight;
@@ -94,6 +128,7 @@ export class ScoringPolicy {
     this._scoreEpsilon = shared.scoreEpsilon;
     this._channelWeights = normalizeWeights(params.channelWeights, 'channelWeights', ['style', 'clientPriorities', 'ergonomics']);
     this._styleBlend = normalizeWeights(params.styleBlend, 'styleBlend', ['targetFit', 'composition']);
+    this._styleInfluence = normalizeStyleInfluence(params.styleInfluence);
     this._occupancy = normalizeOccupancy(params.occupancy);
     this._densityProfiles = normalizeDensityProfiles(params.densityProfiles);
     Object.freeze(this);
@@ -107,6 +142,7 @@ export class ScoringPolicy {
   get scoreEpsilon() { return this._scoreEpsilon; }
   get channelWeights() { return this._channelWeights; }
   get styleBlend() { return this._styleBlend; }
+  get styleInfluence() { return this._styleInfluence; }
   get occupancy() { return this._occupancy; }
   get densityProfiles() { return this._densityProfiles; }
 }

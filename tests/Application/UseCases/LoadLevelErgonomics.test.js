@@ -14,7 +14,7 @@ const rawLevel = asV2Level({
   presentationProfileId: 'test-environment',
 });
 const rawBrief = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   id: 'brief-001',
   levelId: 'level-001',
   client: { id: 'client-001', displayName: 'Клиент' },
@@ -31,6 +31,7 @@ const rawBrief = {
   },
   evaluationPolicy: {
     styleMode: 'weighted-targets-v1',
+    functionalSatisfactionPolicy: { schemaVersion: 1, mode: 'demand-weighted-coverage' },
     completion: { minimumStars: 3, criticalRuleMode: 'informational' },
     compositionRules: {},
     ergonomicsRules: {
@@ -42,7 +43,7 @@ const rawBrief = {
   }
 };
 
-describe('LoadLevelUseCase V2 ergonomics rules', () => {
+describe('LoadLevelUseCase V3 ergonomics rules', () => {
   it('hydrates brief-owned clearance and passage policy as immutable Domain rules in EvaluationSpec', async () => {
     const useCase = new LoadLevelUseCase(
       { loadLevel: async () => rawLevel },

@@ -12,7 +12,7 @@ Decorium — браузерная Three.js-игра о проектирован�
 | Шаг | Действие игрока | Результат системы |
 |---|---|---|
 | 1 | Открывает профиль и выбирает заказ/уровень кампании. | Восстанавливаются settings, completed levels и session context. |
-| 2 | Читает brief: стили, запросы клиента, сценарии и ограничения. | Hydrated `ClientBrief v2` supplies versioned authored policy; UI displays it without interpretation. |
+| 2 | Читает brief: стили, запросы клиента, сценарии и ограничения. | Hydrated `ClientBrief v3` supplies versioned authored policy; UI displays it without interpretation. |
 | 3 | Выбирает, размещает, поворачивает и настраивает предметы/поверхности в 3D-комнате. | `RoomState` создаёт canonical stable instance IDs вида `catalogItemId#n`; move, rotate, remove, variant configuration и feedback focus принимают только этот ID. Color/material/size выбираются только из unlocked authored V5 variants. |
 | 4 | Нажимает «Оценить». | Application вычисляет multi-style fit, composition, client-priority satisfaction и spatial ergonomics, затем калибрует scorecard. |
 | 5 | Читает результат и уточняет композицию. | UI показывает total score, calibrated stars, три канала, style targets и actionable explanation. |
@@ -32,9 +32,9 @@ Decorium — браузерная Three.js-игра о проектирован�
 
 ## Current production baseline
 
-В репозитории существуют три authored Level V2, три `ClientBrief v2` records, exact profile catalog для Scandinavian, Japandi и Eclectic, а также V5 catalog из 34 предметов с explicit semantic roles, spatial behavior и discrete authored variants. Level владеет topology, available catalog subset, recipe baseline, surface defaults, ClientBrief и V3 presentation reference; immutable `evaluationSpec` гидрирует client identity, style targets, priorities, spatial preferences, composition, ergonomics и completion в Application boundary.[1] [4] [10]
+В репозитории существуют три authored Level V2, три `ClientBrief v3` records, exact profile catalog для Scandinavian, Japandi и Eclectic, а также V5 catalog из 34 предметов с explicit semantic roles, spatial behavior и discrete authored variants. Level владеет topology, available catalog subset, recipe baseline, surface defaults, ClientBrief и V3 presentation reference; immutable `evaluationSpec` гидрирует client identity, style targets, priorities, spatial preferences, composition, ergonomics, typed functional satisfaction policy и completion в Application boundary.[1] [4] [10]
 
-Score имеет три независимых канала: **50% style**, **20% client priorities** и **30% ergonomics**. Style channel сочетает normalized weighted target fit и composition с весами **75% / 25%**. Client-priority channel нормализует положительные weights, а fixed `0.1 m` occupancy grid измеряет free-area ratio без двойного счёта перекрывающихся footprints. `ScorecardCalibrationPolicy` по-прежнему единолично выводит display stars и `completionEligible`; UI не сравнивает stars и не открывает уровни.[5] [6]
+Score имеет три независимых канала: **50% style**, **20% client priorities** и **30% ergonomics**. Style channel сочетает normalized weighted target fit и composition с весами **75% / 25%**. Client-priority channel нормализует положительные weights; functional scenarios use demand-weighted unit coverage while separate critical scenario completion remains hard-gated. Fixed `0.1 m` occupancy grid измеряет free-area ratio без двойного счёта перекрывающихся footprints. `ScorecardCalibrationPolicy` по-прежнему единолично выводит display stars и `completionEligible`; UI не сравнивает stars и не открывает уровни.[5] [6]
 
 `EvaluationExplanation v2` отражает source каждого active diagnostic: style, client priority или ergonomics. Card показывает supplied fact/desired value, severity, authored remediation, exact counterfactual recovery и—если applicable—priority label или live instance focus. Presentation форматирует только эти данные и не выводит policy из label, mesh или category.[6] [7]
 
@@ -67,11 +67,11 @@ Cloud sync, multiplayer, платежи, runtime AI-judge, непрозрачн�
 
 ## References
 
-[1]: ../../src/Application/UseCases/LoadLevelUseCase.js "V2 brief hydration"
-[2]: ../../src/Domain/Briefs/ClientBrief.js "ClientBrief V2 value object"
-[3]: ../../data/briefs/client-briefs.v2.json "Shipped client briefs"
+[1]: ../../src/Application/UseCases/LoadLevelUseCase.js "V3 brief hydration"
+[2]: ../../src/Domain/Briefs/ClientBrief.js "ClientBrief V3 value object"
+[3]: ../../data/briefs/client-briefs.v3.json "Shipped client briefs"
 [4]: ../systems/content-model.md "Content model"
-[5]: ../../data/scoring/scoring-parameters.json "Scoring parameters V2"
+[5]: ../../data/scoring/scoring-parameters.json "Scoring parameters V3"
 [6]: ../../src/Application/UseCases/EvaluateRoomUseCase.js "Three-channel evaluation"
 [7]: ../../src/Presentation/Views/EvaluationView.js "Evaluation result rendering"
 [8]: ../architecture/overview.md "Architecture overview"

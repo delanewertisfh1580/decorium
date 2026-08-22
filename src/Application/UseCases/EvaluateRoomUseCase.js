@@ -130,7 +130,8 @@ export class EvaluateRoomUseCase {
       scenarios: evaluationSpec.ergonomicsRules.requiredFunctionalScenarios ?? [],
       roomState,
       occupancyProfile,
-      spatialPreferences: evaluationSpec.spatialPreferences
+      spatialPreferences: evaluationSpec.spatialPreferences,
+      functionalSatisfactionPolicy: evaluationSpec.functionalSatisfactionPolicy
     });
     const ergonomicsViolations = this.ergonomicsEvaluator.evaluate(roomState, evaluationSpec.ergonomicsRules);
     const ergonomicsScoring = this.ergonomicsScorer.evaluate(ergonomicsViolations);

@@ -4,7 +4,7 @@ import RequiredFunctionalScenario from '../../../src/Domain/Ergonomics/RequiredF
 import EvaluationPolicy, { CompletionPolicy, CompositionRules, ErgonomicsPolicy } from '../../../src/Domain/Briefs/EvaluationPolicy.js';
 
 const validBrief = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   id: 'brief-warm-host-001',
   levelId: 'level-001',
   client: {
@@ -51,6 +51,7 @@ const validBrief = {
   },
   evaluationPolicy: {
     styleMode: 'weighted-targets-v1',
+    functionalSatisfactionPolicy: { schemaVersion: 1, mode: 'demand-weighted-coverage' },
     completion: { minimumStars: 3, criticalRuleMode: 'block-completion' },
     compositionRules: { minItems: 4, requiredAffordances: ['lounge-seat', 'coffee-surface', 'light-source'] },
     ergonomicsRules: {
@@ -86,6 +87,8 @@ describe('ClientBrief', () => {
     expect(brief.clientPriorities).toEqual(validBrief.clientPriorities);
     expect(brief.spatialPreferences.clearanceMultiplier).toBe(0.75);
     expect(brief.evaluationPolicy).toBeInstanceOf(EvaluationPolicy);
+    expect(brief.evaluationPolicy.functionalSatisfactionPolicy.mode).toBe('demand-weighted-coverage');
+    expect(Object.isFrozen(brief.evaluationPolicy.functionalSatisfactionPolicy)).toBe(true);
     expect(brief.evaluationPolicy.completion).toBeInstanceOf(CompletionPolicy);
     expect(brief.evaluationPolicy.compositionRules).toBeInstanceOf(CompositionRules);
     expect(brief.evaluationPolicy.ergonomicsRules).toBeInstanceOf(ErgonomicsPolicy);
@@ -113,7 +116,7 @@ describe('ClientBrief', () => {
     })).toThrow('RequiredFunctionalScenario id must be a non-empty string');
   });
 
-  it('accepts V2 priorities only when each client request owns a schema-versioned evaluation rule', () => {
+  it('accepts V3 priorities only when each client request owns a schema-versioned evaluation rule', () => {
     const priorityRules = [
       {
         ...validBrief.clientPriorities[0],
@@ -133,15 +136,15 @@ describe('ClientBrief', () => {
         }
       }
     ];
-    const brief = new ClientBrief({ ...validBrief, schemaVersion: 2, clientPriorities: priorityRules });
+    const brief = new ClientBrief({ ...validBrief, schemaVersion: 3, clientPriorities: priorityRules });
 
-    expect(brief.schemaVersion).toBe(2);
+    expect(brief.schemaVersion).toBe(3);
     expect(brief.clientPriorities).toEqual(priorityRules);
     expect(Object.isFrozen(brief.clientPriorities[0].rule)).toBe(true);
 
     expect(() => new ClientBrief({
       ...validBrief,
-      schemaVersion: 2,
+      schemaVersion: 3,
       clientPriorities: [{ ...priorityRules[0], rule: undefined }, priorityRules[1]]
     })).toThrow('ClientBrief clientPriorities[0].rule must be an object');
   });

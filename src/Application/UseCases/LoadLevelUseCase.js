@@ -12,6 +12,8 @@ function createEvaluationSpec(clientBrief, styleTargets) {
     styleTargets: Object.freeze(styleTargets),
     clientPriorities: Object.freeze([...clientBrief.clientPriorities]),
     spatialPreferences: clientBrief.spatialPreferences,
+    functionalSatisfactionPolicy: policy.functionalSatisfactionPolicy,
+    evaluationPolicy: policy,
     compositionRules: policy.compositionRules,
     ergonomicsRules: Object.freeze({
       minimumClearance: ergonomics.minimumClearance,
@@ -68,7 +70,15 @@ export class LoadLevelUseCase {
       const rawBrief = await this.clientBriefRepository.getById(raw.clientBriefId);
       if (!rawBrief) return { success: false, error: `INVALID_LEVEL_DATA: Unknown client brief ${raw.clientBriefId}` };
       const clientBrief = new ClientBrief(rawBrief);
-      if (clientBrief.schemaVersion !== 2 || clientBrief.levelId !== raw.id) return { success: false, error: `INVALID_LEVEL_DATA: Client brief ${clientBrief.id} does not belong to ${raw.id}` };
+      if (clientBrief.schemaVersion !== 3) {
+        return { success: false, error: `INVALID_LEVEL_DATA: Client brief ${clientBrief.id} must use schemaVersion 3` };
+      }
+      if (clientBrief.levelId !== raw.id) {
+        return {
+          success: false,
+          error: `INVALID_LEVEL_DATA: Client brief ${clientBrief.id} belongs to ${clientBrief.levelId}, not ${raw.id}`
+        };
+      }
 
       const bounds = new RoomBounds(raw.roomDimensions.width, raw.roomDimensions.depth);
       const availableItems = await this.itemCatalog.getItemsByIds(raw.availableItems);
@@ -116,6 +126,7 @@ export class LoadLevelUseCase {
         if (!styleProfile || !Array.isArray(styleProfile.constraints) || styleProfile.constraints.length === 0) throw new Error(`Unknown style constraint profile ${target.styleId}`);
         return Object.freeze({ styleId: target.styleId, label: styleProfile.label, role: target.role, weight: target.weight, constraints: Object.freeze([...styleProfile.constraints]) });
       }));
+
 
       return {
         success: true,

@@ -10,7 +10,7 @@ Decorium — браузерная 3D-игра о проектировании и
 |---|---|
 | Кампания и профиль | Три authored levels, local `PlayerProfile v3`, persisted completion и prerequisite-based unlocks. |
 | Управление комнатой | Floor placement, move, 90° rotate, remove и undo; keyboard и touch intent paths. |
-| Client brief | Три `ClientBrief v2` records определяют style targets, personal priorities, spatial preferences, functional scenarios, ergonomics и completion. |
+| Client brief | Три `ClientBrief v3` records определяют style targets, personal priorities, spatial preferences, functional scenarios, ergonomics и completion. |
 | Оценка | Three-channel aggregate: **50% style**, **20% client priorities**, **30% ergonomics**; style channel blends target fit/composition as `75% / 25%`. |
 | Функциональная планировка | Dining seats/table, sofa-to-TV и coffee-table relationships используют explicit semantic rules; valid functional pairs не получают ложный generic clearance penalty. |
 | Semantic catalog | `catalog V4` содержит 34 предмета с explicit `InteractionProfile` и `SpatialBehavior`; только declared floor obstacles участвуют в generic occupancy и clearance. |
@@ -19,7 +19,7 @@ Decorium — браузерная 3D-игра о проектировании и
 
 ## Current production baseline
 
-Production runtime загружает versioned data из static asset inventory: V4 item catalog, `ClientBrief v2`, exact Scandinavian/Japandi/Eclectic style profiles, scoring parameters V2 и authored feedback. UI отображает supplied policy/facts, но не вычисляет score, progression, economy или item semantics из category/name/mesh.[1] [2]
+Production runtime загружает versioned data из static asset inventory: V4 item catalog, `ClientBrief v3`, exact Scandinavian/Japandi/Eclectic style profiles, scoring parameters V3 и authored feedback. UI отображает supplied policy/facts, но не вычисляет score, progression, economy или item semantics из category/name/mesh.[1] [2]
 
 Игрок проходит цикл «brief → room design → evaluate → explanation → completion». Missing critical functional scenario может block completion; `ScorecardCalibrationPolicy` является единственным источником stars и `completionEligible`. Explanation V2 показывает channel, rule facts, authored remediation и exact recovery impact, а не только общий score.[2] [3]
 
@@ -70,7 +70,7 @@ Environment variables: none
 | Игровой цикл, shipped scenarios и product limits | [Product overview](docs/product/overview.md) |
 | Следующие production направления и TDD discipline | [Production roadmap](docs/product/roadmap.md) |
 | Слои, runtime flow и invariants | [Architecture overview](docs/architecture/overview.md) |
-| Item catalog V4, ClientBrief v2, scoring, levels и feedback | [Content model](docs/systems/content-model.md) |
+| Item catalog V4, ClientBrief v3, scoring, levels и feedback | [Content model](docs/systems/content-model.md) |
 | Active versus retained JSON versions | [Data lifecycle guide](data/README.md) |
 | Выпуск, проверка и rollback web build | [Release runbook](docs/operations/release-runbook.md) |
 | Полная навигация, ADR и historical evidence | [Documentation hub](docs/README.md) |

@@ -4,6 +4,7 @@ import FunctionalLayoutRule from '../Ergonomics/FunctionalLayoutRule.js';
 import RequiredFunctionalScenario from '../Ergonomics/RequiredFunctionalScenario.js';
 
 const CRITICAL_RULE_MODES = new Set(['block-completion', 'cap-stars', 'informational']);
+const FUNCTIONAL_SATISFACTION_MODES = new Set(['demand-weighted-coverage']);
 
 function requiredObject(value, label) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -31,6 +32,28 @@ function freezeDeep(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
   for (const nested of Object.values(value)) freezeDeep(nested);
   return Object.freeze(value);
+}
+
+export class FunctionalSatisfactionPolicy {
+  constructor(value) {
+    requiredObject(value, 'evaluationPolicy functionalSatisfactionPolicy');
+    if (value.schemaVersion !== 1) {
+      throw new Error('ClientBrief evaluationPolicy functionalSatisfactionPolicy schemaVersion must be 1');
+    }
+    if (!FUNCTIONAL_SATISFACTION_MODES.has(value.mode)) {
+      throw new Error('ClientBrief evaluationPolicy functionalSatisfactionPolicy must contain a supported mode');
+    }
+    this._schemaVersion = 1;
+    this._mode = value.mode;
+    Object.freeze(this);
+  }
+
+  get schemaVersion() { return this._schemaVersion; }
+  get mode() { return this._mode; }
+
+  toJSON() {
+    return { schemaVersion: this.schemaVersion, mode: this.mode };
+  }
 }
 
 export class CompletionPolicy {
@@ -132,6 +155,7 @@ export class EvaluationPolicy {
     }
 
     this._styleMode = value.styleMode;
+    this._functionalSatisfactionPolicy = new FunctionalSatisfactionPolicy(value.functionalSatisfactionPolicy);
     this._completion = new CompletionPolicy(value.completion);
     this._compositionRules = new CompositionRules(value.compositionRules ?? {});
     this._ergonomicsRules = new ErgonomicsPolicy(value.ergonomicsRules ?? {}, { clearanceMultiplier });
@@ -140,6 +164,7 @@ export class EvaluationPolicy {
   }
 
   get styleMode() { return this._styleMode; }
+  get functionalSatisfactionPolicy() { return this._functionalSatisfactionPolicy; }
   get completion() { return this._completion; }
   get compositionRules() { return this._compositionRules; }
   get ergonomicsRules() { return this._ergonomicsRules; }

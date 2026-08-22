@@ -5,7 +5,7 @@ import LevelDTO from '../../../src/Application/DTOs/LevelDTO.js';
 import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
 import { asV2Level, loadLevelV2Dependencies } from '../../Fixtures/loadLevelV2Dependencies.js';
 
-const briefCatalog = JSON.parse(readFileSync('data/briefs/client-briefs.v2.json', 'utf8'));
+const briefCatalog = JSON.parse(readFileSync('data/briefs/client-briefs.v3.json', 'utf8'));
 const activeBrief = briefCatalog.briefs.find(brief => brief.id === 'brief-warm-host-001');
 const activeLevel = asV2Level({
   id: 'level-001',
@@ -55,7 +55,7 @@ describe('LoadLevelUseCase V2', () => {
     });
   });
 
-  it('hydrates active V2 brief, exact style profiles and presentation data into LevelDTO', async () => {
+  it('hydrates active V3 brief, exact style profiles and presentation data into LevelDTO', async () => {
     const result = await createUseCase().execute('level-001');
 
     expect(result.success).toBe(true);
@@ -67,6 +67,7 @@ describe('LoadLevelUseCase V2', () => {
     expect(result.data.evaluationSpec).toMatchObject({
       schemaVersion: 1,
       styleTargets: expect.arrayContaining([expect.objectContaining({ styleId: 'scandinavian', role: 'primary' })]),
+      functionalSatisfactionPolicy: expect.objectContaining({ schemaVersion: 1, mode: 'demand-weighted-coverage' }),
       completion: { minimumStars: 3, criticalRuleMode: 'block-completion' }
     });
     expect(Object.isFrozen(result.data.evaluationSpec)).toBe(true);
