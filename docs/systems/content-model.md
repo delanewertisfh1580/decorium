@@ -19,7 +19,7 @@
 | Scoring | `data/scoring/scoring-parameters.json` | `ScoringPolicy` V2 validates and freezes channels, style blend, occupancy, density profiles and calibration before explicit bootstrap injection |
 | Feedback | `data/feedback/scandinavian-feedback.json` | Versioned authored remediation for style, ergonomics and client-priority diagnostics |
 | Visuals | `data/visuals/item-visuals.json` | Presentation-only visual profile |
-| Release | `public/release-manifest.json` | Generated from BuildInfo during dev/build |
+| Release | `public/release-manifest.json` | Generated and validated by operational `src/Operations/Release/BuildInfo` during dev/build |
 
 `src/Infrastructure/DataLoaders/staticDataAssets.js` is the deployment inventory. Every runtime JSON file must be added there and covered by a content test; otherwise Vite may not publish it into `dist/data/`.[3]
 

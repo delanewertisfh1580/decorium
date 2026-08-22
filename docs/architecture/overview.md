@@ -21,6 +21,7 @@ Presentation → Application → Domain ← Infrastructure
 | `src/Application` | Use cases, orchestration и immutable DTO boundary. | Load/evaluate room, V2 explanation assembly, profile settings, campaign levels, completion recording. |
 | `src/Infrastructure` | JSON fetch/validation, exact profile catalog, static asset inventory, browser-local persistence, repositories. | `SchemaLoader`, `JsonConstraintCatalog`, JSON catalogs, AJV validators, local profile adapter. |
 | `src/Presentation` | Browser adapters, Three.js scene, DOM views и тонкая композиция пользовательских intent-ов. | `GameController` façade, `LevelSessionCoordinator`, `RoomInteractionCoordinator`, `EvaluationCoordinator`, `RoomView`, DOM views. |
+| `src/Operations` | Operational/release contracts and CI-facing validation, isolated from gameplay rules. | `Release/BuildInfo`, release-artifact verifier contract. |
 | `data` | Versioned authored content and schemas. | Catalog V4 with complete semantic behavior, topology-only levels, ClientBrief V2, style profiles, feedback, scoring parameters V2 and visual profiles. |
 
 ## Runtime flows
@@ -108,7 +109,7 @@ Player settings and completed level progress are persisted in profile schema V3.
 | `EvaluationSpec v1` | Frozen V2 evaluation inputs reproducible from a loaded level/brief/profile catalog. | Application DTO boundary |
 | `RoomStateResultDTO` | Immutable success/error transport for read/reset room-session commands. | Application DTO boundary |
 | `EvaluationExplanation v2` | Immutable causal `diagnosticId`/rule/fact/priority/remediation/impact/instance snapshot for result panel. | Domain impact policy, Application assembly, feedback adapter and Presentation rendering |
-| BuildInfo / release manifest | Build identity for release verification. | Release pipeline |
+| BuildInfo / release manifest | Operational build identity for release verification. | `src/Operations/Release`, release pipeline and Infrastructure manifest adapter |
 
 ## Non-negotiable invariants
 

@@ -1,4 +1,4 @@
-import BuildInfo from '../../Domain/Release/BuildInfo.js';
+import BuildInfo from '../../Operations/Release/BuildInfo.js';
 
 export default class JsonReleaseManifestRepository {
   constructor(manifestPath = '/release-manifest.json') {

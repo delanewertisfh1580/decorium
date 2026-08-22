@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import BuildInfo from '../../src/Domain/Release/BuildInfo.js';
+import BuildInfo from '../../src/Operations/Release/BuildInfo.js';
 import JsonReleaseManifestRepository from '../../src/Infrastructure/Repositories/JsonReleaseManifestRepository.js';
 
 const manifest = {

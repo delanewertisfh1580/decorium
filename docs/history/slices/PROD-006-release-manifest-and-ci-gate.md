@@ -37,7 +37,7 @@
 | Этап | Компонент | Ответственность |
 |---|---|---|
 | Generation | `scripts/generate-release-manifest.mjs` | Создаёт `public/release-manifest.json` из package version, Git SHA и controlled environment overrides. |
-| Domain | `BuildInfo` | Валидирует immutable manifest v1 без browser/runtime dependencies. |
+| Operations (current P3 ownership) | `BuildInfo` | Валидирует immutable manifest v1 без browser/runtime dependencies; operational release model intentionally remains outside game Domain. |
 | Infrastructure | `JsonReleaseManifestRepository` | Fetches JSON и превращает только валидные данные в `BuildInfo`. |
 | Application | `GetBuildInfoUseCase` | Возвращает controlled `BUILD_INFO_UNAVAILABLE` без leak деталей adapter failure. |
 | Presentation | `ReleaseInfoView` + bootstrap | Показывает support-safe `vX · channel · shortSHA`; unavailable manifest не блокирует игру. |
@@ -53,7 +53,7 @@ Workflow `.github/workflows/release-gate.yml` запускается для pull
 
 | Boundary | Tests |
 |---|---|
-| Domain invariant | `BuildInfo.test.js` |
+| Operational release invariant | `BuildInfo.test.js` |
 | Application error boundary | `GetBuildInfoUseCase.test.js` |
 | JSON adapter | `JsonReleaseManifestRepository.test.js` |
 | Deterministic build generation | `GenerateReleaseManifest.test.js` |

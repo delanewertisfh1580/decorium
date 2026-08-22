@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import BuildInfo from '../../../src/Domain/Release/BuildInfo.js';
+import BuildInfo from '../../../src/Operations/Release/BuildInfo.js';
 
 const validBuild = {
   schemaVersion: 1,

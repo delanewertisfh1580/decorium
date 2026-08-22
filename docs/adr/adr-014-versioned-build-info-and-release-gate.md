@@ -11,7 +11,7 @@ Release metadata не должна становиться gameplay dependency: t
 
 ## Решение
 
-Вводится `BuildInfo v1` как чистый Domain value object. Генератор создаёт `release-manifest.json` до Vite bundle из package version, Git SHA, channel и timestamp. Environment overrides позволяют CI зафиксировать release inputs детерминированно; manifest валидируется в Domain как при runtime load, так и перед сохранением CI artifact.
+Вводится `BuildInfo v1` как immutable operational release value в `src/Operations/Release`. Генератор создаёт `release-manifest.json` до Vite bundle из package version, Git SHA, channel и timestamp. Environment overrides позволяют CI зафиксировать release inputs детерминированно; manifest валидируется operational contract как при runtime load, так и перед сохранением CI artifact.
 
 Runtime manifest загружается через Infrastructure repository и Application use case. Presentation показывает только version, channel и short revision. Ошибка fetch/validation возвращается как controlled unavailable state и не блокирует game bootstrap.
 
@@ -24,7 +24,7 @@ GitHub Actions release gate выполняет locked install, tests, build, art
 | Release diagnosis | Любой production bundle сам сообщает source correlation metadata. |
 | Rollback | CI хранит exact tested artifact ограниченный retention period. |
 | Privacy | Manifest не несёт player или telemetry data. |
-| Architecture | Build metadata остаётся outside Domain gameplay decisions; Domain только валидирует content contract. |
+| Architecture | Build metadata остаётся outside Domain gameplay decisions; operational release module валидирует contract независимо от game Domain. |
 | Resilience | Manifest failure не препятствует launch игры. |
 
 ## Альтернативы
