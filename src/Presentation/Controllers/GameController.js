@@ -90,6 +90,7 @@ export class GameController {
     this.keyboardRouter = null;
     this.completionProfileListener = null;
     this.mainMenuListener = null;
+    this.settingsListener = null;
   }
 
   async init(canvas, catalogContainer, toolbarContainer, evaluationContainer, dashboardContainer = null, statusContainer = null, designInspectorContainer = null, briefContainer = null, workspaceShellContainer = null) {
@@ -104,6 +105,7 @@ export class GameController {
       onEvaluate: () => this._dispatchIntent(INPUT_INTENTS.EVALUATE),
       onCampaign: () => this.openMainMenu(),
       onRoom: () => this._openRoomInspector(),
+      onSettings: () => this.settingsListener?.(),
     });
     this.workspaceShellView.render({ state: this.workspaceState });
     this.catalogView = new ItemCatalogView(this.workspaceShellView.catalogContainer ?? catalogContainer, itemId => this.roomInteraction.beginCatalogPlacement(itemId));
@@ -183,6 +185,13 @@ export class GameController {
       throw new Error('GameController completion profile listener must be a function or null.');
     }
     this.completionProfileListener = listener;
+  }
+
+  setSettingsListener(listener) {
+    if (listener !== null && typeof listener !== 'function') {
+      throw new Error('GameController settings listener must be a function or null.');
+    }
+    this.settingsListener = listener;
   }
 
   setPlayerProfile(profile) {

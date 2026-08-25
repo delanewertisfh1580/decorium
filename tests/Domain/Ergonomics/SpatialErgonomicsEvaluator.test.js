@@ -8,7 +8,7 @@ import { RoomState } from '../../../src/Domain/Rooms/RoomState.js';
 import MinimumClearanceRule from '../../../src/Domain/Ergonomics/MinimumClearanceRule.js';
 import PassageZone from '../../../src/Domain/Ergonomics/PassageZone.js';
 import FunctionalLayoutRule from '../../../src/Domain/Ergonomics/FunctionalLayoutRule.js';
-import SpatialErgonomicsEvaluator from '../../../src/Domain/Ergonomics/SpatialErgonomicsEvaluator.js';
+import SpatialErgonomicsEvaluator, { expandFunctionalClusters } from '../../../src/Domain/Ergonomics/SpatialErgonomicsEvaluator.js';
 
 const vector = new FeatureVector({
   woodShare: 0.7, metalShare: 0.1, glassShare: 0.05, plasticShare: 0.05, textileShare: 0.1,
@@ -77,4 +77,68 @@ describe('SpatialErgonomicsEvaluator', () => {
 
     expect(new SpatialErgonomicsEvaluator().evaluate(room, rules)).toEqual([]);
   });
+
+  it('does not punish seats of one confirmed dining group against each other', () => {
+    // User scenario: a dining table with two chairs on its long sides.
+    // The chair-to-chair gap crosses the table footprint (~0.8m < 0.9m),
+    // but both chairs belong to the same validated functional cluster.
+    const room = RoomState.createEmpty(new RoomBounds(8, 6));
+    room.placeItem(semanticItem('dining-table', 'dining-surface', { x: 1.8, z: 0.9 }), { x: 4, z: 3 });
+    room.placeItem(semanticItem('chair-left', 'dining-seat', { x: 0.5, z: 0.5 }), { x: 3.4, z: 4.05 });
+    room.placeItem(semanticItem('chair-right', 'dining-seat', { x: 0.5, z: 0.5 }), { x: 4.6, z: 4.05 });
+    const rules = {
+      minimumClearance: new MinimumClearanceRule({ minimumDistance: 0.9 }),
+      functionalLayoutRules: [diningRuleWithMinPartners(2)]
+    };
+
+    expect(new SpatialErgonomicsEvaluator().evaluate(room, rules)).toEqual([]);
+  });
+
+  it('keeps generic clearance between separate furniture clusters', () => {
+    const room = RoomState.createEmpty(new RoomBounds(10, 8));
+    room.placeItem(semanticItem('dining-table', 'dining-surface', { x: 1.8, z: 0.9 }), { x: 3, z: 3 });
+    room.placeItem(semanticItem('chair-a', 'dining-seat', { x: 0.5, z: 0.5 }), { x: 2.4, z: 4.05 });
+    room.placeItem(semanticItem('chair-b', 'dining-seat', { x: 0.5, z: 0.5 }), { x: 3.6, z: 4.05 });
+    // An unrelated armchair parked beside a dining seat stays penalized,
+    // while its diagonal distance to the table itself remains acceptable.
+    room.placeItem(chair('lounge-armchair'), { x: 5.15, z: 5.1 });
+    const rules = {
+      minimumClearance: new MinimumClearanceRule({ minimumDistance: 0.9 }),
+      functionalLayoutRules: [diningRuleWithMinPartners(2)]
+    };
+
+    const violations = new SpatialErgonomicsEvaluator().evaluate(room, rules);
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0].constraintId).toBe('ergonomics-minimum-clearance');
+    expect(violations[0].itemIds).toEqual(['chair-b#1', 'lounge-armchair#1'].sort());
+  });
+
+  it('expands matched pairs into full intra-cluster pair lists', () => {
+    const pairs = [
+      ['table#1', 'chair-a#1'],
+      ['table#1', 'chair-b#1']
+    ];
+
+    expect(expandFunctionalClusters(pairs)).toEqual([
+      ['table#1', 'chair-a#1'],
+      ['table#1', 'chair-b#1'],
+      ['chair-a#1', 'chair-b#1']
+    ]);
+    expect(expandFunctionalClusters([])).toEqual([]);
+  });
 });
+
+function diningRuleWithMinPartners(minPartners) {
+  return new FunctionalLayoutRule({
+    schemaVersion: 1,
+    id: 'dining-seating-required',
+    kind: 'adjacency',
+    anchorSelector: { affordance: 'dining-surface' },
+    partnerSelector: { affordance: 'dining-seat' },
+    minPartners,
+    distance: { min: 0, max: 0.45 },
+    weight: 1.2,
+    messageKey: 'functional-dining-seat-required'
+  });
+}

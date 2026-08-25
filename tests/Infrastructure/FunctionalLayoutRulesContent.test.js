@@ -22,7 +22,7 @@ describe('authored functional layout rules', () => {
       anchorSelector: { affordance: 'dining-surface' },
       partnerSelector: { affordance: 'dining-seat' },
       minPartners: 2,
-      distance: { min: 0.05, max: 0.35 },
+      distance: { min: 0, max: 0.45 },
       weight: 1.2,
       messageKey: 'functional-dining-seat-required'
     }]);

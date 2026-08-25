@@ -46,7 +46,7 @@ describe('authored view-target lounge scenario', () => {
         anchorSelector: { affordance: 'lounge-seat' },
         partnerSelector: { affordance: 'coffee-surface' },
         minPartners: 1,
-        distance: { min: 0.1, max: 0.6 },
+        distance: { min: 0, max: 0.6 },
         maxAngleDegrees: 30,
         messageKey: 'functional-coffee-surface-in-front-of-lounge-seat'
       })

@@ -38,8 +38,17 @@ function completionMarkup(explanation, result) {
   const sourceScore = scorecard?.rawScore ?? result.score;
   const sourceStars = scorecard?.displayStars ?? result.stars;
   return `<section class="review-hero ${blocked ? 'blocked' : 'eligible'}" data-review-hero data-completion-status="${blocked ? 'blocked' : 'eligible'}">
-    <div class="review-score"><span class="stars" aria-label="${sourceStars} из 5 звёзд">${'★'.repeat(sourceStars)}${'☆'.repeat(5 - sourceStars)}</span><strong>${Math.round(sourceScore * 100)}<small>/100</small></strong></div>
-    <div><span class="eyebrow">Итог проверки</span><h2>${title}</h2><p>${detail}</p></div>
+    <div class="review-score">
+      <span class="stars" aria-label="${sourceStars} из 5 звёзд">${'★'.repeat(sourceStars)}${'☆'.repeat(5 - sourceStars)}</span>
+      <strong>${Math.round(sourceScore * 100)}<small>/100</small></strong>
+      <span class="review-status-chip">${blocked ? 'Выполнение заблокировано' : 'Готово к сдаче'}</span>
+    </div>
+    <div class="review-summary">
+      <span class="eyebrow">Итог проверки</span>
+      <h2>${title}</h2>
+      <p>${detail}</p>
+      ${scoreChannels(result)}
+    </div>
   </section>`;
 }
 
@@ -72,46 +81,52 @@ function issueFacts(violation) {
 
 function issueRow(violation, selected) {
   return `<li><article class="review-issue severity-${escapeHtml(violation.severity?.level)}${selected ? ' is-selected' : ''}" data-review-issue="${escapeHtml(violation.id)}" data-violation-id="${escapeHtml(violation.id)}">
-    <button type="button" class="review-issue-select" data-select-issue="${escapeHtml(violation.id)}" aria-pressed="${selected}">
-      <span class="explanation-severity">${escapeHtml(severityLabel(violation.severity))}</span>
-      <span class="explanation-channel">${escapeHtml(channelLabel(violation.channel))}</span>
+    <button type="button" class="review-issue-select" data-select-issue="${escapeHtml(violation.id)}" aria-expanded="${selected}">
+      <span class="review-issue-tags"><span class="explanation-severity">${escapeHtml(severityLabel(violation.severity))}</span><span class="explanation-channel">${escapeHtml(channelLabel(violation.channel))}</span></span>
       <strong>${escapeHtml(violation.priority?.label ?? violation.rule?.description)}</strong>
-      <span>${escapeHtml(violation.remediation)}</span>
+      <span class="review-issue-remedy">${escapeHtml(violation.remediation)}</span>
+      ${issueFacts(violation)}
     </button>
-    ${issueFacts(violation)}
     ${instanceActions(violation)}
   </article></li>`;
 }
 
 function issueDetail(violation) {
   if (!violation) return '<aside class="review-issue-detail empty" data-review-detail><p>Для выбранного фильтра нет рекомендаций.</p></aside>';
-  return `<aside class="review-issue-detail explanation-card severity-${escapeHtml(violation.severity?.level)}" data-review-detail>
+  return `<aside class="review-issue-detail severity-${escapeHtml(violation.severity?.level)}" data-review-detail>
     <header><span class="explanation-severity">${escapeHtml(severityLabel(violation.severity))}</span><span class="explanation-channel">${escapeHtml(channelLabel(violation.channel))}</span></header>
     ${violation.priority ? `<p class="explanation-priority">Запрос клиента: ${escapeHtml(violation.priority.label)}</p>` : ''}
     <h3>${escapeHtml(violation.rule?.description)}</h3>
     ${issueFacts(violation)}
     <p class="explanation-impact">${escapeHtml(impactText(violation.impact))}</p>
     <p class="explanation-remediation">${escapeHtml(violation.remediation)}</p>
-    ${instanceActions(violation)}
   </aside>`;
+}
+
+function channelBar(channelKey, label, value, weight) {
+  if (typeof value !== 'number') return '';
+  const percent = Math.round(value * 100);
+  const weightTag = typeof weight === 'number' ? `<small>${Math.round(weight * 100)}%</small>` : '';
+  return `<div class="review-channel" data-score-channel="${channelKey}">
+    <dt>${label}${weightTag}</dt>
+    <dd><span class="review-channel-track"><span class="review-channel-fill" style="width:${percent}%"></span></span><span class="review-channel-value">${percent}<small>/100</small></span></dd>
+  </div>`;
 }
 
 function scoreChannels(result) {
   const hasSubScores = typeof result.styleScore === 'number' && typeof result.ergonomicsScore === 'number';
   if (!hasSubScores) return '';
-  const clientPriorityChannel = typeof result.clientPriorityScore === 'number'
-    ? `<div data-score-channel="client-priority"><dt>Запросы клиента</dt><dd>${Math.round(result.clientPriorityScore * 100)}<small>/100</small></dd></div>`
-    : '';
+  const weights = result.scoreWeights ?? {};
   const targetRows = Array.isArray(result.scoreBreakdown?.style?.targets) && result.scoreBreakdown.style.targets.length > 0
     ? `<ul class="style-target-breakdown" aria-label="Целевые стили клиента">${result.scoreBreakdown.style.targets.map(target => (
       `<li data-style-target="${escapeHtml(target.styleId)}"><span>${escapeHtml(target.label ?? target.styleId)} · ${escapeHtml(target.role)}</span><strong>${Math.round(target.score * 100)}/100</strong></li>`
     )).join('')}</ul>`
     : '';
-  return `<div class="review-metrics"><dl class="score-channels" aria-label="Состав оценки">
-    <div data-score-channel="style"><dt>Стиль</dt><dd>${Math.round(result.styleScore * 100)}<small>/100</small></dd></div>
-    ${clientPriorityChannel}
-    <div data-score-channel="ergonomics"><dt>Эргономика</dt><dd>${Math.round(result.ergonomicsScore * 100)}<small>/100</small></dd></div>
-  </dl>${targetRows}</div>`;
+  return `<dl class="score-channels" aria-label="Состав оценки">
+    ${channelBar('style', 'Стиль', result.styleScore, weights.style)}
+    ${channelBar('client-priority', 'Запросы клиента', result.clientPriorityScore, weights.clientPriorities)}
+    ${channelBar('ergonomics', 'Эргономика', result.ergonomicsScore, weights.ergonomics)}
+  </dl>${targetRows}`;
 }
 
 function orderedViolations(explanation) {
@@ -167,10 +182,10 @@ export class EvaluationView {
     this.container.innerHTML = `<section class="review-workspace" data-review-workspace aria-labelledby="evaluation-title">
       <header class="review-topbar"><div><span class="eyebrow">Результат расстановки</span><h1 id="evaluation-title">Проверка комнаты</h1></div><button class="close" type="button" data-close aria-label="Вернуться к редактированию">×</button></header>
       ${completionMarkup(result.explanation, result)}
-      ${scoreChannels(result)}
       <section class="review-repairs" aria-labelledby="review-repairs-title">
         <header class="review-repairs-header"><div><h2 id="review-repairs-title">Что исправить</h2><p class="score-label${allIssues.length ? '' : ' success-note'}">${prompt}</p></div><div class="review-filters" role="toolbar" aria-label="Фильтр рекомендаций">${filters.map(([id, label]) => `<button type="button" data-review-filter="${id}" aria-pressed="${this.filter === id}">${label}</button>`).join('')}</div></header>
-        <div class="review-body"><ol class="review-issue-list" data-review-issue-list data-explanation-list>${issues.map(issue => issueRow(issue, issue.id === this.selectedViolationId)).join('')}</ol>${issueDetail(selected)}</div>
+        <ol class="review-issue-list" data-review-issue-list data-explanation-list>${issues.map(issue => issueRow(issue, issue.id === this.selectedViolationId)).join('')}</ol>
+        ${issueDetail(selected)}
       </section>
       ${feedbackMarkup}
       <footer class="review-footer"><button type="button" class="review-continue" data-close>Вернуться к редактированию</button></footer>

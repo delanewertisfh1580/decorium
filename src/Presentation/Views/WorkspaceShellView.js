@@ -17,7 +17,8 @@ export class WorkspaceShellView {
       onCatalog: requireCallback(callbacks.onCatalog),
       onUndo: requireCallback(callbacks.onUndo),
       onEvaluate: requireCallback(callbacks.onEvaluate),
-      onRoom: requireCallback(callbacks.onRoom)
+      onRoom: requireCallback(callbacks.onRoom),
+      onSettings: requireCallback(callbacks.onSettings)
     });
     this._rendered = false;
   }
@@ -40,6 +41,7 @@ export class WorkspaceShellView {
           <div class="workspace-app-actions">
             <button class="workspace-icon-button" type="button" data-workspace-action="brief" aria-label="Открыть бриф клиента">Бриф</button>
             <button class="workspace-icon-button" type="button" data-workspace-action="room" aria-label="Открыть настройку комнаты">Комната</button>
+            <button class="workspace-icon-button" type="button" data-workspace-action="settings" aria-label="Открыть настройки">⚙</button>
           </div>
         </header>
         <aside class="workspace-drawer-slot" data-workspace-drawer aria-label="Активная панель">
@@ -65,7 +67,8 @@ export class WorkspaceShellView {
         catalog: this.callbacks.onCatalog,
         undo: this.callbacks.onUndo,
         evaluate: this.callbacks.onEvaluate,
-        room: this.callbacks.onRoom
+        room: this.callbacks.onRoom,
+        settings: this.callbacks.onSettings
       };
       for (const [action, callback] of Object.entries(actions)) {
         this.container.querySelector(`[data-workspace-action="${action}"]`)?.addEventListener('click', callback);

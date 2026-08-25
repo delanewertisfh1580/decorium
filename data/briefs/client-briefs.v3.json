@@ -90,11 +90,11 @@
               "partnerSelector": {
                 "affordance": "dining-seat"
               },
-              "minPartners": 2,
-              "distance": {
-                "min": 0.05,
-                "max": 0.35
-              },
+          "minPartners": 2,
+          "distance": {
+            "min": 0,
+            "max": 0.45
+          },
               "weight": 1.2,
               "messageKey": "functional-dining-seat-required"
             }
@@ -246,7 +246,7 @@
               },
               "minPartners": 1,
               "distance": {
-                "min": 0.1,
+                "min": 0,
                 "max": 0.6
               },
               "maxAngleDegrees": 30,

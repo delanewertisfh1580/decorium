@@ -1,4 +1,5 @@
 import './styles.css';
+import './styles.patch.css';
 import { DESIGN_TOKENS, applyDesignTokens, validateDesignTokens } from './Presentation/UI/designTokens.js';
 import { HUD_LAYOUT, validateHudLayout } from './Presentation/UI/hudLayout.js';
 import { SchemaLoader } from './Infrastructure/DataLoaders/SchemaLoader.js';
@@ -297,6 +298,7 @@ async function bootstrap() {
       appRoot: document.getElementById('app')
     });
     playerProfile = settingsInitialization.profile;
+    controller.setSettingsListener(() => settingsInitialization.view.open());
     const mainMenu = await initializeMainMenuForApp({
       getCampaignLevelsUseCase,
       savePlayerProfileUseCase,

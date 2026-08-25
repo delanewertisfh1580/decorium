@@ -159,6 +159,32 @@ describe('FunctionalLayoutEvaluator', () => {
     });
   });
 
+  it('counts a chair pushed tight against the table when the authored range starts at zero', () => {
+    // A tucked-in seat overlaps the table footprint, producing a zero gap;
+    // with distance.min = 0 it must still count as valid dining seating.
+    const tuckedRule = new FunctionalLayoutRule({
+      schemaVersion: 1,
+      id: 'dining-seating-required',
+      kind: 'adjacency',
+      anchorSelector: { affordance: 'dining-surface' },
+      partnerSelector: { affordance: 'dining-seat' },
+      minPartners: 1,
+      distance: { min: 0, max: 0.45 },
+      weight: 1.2,
+      messageKey: 'functional-dining-seat-required'
+    });
+    const diningTable = item('dining-table', 'dining-surface', { dimensions: { x: 2, z: 1 } });
+    const diningChair = item('dining-chair', 'dining-seat');
+
+    const result = new FunctionalLayoutEvaluator().evaluate(room([
+      [diningTable, { x: 4, z: 4 }],
+      [diningChair, { x: 4.9, z: 4 }]
+    ]), [tuckedRule]);
+
+    expect(result.violations).toEqual([]);
+    expect(result.matchedPairs).toEqual([['dining-chair#1', 'dining-table#1']]);
+  });
+
   it('consumes a dining chair at most once, so one chair cannot satisfy two tables', () => {
     const tableA = item('table-a', 'dining-surface', {
       dimensions: { x: 1, z: 1 }, usableSides: ['positiveX']
