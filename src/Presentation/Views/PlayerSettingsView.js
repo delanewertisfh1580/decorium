@@ -91,12 +91,14 @@ export class PlayerSettingsView {
       }
     }
 
+    const motionInput = this.container.querySelector('[data-setting="reducedMotion"]');
     this.container.querySelector('[data-settings-switch]').addEventListener('click', event => {
-      if (event.target.tagName !== 'INPUT') {
-        const input = this.container.querySelector('[data-setting="reducedMotion"]');
-        input.checked = !input.checked;
+      if (event.target !== motionInput) {
+        // The label would otherwise forward a second click and cancel our toggle.
+        event.preventDefault();
+        motionInput.checked = !motionInput.checked;
       }
-      event.currentTarget.classList.toggle('is-active', this.container.querySelector('[data-setting="reducedMotion"]').checked);
+      event.currentTarget.classList.toggle('is-active', motionInput.checked);
     });
 
     this.container.querySelector('[data-settings-close]').addEventListener('click', () => this.close());

@@ -32,13 +32,15 @@ export class WorkspaceShellView {
     if (!this._rendered) {
       this.container.innerHTML = `
         <header class="workspace-app-bar" data-workspace-app-bar>
-          <button class="workspace-nav-button" type="button" data-workspace-action="campaign" aria-label="Открыть кампанию">
-            <span aria-hidden="true">←</span><span>Кампания</span>
-          </button>
-          <div class="workspace-level-context" aria-live="polite">
-            <strong data-workspace-level-label></strong><span data-workspace-placed-count></span>
+          <div class="workspace-bar-chip">
+            <button class="workspace-nav-button" type="button" data-workspace-action="campaign" aria-label="Открыть кампанию">
+              <span aria-hidden="true">←</span><span>Кампания</span>
+            </button>
+            <div class="workspace-level-context" aria-live="polite">
+              <strong data-workspace-level-label></strong><span data-workspace-placed-count></span>
+            </div>
           </div>
-          <div class="workspace-app-actions">
+          <div class="workspace-bar-chip workspace-app-actions">
             <button class="workspace-icon-button" type="button" data-workspace-action="brief" aria-label="Открыть бриф клиента">Бриф</button>
             <button class="workspace-icon-button" type="button" data-workspace-action="room" aria-label="Открыть настройку комнаты">Комната</button>
             <button class="workspace-icon-button" type="button" data-workspace-action="settings" aria-label="Открыть настройки">⚙</button>

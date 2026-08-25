@@ -1,5 +1,5 @@
 /* Decorium UI patch: calm review scorecard + systemic settings modal.
-   Loaded after styles.css via index.html; overrides earlier rules by cascade order. */
+   Loaded after styles.css via main.js imports; overrides earlier rules by cascade order. */
 
 /* --- Settings: dedicated modal surface ------------------------------------- */
 #settings-container {
@@ -11,7 +11,8 @@
   padding: 20px;
   pointer-events: none;
 }
-#settings-container:not(:empty) { background: rgba(25, 36, 34, .38); backdrop-filter: blur(7px); pointer-events: auto; }
+#settings-container.is-open { background: rgba(25, 36, 34, .38); backdrop-filter: blur(7px); pointer-events: auto; }
+#settings-container:not(.is-open) .settings-modal { display: none; }
 .settings-modal { width: min(430px, 100%); max-height: min(680px, 100%); overflow: auto; animation: panel-in var(--motion-panel) ease-out; }
 .settings-card {
   display: grid;
@@ -23,7 +24,7 @@
   color: var(--text);
   box-shadow: 0 26px 70px rgba(17, 28, 26, .3);
 }
-.settings-header { display: grid; gap: 4px; }
+.settings-header { position: relative; display: grid; gap: 4px; padding-right: 44px; }
 .settings-header h2 { margin: 0; font-size: 21px; letter-spacing: -.03em; }
 .settings-header p { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.4; }
 .settings-form { display: grid; gap: 16px; }
@@ -89,11 +90,47 @@
 }
 .settings-save:hover { background: linear-gradient(135deg, #426a63, #669087); }
 .settings-close { display: grid; flex: 0 0 auto; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; font-size: 24px; }
+.settings-header .settings-close { position: absolute; top: -2px; right: -6px; }
 .settings-close:hover { background: rgba(111,143,135,.12); color: var(--text); }
 @media (max-width: 520px) {
   #settings-container { padding: 0; align-items: end; }
   .settings-modal { width: 100%; max-height: 92vh; }
   .settings-card { border-radius: 22px 22px 0 0; }
+}
+
+/* --- Workspace top chrome: floating chips instead of a full-width brow ----- */
+.workspace-app-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  pointer-events: none;
+}
+.workspace-bar-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100vw - 28px);
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, .42);
+  border-radius: 14px;
+  background: rgba(255, 250, 243, .94);
+  box-shadow: 0 10px 34px rgba(47, 62, 58, .16);
+  backdrop-filter: blur(16px);
+  pointer-events: auto;
+}
+.workspace-app-actions { padding: 5px; }
+.workspace-level-context { padding: 0 10px 0 4px; text-align: left; }
+@media (max-width: 720px) {
+  .workspace-app-bar { top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); left: max(8px, env(safe-area-inset-left)); }
+  .workspace-bar-chip { max-width: calc(50vw - 12px); }
 }
 
 /* --- Review workspace: calm scorecard --------------------------------------- */
