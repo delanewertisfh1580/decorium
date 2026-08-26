@@ -6,6 +6,7 @@ import SceneLifeSystem from '../Scene/SceneLifeSystem.js';
 import { getWallOpacities } from '../Scene/WallVisibility.js';
 import { getRoomOpenings } from '../Scene/RoomArchitecture.js';
 import { resolveEnvironmentProfilePlan } from '../Scene/EnvironmentProfilePlan.js';
+import { createPassageZoneOverlay } from '../Scene/PassageZoneOverlay.js';
 
 const DRAG_THRESHOLD = 5;
 const ANIMATION_MS = 220;
@@ -96,10 +97,13 @@ export class RoomView {
     this.pointer = new THREE.Vector2();
     this.roomGroup = new THREE.Group();
     this.furnitureGroup = new THREE.Group();
-    this.scene.add(this.roomGroup, this.furnitureGroup);
+    this.overlayGroup = new THREE.Group();
+    this.scene.add(this.roomGroup, this.furnitureGroup, this.overlayGroup);
     this.floor = null;
     this.walls = [];
     this.objectsById = new Map();
+    this.passageZones = [];
+    this._highlightedIds = new Set();
     this.animations = new Set();
     this.ghost = null;
     this.ghostItem = null;
@@ -153,6 +157,34 @@ export class RoomView {
     if (floor.surface && floor.surface !== 'floor') throw new Error(`Surface finish ${floor.id} cannot be applied to floor.`);
     if (wall.surface && wall.surface !== 'wall') throw new Error(`Surface finish ${wall.id} cannot be applied to wall.`);
     return Object.freeze({ floor, wall, signature: `${floor.id}/${wall.id}` });
+  }
+
+  /** Shows the ergonomics passage zones (door/window/approach) as floor guides. */
+  setPassageZones(zones = []) {
+    this.passageZones = Array.isArray(zones) ? zones : [];
+    this._rebuildPassageOverlay();
+  }
+
+  _rebuildPassageOverlay() {
+    disposeObject(this.overlayGroup);
+    this.overlayGroup.clear();
+    if (this.passageZones.length > 0) this.overlayGroup.add(createPassageZoneOverlay(this.passageZones));
+  }
+
+  /** Tints the given room instances with the invalid feedback state. */
+  highlightItems(instanceIds = []) {
+    this._highlightedIds = new Set(instanceIds);
+    for (const [id, object] of this.objectsById) {
+      ItemVisualFactory.setPreviewValidity(object, !this._highlightedIds.has(id));
+    }
+  }
+
+  clearHighlightedItems() {
+    if (this._highlightedIds.size === 0) return;
+    this._highlightedIds.clear();
+    for (const object of this.objectsById.values()) {
+      ItemVisualFactory.setPreviewValidity(object, true);
+    }
   }
 
   async init() {
@@ -397,7 +429,8 @@ export class RoomView {
         if (previousVariantScale !== (object.userData.variantScale ?? 1)) this._animateScale(object, object.userData.variantScale ?? 1);
         this._animateTransform(object, placed.position, placed.rotation);
       }
-      ItemVisualFactory.setPreviewValidity(object, true);
+      const highlighted = this._highlightedIds.size > 0 && this._highlightedIds.has(placed.id);
+      ItemVisualFactory.setPreviewValidity(object, !highlighted);
       ItemVisualFactory.setSelected(object, selectedItemId === placed.id);
     }
 

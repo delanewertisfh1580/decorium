@@ -3,8 +3,9 @@ import { RoomState } from '../../Domain/Rooms/RoomState.js';
 import { RoomBounds } from '../../Domain/Rooms/RoomBounds.js';
 import RoomInteriorGenerator from '../../Domain/Rooms/RoomInteriorGenerator.js';
 import ClientBrief from '../../Domain/Briefs/ClientBrief.js';
+import { createOpeningPassageZones, openingClearanceRects } from '../../Domain/Rooms/RoomOpenings.js';
 
-function createEvaluationSpec(clientBrief, styleTargets) {
+function createEvaluationSpec(clientBrief, styleTargets, openingPassageZones = []) {
   const policy = clientBrief.evaluationPolicy;
   const ergonomics = policy.ergonomicsRules;
   return Object.freeze({
@@ -17,7 +18,8 @@ function createEvaluationSpec(clientBrief, styleTargets) {
     compositionRules: policy.compositionRules,
     ergonomicsRules: Object.freeze({
       minimumClearance: ergonomics.minimumClearance,
-      passageZones: ergonomics.passageZones,
+      // Authored circulation zones first, synthesized opening zones appended.
+      passageZones: Object.freeze([...(ergonomics.passageZones ?? []), ...openingPassageZones]),
       functionalLayoutRules: ergonomics.functionalLayoutRules,
       requiredFunctionalScenarios: ergonomics.requiredFunctionalScenarios
     }),
@@ -80,7 +82,20 @@ export class LoadLevelUseCase {
         };
       }
 
-      const bounds = new RoomBounds(raw.roomDimensions.width, raw.roomDimensions.depth);
+      const presentationEnvironment = await this.presentationEnvironmentRepository.getById(raw.presentationProfileId);
+      if (!presentationEnvironment) return { success: false, error: `INVALID_LEVEL_DATA: Unknown presentation profile ${raw.presentationProfileId}` };
+      // Openings resolve from the same authored preset the scene renders,
+      // so visible doors/windows are exactly what ergonomics protects.
+      const openingsPresetId = presentationEnvironment.room?.openingsPreset ?? null;
+      const openingRects = openingsPresetId
+        ? openingClearanceRects({ width: raw.roomDimensions.width, depth: raw.roomDimensions.depth, presetId: openingsPresetId })
+        : [];
+      const bounds = new RoomBounds(
+        raw.roomDimensions.width,
+        raw.roomDimensions.depth,
+        openingRects.filter(rect => rect.kind === 'door'),
+        openingRects.filter(rect => rect.kind === 'window')
+      );
       const availableItems = await this.itemCatalog.getItemsByIds(raw.availableItems);
       if (availableItems.length !== raw.availableItems.length) {
         const missing = raw.availableItems.filter(id => !availableItems.some(item => item.id === id));
@@ -119,8 +134,6 @@ export class LoadLevelUseCase {
         }
       }
 
-      const presentationEnvironment = await this.presentationEnvironmentRepository.getById(raw.presentationProfileId);
-      if (!presentationEnvironment) return { success: false, error: `INVALID_LEVEL_DATA: Unknown presentation profile ${raw.presentationProfileId}` };
       const styleTargets = await Promise.all(clientBrief.styleTargets.map(async target => {
         const styleProfile = await this.constraintCatalog.getStyleProfileById(target.styleId);
         if (!styleProfile || !Array.isArray(styleProfile.constraints) || styleProfile.constraints.length === 0) throw new Error(`Unknown style constraint profile ${target.styleId}`);
@@ -141,7 +154,13 @@ export class LoadLevelUseCase {
           targetScore: clientBrief.evaluationPolicy.completion.minimumStars,
           presentationEnvironment,
           clientBrief,
-          evaluationSpec: createEvaluationSpec(clientBrief, styleTargets),
+          evaluationSpec: createEvaluationSpec(
+            clientBrief,
+            styleTargets,
+            openingsPresetId
+              ? createOpeningPassageZones({ width: raw.roomDimensions.width, depth: raw.roomDimensions.depth, presetId: openingsPresetId })
+              : []
+          ),
           interiorRecipe,
           generationSeed: raw.generationSeed,
           surfaceFinishes,

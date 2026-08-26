@@ -1,9 +1,7 @@
+import { OPENING_PRESETS } from '../../Domain/Rooms/RoomOpenings.js';
+
 const PRESETS = Object.freeze({
-  openings: Object.freeze({
-    'living-window-and-door': Object.freeze({ window: Object.freeze({ widthFactor: 0.34, centerXFactor: 0.68, height: 1.35, bottom: 1.25, glassOpacity: 0.24, maxWidth: 2.15 }), door: Object.freeze({ centerZFactor: 0.72, width: 0.9, color: 0x394b52 }) }),
-    'media-narrow-window': Object.freeze({ window: Object.freeze({ widthFactor: 0.24, centerXFactor: 0.24, height: 1.05, bottom: 1.5, glassOpacity: 0.18, maxWidth: 1.45 }), door: Object.freeze({ centerZFactor: 0.76, width: 0.82, color: 0x242b34 }) }),
-    'studio-wide-window': Object.freeze({ window: Object.freeze({ widthFactor: 0.56, centerXFactor: 0.56, height: 1.72, bottom: 0.92, glassOpacity: 0.3, maxWidth: 5.4 }), door: Object.freeze({ centerZFactor: 0.24, width: 1.0, color: 0x6f665c }) })
-  }),
+  openings: OPENING_PRESETS,
   cameras: Object.freeze({
     'compact-living': Object.freeze({ xFactor: 1.16, zFactor: 1.34, heightFactor: 1.1, minHeight: 5.4, targetHeight: 0.8 }),
     'intimate-media': Object.freeze({ xFactor: 1.06, zFactor: 1.2, heightFactor: 1.0, minHeight: 4.9, targetHeight: 0.76 }),

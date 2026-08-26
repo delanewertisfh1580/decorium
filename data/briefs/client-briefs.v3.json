@@ -68,17 +68,7 @@
             "minimumDistance": 0.9,
             "weight": 1
           },
-          "passageZones": [
-            {
-              "id": "entry-passage",
-              "label": "Входной проход",
-              "x": 0,
-              "z": 2.2,
-              "width": 1,
-              "depth": 1.6,
-              "weight": 1.4
-            }
-          ],
+          "passageZones": [],
           "functionalLayoutRules": [
             {
               "schemaVersion": 1,
@@ -203,17 +193,7 @@
             "minimumDistance": 0.8,
             "weight": 1
           },
-          "passageZones": [
-            {
-              "id": "entry-passage",
-              "label": "Входной проход",
-              "x": 0,
-              "z": 1.6,
-              "width": 1,
-              "depth": 1.8,
-              "weight": 1.4
-            }
-          ],
+          "passageZones": [],
           "functionalLayoutRules": [
             {
               "schemaVersion": 1,
@@ -353,17 +333,7 @@
             "minimumDistance": 0.9,
             "weight": 1.2
           },
-          "passageZones": [
-            {
-              "id": "entry-passage",
-              "label": "Входной проход",
-              "x": 0,
-              "z": 2.5,
-              "width": 1,
-              "depth": 2,
-              "weight": 1.5
-            }
-          ],
+          "passageZones": [],
           "functionalLayoutRules": [],
           "requiredFunctionalScenarios": [
             {

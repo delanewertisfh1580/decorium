@@ -76,7 +76,10 @@ function createController({
     ghostItem: null,
     cancelPlacement: vi.fn(),
     beginPlacement: vi.fn(),
-    rotateGhost: vi.fn(() => true)
+    rotateGhost: vi.fn(() => true),
+    setPassageZones: vi.fn(),
+    highlightItems: vi.fn(),
+    clearHighlightedItems: vi.fn()
   };
   controller.catalogView = { close: vi.fn() };
   controller.evaluationView = { hide: vi.fn() };

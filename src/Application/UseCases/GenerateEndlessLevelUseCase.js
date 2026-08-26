@@ -3,8 +3,9 @@ import ClientBrief from '../../Domain/Briefs/ClientBrief.js';
 import { RoomBounds } from '../../Domain/Rooms/RoomBounds.js';
 import RoomInteriorGenerator from '../../Domain/Rooms/RoomInteriorGenerator.js';
 import EndlessLevelGenerator from '../../Domain/Levels/EndlessLevelGenerator.js';
+import { createOpeningPassageZones, openingClearanceRects } from '../../Domain/Rooms/RoomOpenings.js';
 
-function evaluationSpecFor(clientBrief, styleTargets) {
+function evaluationSpecFor(clientBrief, styleTargets, openingPassageZones = []) {
   const policy = clientBrief.evaluationPolicy;
   const ergonomics = policy.ergonomicsRules;
   return Object.freeze({
@@ -17,7 +18,8 @@ function evaluationSpecFor(clientBrief, styleTargets) {
     compositionRules: policy.compositionRules,
     ergonomicsRules: Object.freeze({
       minimumClearance: ergonomics.minimumClearance,
-      passageZones: ergonomics.passageZones,
+      // Authored circulation zones first, synthesized opening zones appended.
+      passageZones: Object.freeze([...(ergonomics.passageZones ?? []), ...openingPassageZones]),
       functionalLayoutRules: ergonomics.functionalLayoutRules,
       requiredFunctionalScenarios: ergonomics.requiredFunctionalScenarios
     }),
@@ -104,10 +106,21 @@ export class GenerateEndlessLevelUseCase {
         return { success: false, error: `DEFAULT_SURFACE_LOCKED: ${blueprint.id}` };
       }
       const itemsById = new Map(availableItems.map(item => [item.id, item]));
+      const presentationEnvironment = await this.presentationEnvironmentRepository.getById(blueprint.presentationProfileId);
+      if (!presentationEnvironment) return { success: false, error: `ENDLESS_PRESENTATION_MISSING: ${blueprint.presentationProfileId}` };
+      const openingsPresetId = presentationEnvironment.room?.openingsPreset ?? null;
+      const openingRects = openingsPresetId
+        ? openingClearanceRects({ width: room.width, depth: room.depth, presetId: openingsPresetId })
+        : [];
       const materialized = this.roomInteriorGenerator.generate({
         recipe: interiorRecipe,
         seed,
-        bounds: new RoomBounds(room.width, room.depth),
+        bounds: new RoomBounds(
+          room.width,
+          room.depth,
+          openingRects.filter(rect => rect.kind === 'door'),
+          openingRects.filter(rect => rect.kind === 'window')
+        ),
         itemsById,
         surfaceDefaults: blueprint.surfaceDefaults,
         allowedItemIds: new Set(availableItems.map(item => item.id)),
@@ -115,14 +128,15 @@ export class GenerateEndlessLevelUseCase {
       });
       if (!materialized.success) return { success: false, error: `ENDLESS_MATERIALIZATION_FAILED: ${materialized.error}` };
 
-      const presentationEnvironment = await this.presentationEnvironmentRepository.getById(blueprint.presentationProfileId);
-      if (!presentationEnvironment) return { success: false, error: `ENDLESS_PRESENTATION_MISSING: ${blueprint.presentationProfileId}` };
       const clientBrief = endlessBriefFor({ seed, blueprint });
       const styleTargets = await Promise.all(clientBrief.styleTargets.map(async target => {
         const styleProfile = await this.constraintCatalog.getStyleProfileById(target.styleId);
         if (!styleProfile?.constraints?.length) throw new Error(`ENDLESS_STYLE_MISSING: ${target.styleId}`);
         return Object.freeze({ styleId: target.styleId, label: styleProfile.label, role: target.role, weight: target.weight, constraints: Object.freeze([...styleProfile.constraints]) });
       }));
+      const openingPassageZones = openingsPresetId
+        ? createOpeningPassageZones({ width: room.width, depth: room.depth, presetId: openingsPresetId })
+        : [];
       const roomState = materialized.data.roomState;
       return {
         success: true,
@@ -137,7 +151,7 @@ export class GenerateEndlessLevelUseCase {
           targetScore: clientBrief.evaluationPolicy.completion.minimumStars,
           presentationEnvironment,
           clientBrief,
-          evaluationSpec: evaluationSpecFor(clientBrief, styleTargets),
+          evaluationSpec: evaluationSpecFor(clientBrief, styleTargets, openingPassageZones),
           interiorRecipe,
           generationSeed: seed,
           surfaceFinishes,

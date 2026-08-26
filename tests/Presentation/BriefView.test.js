@@ -57,4 +57,55 @@ describe('BriefView', () => {
     expect(() => view.render({ brief: null, mode: 'launch' })).toThrow('brief');
     expect(() => view.render({ brief, mode: 'unknown' })).toThrow('mode');
   });
+
+  it('reveals style criteria and functional schemas before placement when hydrated profiles are provided', () => {
+    const container = document.createElement('div');
+    const view = new BriefView(container);
+
+    view.render({
+      brief: Object.freeze({
+        ...brief,
+        evaluationPolicy: Object.freeze({
+          ergonomicsRules: Object.freeze({
+            functionalLayoutRules: Object.freeze([
+              Object.freeze({
+                id: 'lounge-faces-tv', kind: 'front-adjacency',
+                anchorSelector: { affordance: 'lounge-seat' },
+                partnerSelector: { affordance: 'view-target' },
+                distance: { min: 1, max: 4 }, maxAngleDegrees: 30
+              })
+            ]),
+            requiredFunctionalScenarios: Object.freeze([
+              Object.freeze({
+                id: 'media', label: 'Медиа-зона', critical: true,
+                requiredRoles: Object.freeze([
+                  Object.freeze({ affordance: 'lounge-seat', minCount: 1 }),
+                  Object.freeze({ affordance: 'view-target', minCount: 1 })
+                ])
+              })
+            ])
+          })
+        })
+      }),
+      mode: 'launch',
+      levelLabel: 'Гостиная · Первые шаги',
+      styleProfiles: [{
+        styleId: 'scandinavian', label: 'Скандинавский', role: 'primary', weight: 1,
+        constraints: [
+          { feature: 'woodShare', operator: 'gte', threshold: 0.5 },
+          { feature: 'plasticShare', operator: 'lte', threshold: 0.1 }
+        ]
+      }]
+    });
+
+    expect(container.textContent).toContain('Как организовать пространство');
+    expect(container.textContent).toContain('Медиа-зона');
+    expect(container.textContent).toContain('Диван или кресло ×1');
+    expect(container.textContent).toContain('обязательно для сдачи');
+    expect(container.textContent).toContain('фронтально к «ТВ-зона» на расстоянии 1–4 м');
+    expect(container.textContent).toContain('развернуть не более чем на 30°');
+    expect(container.textContent).toContain('двери и окну должны оставаться свободными');
+    expect(container.textContent).toContain('Натуральное дерево — не ниже 50%');
+    expect(container.textContent).toContain('Пластик — не выше 10%');
+  });
 });

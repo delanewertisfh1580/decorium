@@ -262,5 +262,17 @@
     "category": "violation",
     "template": "Соберите рабочий сценарий со столом и подходящим местом для работы.",
     "severity": "high"
+  },
+  {
+    "id": "ergonomics-opening-door-free",
+    "category": "violation",
+    "template": "Мебель перекрывает проход к двери. Освободите зону перед дверью, чтобы её можно было открыть.",
+    "severity": "high"
+  },
+  {
+    "id": "ergonomics-opening-window-free",
+    "category": "violation",
+    "template": "Мебель загораживает окно. Освободите зону под окном — свет и радиатор должны оставаться доступными.",
+    "severity": "medium"
   }
 ]

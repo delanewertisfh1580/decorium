@@ -63,4 +63,29 @@ describe('LoadLevelUseCase V3 ergonomics rules', () => {
     expect(result.data.evaluationSpec.ergonomicsRules.passageZones[0]).toBeInstanceOf(PassageZone);
     expect(result.data.evaluationSpec.ergonomicsRules.passageZones[0].label).toBe('Вход');
   });
+
+  it('appends opening-derived passage zones after brief-owned zones when the environment defines an openings preset', async () => {
+    const useCase = new LoadLevelUseCase(
+      { loadLevel: async () => rawLevel },
+      { getItemsByIds: async () => [{ id: 'chair-001' }] },
+      { getStyleProfileById: async () => ({ id: 'scandinavian', label: 'Скандинавский', constraints: [{ id: 'constraint' }] }) },
+      { getById: async () => ({ id: 'test-environment', room: { openingsPreset: 'living-window-and-door' } }) },
+      { getById: async () => rawBrief },
+      loadLevelV2Dependencies()
+    );
+
+    const result = await useCase.execute('level-001');
+
+    expect(result.success).toBe(true);
+    const zones = result.data.evaluationSpec.ergonomicsRules.passageZones;
+    expect(zones).toHaveLength(3);
+    expect(zones[0].label).toBe('Вход');
+    expect(zones[1].id).toBe('opening-door');
+    expect(zones[1].messageKey).toBe('ergonomics-opening-door-free');
+    // Door centerZ = 5 * 0.72 = 3.6, half width 0.45, swing margin 0.05.
+    expect(zones[1].z).toBeCloseTo(3.1, 5);
+    expect(zones[2].id).toBe('opening-window');
+    expect(zones[2].messageKey).toBe('ergonomics-opening-window-free');
+    expect(zones[2].z + zones[2].depth).toBe(5);
+  });
 });

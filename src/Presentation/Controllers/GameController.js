@@ -207,6 +207,7 @@ export class GameController {
 
   async loadLevel(levelId) {
     await this.sessionCoordinator.load(levelId);
+    this._syncPassageZones();
     this.workspaceState = this.workspaceState.openBrief();
     this._render();
     this._renderBrief();
@@ -235,6 +236,7 @@ export class GameController {
 
   async loadEndlessRun(seed) {
     await this.sessionCoordinator.loadEndless(seed);
+    this._syncPassageZones();
     this.workspaceState = WorkspaceState.edit();
     this._render();
   }
@@ -267,7 +269,8 @@ export class GameController {
     this.briefView?.render({
       brief: this.level.clientBrief,
       mode: 'launch',
-      levelLabel: this.roomViewModel?.name ?? this.level.id
+      levelLabel: this.roomViewModel?.name ?? this.level.id,
+      styleProfiles: this.level.evaluationSpec?.styleTargets ?? []
     });
   }
 
@@ -276,7 +279,8 @@ export class GameController {
     this.briefDrawerView?.render({
       brief: this.level.clientBrief,
       mode: 'drawer',
-      levelLabel: this.roomViewModel?.name ?? this.level.id
+      levelLabel: this.roomViewModel?.name ?? this.level.id,
+      styleProfiles: this.level.evaluationSpec?.styleTargets ?? []
     });
   }
 
@@ -310,7 +314,21 @@ export class GameController {
     this.toolbarView.setUndoState(this.undoBuffer.canUndo, this.undoBuffer.nextLabel);
   }
 
+  /** Floor guides mirror the exact passage rectangles the evaluator enforces. */
+  _syncPassageZones() {
+    const zones = this.level?.evaluationSpec?.ergonomicsRules?.passageZones ?? [];
+    this.roomView?.setPassageZones(zones);
+  }
+
+  _highlightOffendingItems() {
+    const offenders = (this.evaluationViewModel?.violations ?? [])
+      .flatMap(issue => (issue.instances ?? []).map(instance => instance.instanceId))
+      .filter(Boolean);
+    this.roomView?.highlightItems(offenders);
+  }
+
   _invalidateEvaluation() {
+    this.roomView?.clearHighlightedItems();
     this.evaluationCoordinator.invalidate();
   }
 
@@ -364,6 +382,7 @@ export class GameController {
     }
     this.roomInteraction.resetTransientState();
     this.evaluationCoordinator.reset();
+    this.roomView?.clearHighlightedItems();
     this._showStatus('Новая попытка начата');
     this._render();
     return { success: true };
@@ -381,7 +400,11 @@ export class GameController {
       roomViewModel: this.roomViewModel,
       profile: this.playerProfile
     });
-    if (!result.success) this._exitReviewWorkspace();
+    if (!result.success) {
+      this._exitReviewWorkspace();
+      return result;
+    }
+    this._highlightOffendingItems();
     return result;
   }
 

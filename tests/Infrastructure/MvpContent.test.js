@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import Ajv from 'ajv';
+import { OPENING_PRESETS, openingClearanceRects } from '../../src/Domain/Rooms/RoomOpenings.js';
 
 const readJson = path => JSON.parse(readFileSync(path, 'utf8'));
 const catalog = readJson('data/items/catalog.v5.json');
@@ -16,6 +17,8 @@ const styleConstraintCatalog = readJson('data/styles/style-constraint-catalog.v1
 const constraints = styleConstraintCatalog.profiles.flatMap(profile => profile.constraints);
 const feedback = readJson('data/feedback/scandinavian-feedback.json');
 const visualProfiles = readJson('data/visuals/item-visuals.json');
+const presentationProfiles = readJson('data/presentation/environment-profiles.v3.json');
+const presentationById = new Map(presentationProfiles.profiles.map(profile => [profile.id, profile]));
 
 const itemIds = new Set(catalog.items.map(item => item.id));
 const feedbackIds = new Set(feedback.map(message => message.id));
@@ -36,12 +39,19 @@ describe('Production content contracts', () => {
     expect(catalog.items.every(item => Object.keys(item.featureVector).length === 16)).toBe(true);
   });
 
-  it('references only catalog items and resolves complete client-owned ergonomics policy for every authored level', () => {
+  it('references only catalog items and resolves client ergonomics policy plus environment-owned opening protection for every authored level', () => {
     expect(level.availableItems).toHaveLength(16);
     expect(levels.every(levelDefinition => levelDefinition.availableItems.every(itemId => itemIds.has(itemId)))).toBe(true);
     expect(levels.every(levelDefinition => clientBriefsById.get(levelDefinition.clientBriefId)?.levelId === levelDefinition.id)).toBe(true);
     expect(levels.every(levelDefinition => clientBriefsById.get(levelDefinition.clientBriefId)?.evaluationPolicy.ergonomicsRules.minimumClearance.minimumDistance > 0)).toBe(true);
-    expect(levels.every(levelDefinition => clientBriefsById.get(levelDefinition.clientBriefId)?.evaluationPolicy.ergonomicsRules.passageZones.length > 0)).toBe(true);
+    // Passage protection is derived from the shared opening preset (single source of
+    // truth for door/window geometry), so authored briefs carry no hand-copied zones.
+    expect(levels.every(levelDefinition => {
+      const presetId = presentationById.get(levelDefinition.presentationProfileId)?.room?.openingsPreset;
+      if (!presetId || !OPENING_PRESETS[presetId]) return false;
+      const rects = openingClearanceRects({ width: levelDefinition.roomDimensions.width, depth: levelDefinition.roomDimensions.depth, presetId });
+      return rects.some(rect => rect.kind === 'door') && rects.some(rect => rect.kind === 'window');
+    })).toBe(true);
   });
 
   it('defines a deterministic prerequisite chain for the authored campaign', () => {
@@ -57,6 +67,8 @@ describe('Production content contracts', () => {
     expect(constraints.every(constraint => feedbackIds.has(constraint.messageKey))).toBe(true);
     expect(feedbackIds.has('ergonomics-minimum-clearance')).toBe(true);
     expect(feedbackIds.has('ergonomics-passage-zone-free')).toBe(true);
+    expect(feedbackIds.has('ergonomics-opening-door-free')).toBe(true);
+    expect(feedbackIds.has('ergonomics-opening-window-free')).toBe(true);
   });
 
   it('keeps presentation shapes in a data-driven visual profile contract', () => {

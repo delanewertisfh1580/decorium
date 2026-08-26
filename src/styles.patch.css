@@ -196,3 +196,17 @@
   .review-issue-detail { max-height: 32vh; }
   .review-footer { padding: 0 16px max(16px, env(safe-area-inset-bottom)); }
 }
+
+/* --- Brief: pre-placement criteria & functional schemas (stage 2) --- */
+.brief-functional { display: grid; gap: 10px; margin: 0 0 24px; padding: 18px; border: 1px solid rgba(82, 117, 110, .16); border-radius: 14px; background: rgba(111, 143, 135, .07); }
+.brief-scenarios, .brief-layout-rules { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.brief-scenarios li { position: relative; display: grid; gap: 2px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, .76); font-size: 14px; }
+.brief-scenarios strong { font-size: 14px; }
+.brief-scenarios span { color: #53625d; font-size: 13px; }
+.brief-critical { justify-self: start; margin-top: 2px; padding: 2px 8px; border-radius: 999px; background: rgba(197, 111, 104, .14); color: #a4544b; font-size: 11px; font-style: normal; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+.brief-layout-rules li { color: #53625d; font-size: 13.5px; line-height: 1.5; }
+.brief-relation { color: var(--text); font-weight: 700; }
+.brief-passage-hint { margin: 2px 0 0; color: var(--muted); font-size: 12.5px; }
+.brief-style-criteria { display: grid; gap: 3px; margin: 6px 0 0; padding: 8px 0 0; border-top: 1px dashed rgba(82, 117, 110, .22); list-style: none; }
+.brief-style-criteria li { color: #53625d; font-size: 12.5px; line-height: 1.45; }
+.brief-style-criteria li::before { content: '· '; color: var(--accent-strong); font-weight: 800; }
