@@ -29,6 +29,21 @@ function distanceBetween(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
+function scaleVector(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return { x: value, y: value, z: value };
+  return {
+    x: Number.isFinite(value?.x) ? value.x : 1,
+    y: Number.isFinite(value?.y) ? value.y : 1,
+    z: Number.isFinite(value?.z) ? value.z : 1
+  };
+}
+
+function sameScaleVector(left, right) {
+  const a = scaleVector(left);
+  const b = scaleVector(right);
+  return Math.abs(a.x - b.x) < 0.001 && Math.abs(a.y - b.y) < 0.001 && Math.abs(a.z - b.z) < 0.001;
+}
+
 function disposeObject(object) {
   object.traverse(child => {
     child.geometry?.dispose();
@@ -417,21 +432,24 @@ export class RoomView {
         this._setObjectInstanceId(object, placed.id);
         object.position.set(placed.position.x, placed.position.y ?? 0, placed.position.z);
         object.rotation.y = THREE.MathUtils.degToRad(placed.rotation);
-        object.scale.setScalar(0.01 * (object.userData.variantScale ?? 1));
+        object.scale.setScalar(0.01);
         this.objectsById.set(placed.id, object);
         this.furnitureGroup.add(object);
         this._upgradeVisualWithAsset(object, placed.item);
-        this._animateScale(object, object.userData.variantScale ?? 1);
+        this._animateScale(object, object.userData.variantScaleVector ?? object.userData.variantScale ?? 1);
       } else {
         this._setObjectInstanceId(object, placed.id);
-        const previousVariantScale = object.userData.variantScale ?? 1;
+        const previousVariantScale = object.userData.variantScaleVector ?? object.userData.variantScale ?? 1;
         ItemVisualFactory.applyConfiguration(object, placed.item, placed.configuration);
-        if (previousVariantScale !== (object.userData.variantScale ?? 1)) this._animateScale(object, object.userData.variantScale ?? 1);
+        const nextVariantScale = object.userData.variantScaleVector ?? object.userData.variantScale ?? 1;
+        if (!sameScaleVector(previousVariantScale, nextVariantScale)) this._animateScale(object, nextVariantScale);
         this._animateTransform(object, placed.position, placed.rotation);
       }
       const highlighted = this._highlightedIds.size > 0 && this._highlightedIds.has(placed.id);
-      ItemVisualFactory.setPreviewValidity(object, !highlighted);
+      // Apply selection first, then the evaluation state: an offending item
+      // must remain visibly red even when it is also the active selection.
       ItemVisualFactory.setSelected(object, selectedItemId === placed.id);
+      ItemVisualFactory.setPreviewValidity(object, !highlighted);
     }
 
     for (const [itemId, object] of this.objectsById) {
@@ -488,10 +506,15 @@ export class RoomView {
   }
 
   _animateScale(object, targetScale) {
-    const initialScale = object.scale.x;
+    const initialScale = { x: object.scale.x, y: object.scale.y, z: object.scale.z };
+    const target = scaleVector(targetScale);
     this._animate(ANIMATION_MS, progress => {
       const eased = easeOutCubic(progress);
-      object.scale.setScalar(initialScale + (targetScale - initialScale) * eased);
+      object.scale.set(
+        initialScale.x + (target.x - initialScale.x) * eased,
+        initialScale.y + (target.y - initialScale.y) * eased,
+        initialScale.z + (target.z - initialScale.z) * eased
+      );
     });
   }
 

@@ -38,6 +38,28 @@ const FEEDBACK = Object.freeze({
   invalid: { color: 0xff806d, opacity: 0.82 }
 });
 
+const MATERIAL_FINISHES = Object.freeze({
+  'oak-light': Object.freeze({ roughness: 0.62, metalness: 0.02 }),
+  walnut: Object.freeze({ roughness: 0.58, metalness: 0.03 }),
+  textile: Object.freeze({ roughness: 0.96, metalness: 0 }),
+  velvet: Object.freeze({ roughness: 0.9, metalness: 0 }),
+  linen: Object.freeze({ roughness: 0.94, metalness: 0 }),
+  ceramic: Object.freeze({ roughness: 0.34, metalness: 0.04 }),
+  terracotta: Object.freeze({ roughness: 0.82, metalness: 0 }),
+  brass: Object.freeze({ roughness: 0.28, metalness: 0.72 }),
+  'black-metal': Object.freeze({ roughness: 0.36, metalness: 0.68 }),
+  graphite: Object.freeze({ roughness: 0.4, metalness: 0.4 }),
+  'midnight-metal': Object.freeze({ roughness: 0.3, metalness: 0.72 })
+});
+
+function applyMaterialFinish(materialValue, materialId) {
+  const finish = MATERIAL_FINISHES[materialId];
+  if (!materialValue || !finish) return;
+  materialValue.roughness = finish.roughness;
+  materialValue.metalness = finish.metalness;
+  materialValue.needsUpdate = true;
+}
+
 function dimensionsOf(item) {
   return item.dimensions ?? { x: 1, z: 1 };
 }
@@ -639,17 +661,32 @@ export class ItemVisualFactory {
       group.userData.variantId = null;
       group.userData.variantVisual = null;
       group.userData.variantScale = 1;
+      group.userData.variantScaleVector = Object.freeze({ x: 1, y: 1, z: 1 });
       return;
     }
     const resolved = item.resolveConfiguration(configuration);
+    const baseDimensions = item.dimensions ?? resolved.dimensions ?? { x: 1, z: 1 };
+    const resolvedDimensions = resolved.dimensions ?? baseDimensions;
+    const baseX = Number.isFinite(baseDimensions.x) && baseDimensions.x > 0 ? baseDimensions.x : 1;
+    const baseZ = Number.isFinite(baseDimensions.z) && baseDimensions.z > 0 ? baseDimensions.z : 1;
+    const scaleY = resolved.visual?.scale ?? 1;
     group.userData.variantId = resolved.variantId;
     group.userData.variantVisual = resolved.visual;
-    group.userData.variantScale = resolved.visual?.scale ?? 1;
+    // Geometry is authored from base dimensions. Keep the resolved footprint
+    // and visual height as a separate vector so the scene and RoomState use
+    // the same finite variant contract, including non-uniform dimensions.
+    group.userData.variantScale = scaleY;
+    group.userData.variantScaleVector = Object.freeze({
+      x: Math.max(0.01, resolvedDimensions.x / baseX),
+      y: Math.max(0.01, scaleY),
+      z: Math.max(0.01, resolvedDimensions.z / baseZ)
+    });
     if (!resolved.visual?.color) return;
     const color = new THREE.Color(resolved.visual.color).getHex();
     group.traverse(object => {
       if (!object.isMesh || !['item-part', 'item-asset-part'].includes(object.userData.kind) || !object.material?.color) return;
       object.material.color.setHex(color);
+      applyMaterialFinish(object.material, resolved.visual.materialId);
       object.userData.baseColor = color;
     });
   }
@@ -673,7 +710,11 @@ export class ItemVisualFactory {
     if (visual?.color) {
       const color = new THREE.Color(visual.color).getHex();
       asset.traverse(object => {
-        if (object.isMesh && object.material?.color) { object.material.color.setHex(color); object.userData.baseColor = color; }
+        if (object.isMesh && object.material?.color) {
+          object.material.color.setHex(color);
+          applyMaterialFinish(object.material, visual.materialId);
+          object.userData.baseColor = color;
+        }
       });
     }
     const state = group.userData.feedbackState ?? 'idle';

@@ -1,5 +1,56 @@
+const MATERIAL_LABELS = Object.freeze({
+  'oak-light': 'светлый дуб',
+  walnut: 'тёмный орех',
+  textile: 'текстиль',
+  velvet: 'бархат',
+  linen: 'лён',
+  ceramic: 'керамика',
+  terracotta: 'терракота',
+  brass: 'латунь',
+  'black-metal': 'чёрный металл',
+  graphite: 'графит',
+  'midnight-metal': 'полированный металл'
+});
+
+const COLOR_LABELS = Object.freeze({
+  '#a97956': 'медовый дуб',
+  '#9c7251': 'натуральное дерево',
+  '#8b654b': 'ореховый дуб',
+  '#8d725f': 'тёплый тауп',
+  '#604430': 'тёмный орех',
+  '#594035': 'шоколадный орех',
+  '#405d59': 'глубокий шалфей',
+  '#647b92': 'стальной синий',
+  '#9a745e': 'песочный лён',
+  '#78939b': 'дымчато-синий',
+  '#b36e50': 'жжёная терракота',
+  '#c79b55': 'тёплая латунь',
+  '#2d3440': 'графитовый металл',
+  '#273347': 'графит',
+  '#172131': 'полночный металл'
+});
+
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+}
+
+function formatDimension(dimensions) {
+  if (!dimensions || typeof dimensions.x !== 'number' || typeof dimensions.z !== 'number') return 'размер по умолчанию';
+  return `${dimensions.x.toFixed(2)} × ${dimensions.z.toFixed(2)} м`;
+}
+
+function materialLabel(materialId) {
+  return MATERIAL_LABELS[materialId] ?? materialId ?? 'материал не указан';
+}
+
+function colorLabel(color) {
+  const normalized = String(color ?? '').toLowerCase();
+  return COLOR_LABELS[normalized] ?? `цвет ${normalized || 'не указан'}`;
+}
+
+function variantMeta(variant, placed) {
+  const dimensions = variant.dimensions ?? placed.item.dimensions;
+  return `${escapeHtml(materialLabel(variant.visual.materialId))} · ${escapeHtml(colorLabel(variant.visual.color))} · ${escapeHtml(formatDimension(dimensions))}`;
 }
 
 function itemVariantMarkup(placed, unlockedIds) {
@@ -8,11 +59,18 @@ function itemVariantMarkup(placed, unlockedIds) {
   return placed.item.variants.map(variant => {
     const unlocked = unlockedIds.has(variant.unlockId);
     const active = variant.id === activeVariantId;
-    return `<button class="design-option ${active ? 'is-active' : ''}" type="button" data-design-variant="${escapeHtml(variant.id)}" ${unlocked ? '' : 'disabled'} aria-pressed="${active}">
+    return `<button class="design-option ${active ? 'is-active' : ''}" type="button" data-design-variant="${escapeHtml(variant.id)}" ${unlocked ? '' : 'disabled'} aria-pressed="${active}" aria-label="${escapeHtml(variant.label)}: ${variantMeta(variant, placed)}">
       <i class="design-swatch" style="--swatch:${escapeHtml(variant.visual.color)}"></i>
-      <span>${escapeHtml(variant.label)}</span><small>${unlocked ? escapeHtml(variant.visual.materialId) : 'Откроется позже'}</small>
+      <span class="design-option-copy"><span>${escapeHtml(variant.label)}</span><small>${variantMeta(variant, placed)}</small></span>
     </button>`;
   }).join('');
+}
+
+function currentConfigurationMarkup(placed) {
+  const variantId = placed?.configuration?.variantId ?? placed?.item?.baseVariantId;
+  const variant = placed?.item?.getVariant?.(variantId) ?? placed?.item?.variants?.find(value => value.id === variantId);
+  if (!variant) return '';
+  return `<p class="design-current-configuration" data-current-configuration>Сейчас: <strong>${escapeHtml(variant.label)}</strong> · ${variantMeta(variant, placed)}</p>`;
 }
 
 function itemActionsMarkup(placed) {
@@ -29,9 +87,9 @@ function surfaceMarkup(surface, currentFinishId, finishes, unlockedIds) {
   const options = finishes.filter(finish => finish.surface === surface).map(finish => {
     const unlocked = unlockedIds.has(finish.unlockId);
     const active = finish.id === currentFinishId;
-    return `<button class="design-option ${active ? 'is-active' : ''}" type="button" data-design-surface="${surface}" data-design-finish="${escapeHtml(finish.id)}" ${unlocked ? '' : 'disabled'} aria-pressed="${active}">
+    return `<button class="design-option ${active ? 'is-active' : ''}" type="button" data-design-surface="${escapeHtml(surface)}" data-design-finish="${escapeHtml(finish.id)}" ${unlocked ? '' : 'disabled'} aria-pressed="${active}" aria-label="${escapeHtml(finish.label)}">
       <i class="design-swatch" style="--swatch:${escapeHtml(finish.visual.color)}"></i>
-      <span>${escapeHtml(finish.label)}</span><small>${unlocked ? 'Доступно' : 'Откроется позже'}</small>
+      <span class="design-option-copy"><span>${escapeHtml(finish.label)}</span><small>${unlocked ? 'Доступно' : 'Откроется позже'}</small></span>
     </button>`;
   }).join('');
   return options || '<p class="design-inspector-empty">Нет вариантов отделки.</p>';
@@ -67,16 +125,28 @@ export class DesignInspectorView {
     const unlocked = new Set(unlockedIds);
     const placed = selectedItemId ? roomState?.getItem(selectedItemId) : null;
     const surfaces = roomState?.surfaceConfiguration;
-    this.container.innerHTML = `<section class="contextual-inspector" data-contextual-inspector aria-label="${placed ? 'Настройка выбранного предмета' : 'Настройка комнаты'}">
+    const itemContext = Boolean(placed);
+    const content = itemContext
+      ? `<section class="design-inspector-section" data-inspector-section="item">
+          <strong>Внешний вид и размер</strong>
+          ${currentConfigurationMarkup(placed)}
+          <div class="design-option-grid" role="listbox" aria-label="Варианты выбранного предмета">${itemVariantMarkup(placed, unlocked)}</div>
+        </section>`
+      : `<section class="design-inspector-section" data-inspector-section="room">
+          <strong>Отделка комнаты</strong>
+          <span class="design-section-label">Пол</span>
+          <div class="design-option-grid" role="listbox" aria-label="Отделка пола">${surfaceMarkup('floor', surfaces?.floorFinishId, surfaceFinishes, unlocked)}</div>
+          <span class="design-section-label">Стены</span>
+          <div class="design-option-grid" role="listbox" aria-label="Отделка стен">${surfaceMarkup('wall', surfaces?.wallFinishId, surfaceFinishes, unlocked)}</div>
+        </section>`;
+
+    this.container.innerHTML = `<section class="contextual-inspector" data-contextual-inspector data-inspector-context="${itemContext ? 'item' : 'room'}" aria-label="${itemContext ? 'Настройка выбранного предмета' : 'Настройка комнаты'}">
       <header class="contextual-inspector-header">
-        <div><span class="design-section-label">${placed ? 'Выбранный предмет' : 'Комната'}</span><h2>${placed ? escapeHtml(placed.item.name) : 'Настройка комнаты'}</h2></div>
+        <div><span class="design-section-label">${itemContext ? 'Выбранный предмет' : 'Комната'}</span><h2>${itemContext ? escapeHtml(placed.item.name) : 'Настройка комнаты'}</h2></div>
         <button type="button" class="contextual-inspector-close" data-inspector-action="close" aria-label="Закрыть настройку">×</button>
       </header>
       ${itemActionsMarkup(placed)}
-      <div class="contextual-inspector-content">
-        ${placed ? `<section><strong>Вариант предмета</strong><div class="design-option-grid">${itemVariantMarkup(placed, unlocked)}</div></section>` : ''}
-        <section><strong>Отделка комнаты</strong><span class="design-section-label">Пол</span><div class="design-option-grid">${surfaceMarkup('floor', surfaces?.floorFinishId, surfaceFinishes, unlocked)}</div><span class="design-section-label">Стены</span><div class="design-option-grid">${surfaceMarkup('wall', surfaces?.wallFinishId, surfaceFinishes, unlocked)}</div></section>
-      </div>
+      <div class="contextual-inspector-content">${content}</div>
     </section>`;
   }
 

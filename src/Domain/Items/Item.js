@@ -85,7 +85,14 @@ export class Item {
     }
     const variant = this.getVariant(variantId);
     if (!variant) throw new Error(`Item ${this.id} has no variant ${variantId}.`);
-    return variant.resolve({ baseDimensions: this.dimensions, baseFeatureVector: this.featureVector });
+    return variant.resolve({
+      baseDimensions: this.dimensions,
+      baseFeatureVector: this.featureVector,
+      // The base variant preserves the authored catalog vector. Other variants
+      // derive semantic score inputs from their material, color and dimensions
+      // unless the author supplied an explicit featureVector override.
+      deriveSemanticFeatureVector: variant.id !== this.baseVariantId
+    });
   }
 }
 

@@ -18,12 +18,13 @@ export class WorkspaceShellView {
       onUndo: requireCallback(callbacks.onUndo),
       onEvaluate: requireCallback(callbacks.onEvaluate),
       onRoom: requireCallback(callbacks.onRoom),
+      onConfigureItem: requireCallback(callbacks.onConfigureItem),
       onSettings: requireCallback(callbacks.onSettings)
     });
     this._rendered = false;
   }
 
-  render({ state = WorkspaceState.edit(), levelLabel = 'Комната', placedCount = 0, canUndo = false } = {}) {
+  render({ state = WorkspaceState.edit(), levelLabel = 'Комната', placedCount = 0, canUndo = false, selectedItemId = null } = {}) {
     if (!this.container) return;
     if (!(state instanceof WorkspaceState)) {
       throw new Error('WorkspaceShellView state must be a WorkspaceState');
@@ -43,6 +44,7 @@ export class WorkspaceShellView {
           <div class="workspace-bar-chip workspace-app-actions">
             <button class="workspace-icon-button" type="button" data-workspace-action="brief" aria-label="Открыть бриф клиента">Бриф</button>
             <button class="workspace-icon-button" type="button" data-workspace-action="room" aria-label="Открыть настройку комнаты">Комната</button>
+            <button class="workspace-icon-button workspace-item-configure-button" type="button" data-workspace-action="configure-item" aria-label="Настроить выбранный предмет" hidden>Предмет</button>
             <button class="workspace-icon-button" type="button" data-workspace-action="settings" aria-label="Открыть настройки">⚙</button>
           </div>
         </header>
@@ -70,6 +72,7 @@ export class WorkspaceShellView {
         undo: this.callbacks.onUndo,
         evaluate: this.callbacks.onEvaluate,
         room: this.callbacks.onRoom,
+        'configure-item': this.callbacks.onConfigureItem,
         settings: this.callbacks.onSettings
       };
       for (const [action, callback] of Object.entries(actions)) {
@@ -82,6 +85,10 @@ export class WorkspaceShellView {
     this.container.querySelector('[data-workspace-level-label]').textContent = levelLabel;
     this.container.querySelector('[data-workspace-placed-count]').textContent = `${placedCount} предметов`;
     this.container.querySelector('[data-workspace-action="undo"]').disabled = !canUndo;
+    const configureItem = this.container.querySelector('[data-workspace-action="configure-item"]');
+    if (configureItem) {
+      configureItem.hidden = state.screen !== WORKSPACE_SCREENS.EDIT || !selectedItemId;
+    }
     this.container.querySelector('[data-workspace-command-dock]').hidden = state.screen !== WORKSPACE_SCREENS.EDIT;
   }
 

@@ -105,6 +105,7 @@ export class GameController {
       onEvaluate: () => this._dispatchIntent(INPUT_INTENTS.EVALUATE),
       onCampaign: () => this.openMainMenu(),
       onRoom: () => this._openRoomInspector(),
+      onConfigureItem: () => this._openItemInspector(),
       onSettings: () => this.settingsListener?.(),
     });
     this.workspaceShellView.render({ state: this.workspaceState });
@@ -255,12 +256,26 @@ export class GameController {
     this._render();
   }
 
+  _openItemInspector() {
+    const selectedItemId = this.roomViewModel?.selectedItemId;
+    if (!selectedItemId || !this.roomViewModel?.roomState?.getItem(selectedItemId)) {
+      this._showStatus('Сначала выберите предмет в комнате');
+      return false;
+    }
+    this.workspaceState = this.workspaceState.openDrawer(WORKSPACE_DRAWERS.INSPECTOR_ITEM);
+    this.catalogView?.close();
+    this.briefDrawerView?.hide();
+    this._render();
+    return true;
+  }
+
   _renderWorkspaceShell() {
     this.workspaceShellView?.render({
       state: this.workspaceState,
       levelLabel: this.roomViewModel?.name ?? this.level?.id ?? 'Комната',
       placedCount: this.roomViewModel?.placedItems?.length ?? 0,
-      canUndo: this.undoBuffer?.canUndo ?? false
+      canUndo: this.undoBuffer?.canUndo ?? false,
+      selectedItemId: this.roomViewModel?.selectedItemId ?? null
     });
   }
 
@@ -286,11 +301,6 @@ export class GameController {
 
   _render() {
     const selectedItemId = this.roomViewModel.selectedItemId;
-    if (this.workspaceState.screen === WORKSPACE_SCREENS.EDIT && selectedItemId) {
-      this.workspaceState = this.workspaceState.openDrawer(WORKSPACE_DRAWERS.INSPECTOR_ITEM);
-      this.catalogView?.close();
-      this.briefDrawerView?.hide();
-    }
     if (this.workspaceState.activeDrawer === WORKSPACE_DRAWERS.INSPECTOR_ITEM && !selectedItemId) {
       this.workspaceState = this.workspaceState.dismiss();
     }

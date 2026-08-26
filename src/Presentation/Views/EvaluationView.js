@@ -28,6 +28,49 @@ function severityRank(violation) {
   return ({ high: 3, medium: 2, low: 1 })[violation.severity?.level] ?? 0;
 }
 
+function scoreValue(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
+}
+
+function radarPoint(index, value, center = 102, radius = 70) {
+  const angle = -Math.PI / 2 + (index * Math.PI * 2) / 3;
+  const distance = radius * scoreValue(value);
+  return `${(center + Math.cos(angle) * distance).toFixed(2)},${(center + Math.sin(angle) * distance).toFixed(2)}`;
+}
+
+function radarRing(level, center = 102, radius = 70) {
+  return [0, 1, 2].map(index => radarPoint(index, level, center, radius)).join(' ');
+}
+
+function radarChart(result) {
+  if (![result.styleScore, result.clientPriorityScore, result.ergonomicsScore].every(value => typeof value === 'number')) return '';
+  const values = [result.styleScore, result.clientPriorityScore, result.ergonomicsScore];
+  const labels = ['Стиль', 'Клиент', 'Эргономика'];
+  const axes = [0, 1, 2].map(index => {
+    const angle = -Math.PI / 2 + (index * Math.PI * 2) / 3;
+    const x = (102 + Math.cos(angle) * 70).toFixed(2);
+    const y = (102 + Math.sin(angle) * 70).toFixed(2);
+    return `<line x1="102" y1="102" x2="${x}" y2="${y}" />`;
+  }).join('');
+  const labelMarkup = [
+    '<text x="102" y="15" text-anchor="middle">Стиль</text>',
+    '<text x="184" y="153" text-anchor="start">Клиент</text>',
+    '<text x="20" y="153" text-anchor="end">Эргономика</text>'
+  ].join('');
+  return `<figure class="review-radar" data-review-radar aria-label="Лепестковая диаграмма каналов оценки">
+    <svg viewBox="0 0 204 176" role="img" aria-labelledby="review-radar-title review-radar-description">
+      <title id="review-radar-title">Баланс оценки</title>
+      <desc id="review-radar-description">Сравнение стиля, запросов клиента и эргономики по шкале от нуля до ста.</desc>
+      <g class="review-radar-grid">${[.25, .5, .75, 1].map(level => `<polygon points="${radarRing(level)}" />`).join('')}</g>
+      <g class="review-radar-axes">${axes}</g>
+      <polygon class="review-radar-value" points="${values.map((value, index) => radarPoint(index, value)).join(' ')}" />
+      ${values.map((value, index) => `<circle class="review-radar-dot" cx="${radarPoint(index, value).split(',')[0]}" cy="${radarPoint(index, value).split(',')[1]}" r="3" />`).join('')}
+      <g class="review-radar-labels">${labelMarkup}</g>
+    </svg>
+    <figcaption>Баланс каналов</figcaption>
+  </figure>`;
+}
+
 function completionMarkup(explanation, result) {
   const scorecard = explanation?.scorecard;
   const blocked = scorecard?.completionEligible === false;
@@ -105,7 +148,7 @@ function issueDetail(violation) {
 
 function channelBar(channelKey, label, value, weight) {
   if (typeof value !== 'number') return '';
-  const percent = Math.round(value * 100);
+  const percent = Math.round(scoreValue(value) * 100);
   const weightTag = typeof weight === 'number' ? `<small>${Math.round(weight * 100)}%</small>` : '';
   return `<div class="review-channel" data-score-channel="${channelKey}">
     <dt>${label}${weightTag}</dt>
@@ -114,19 +157,25 @@ function channelBar(channelKey, label, value, weight) {
 }
 
 function scoreChannels(result) {
-  const hasSubScores = typeof result.styleScore === 'number' && typeof result.ergonomicsScore === 'number';
+  const hasSubScores = typeof result.styleScore === 'number' || typeof result.clientPriorityScore === 'number' || typeof result.ergonomicsScore === 'number';
   if (!hasSubScores) return '';
   const weights = result.scoreWeights ?? {};
   const targetRows = Array.isArray(result.scoreBreakdown?.style?.targets) && result.scoreBreakdown.style.targets.length > 0
     ? `<ul class="style-target-breakdown" aria-label="Целевые стили клиента">${result.scoreBreakdown.style.targets.map(target => (
-      `<li data-style-target="${escapeHtml(target.styleId)}"><span>${escapeHtml(target.label ?? target.styleId)} · ${escapeHtml(target.role)}</span><strong>${Math.round(target.score * 100)}/100</strong></li>`
+      `<li data-style-target="${escapeHtml(target.styleId)}"><span>${escapeHtml(target.label ?? target.styleId)} · ${escapeHtml(target.role)}</span><strong>${Math.round(scoreValue(target.score) * 100)}/100</strong></li>`
     )).join('')}</ul>`
     : '';
-  return `<dl class="score-channels" aria-label="Состав оценки">
-    ${channelBar('style', 'Стиль', result.styleScore, weights.style)}
-    ${channelBar('client-priority', 'Запросы клиента', result.clientPriorityScore, weights.clientPriorities)}
-    ${channelBar('ergonomics', 'Эргономика', result.ergonomicsScore, weights.ergonomics)}
-  </dl>${targetRows}`;
+  return `<div class="review-metrics">
+    ${radarChart(result)}
+    <div class="review-channel-stack">
+      <dl class="score-channels" aria-label="Состав оценки">
+        ${channelBar('style', 'Стиль', result.styleScore, weights.style)}
+        ${channelBar('client-priority', 'Запросы клиента', result.clientPriorityScore, weights.clientPriorities)}
+        ${channelBar('ergonomics', 'Эргономика', result.ergonomicsScore, weights.ergonomics)}
+      </dl>
+      ${targetRows}
+    </div>
+  </div>`;
 }
 
 function orderedViolations(explanation) {
@@ -166,14 +215,14 @@ export class EvaluationView {
   }
 
   _render() {
-    const result = this.result;
+    const result = this.result ?? {};
     const feedback = (Array.isArray(result.feedback) ? result.feedback : [result.feedback]).filter(Boolean);
     const allIssues = orderedViolations(result.explanation);
     const issues = allIssues.filter(issue => matchesFilter(issue, this.filter));
     if (!issues.some(issue => issue.id === this.selectedViolationId)) this.selectedViolationId = issues[0]?.id ?? null;
     const selected = issues.find(issue => issue.id === this.selectedViolationId) ?? null;
     const feedbackMarkup = feedback.length && allIssues.length === 0
-      ? `<ul class="feedback">${feedback.map(message => `<li>${escapeHtml(message)}</li>`).join('')}</ul>`
+      ? `<div class="review-feedback"><ul class="feedback">${feedback.map(message => `<li>${escapeHtml(message)}</li>`).join('')}</ul></div>`
       : '';
     const reportedIssueCount = allIssues.length || (Array.isArray(result.violations) ? result.violations.length : 0);
     const prompt = reportedIssueCount > 0 ? `${reportedIssueCount} подсказок для следующей попытки` : 'Комната собрана гармонично';
@@ -183,11 +232,13 @@ export class EvaluationView {
       <header class="review-topbar"><div><span class="eyebrow">Результат расстановки</span><h1 id="evaluation-title">Проверка комнаты</h1></div><button class="close" type="button" data-close aria-label="Вернуться к редактированию">×</button></header>
       ${completionMarkup(result.explanation, result)}
       <section class="review-repairs" aria-labelledby="review-repairs-title">
-        <header class="review-repairs-header"><div><h2 id="review-repairs-title">Что исправить</h2><p class="score-label${allIssues.length ? '' : ' success-note'}">${prompt}</p></div><div class="review-filters" role="toolbar" aria-label="Фильтр рекомендаций">${filters.map(([id, label]) => `<button type="button" data-review-filter="${id}" aria-pressed="${this.filter === id}">${label}</button>`).join('')}</div></header>
-        <ol class="review-issue-list" data-review-issue-list data-explanation-list>${issues.map(issue => issueRow(issue, issue.id === this.selectedViolationId)).join('')}</ol>
-        ${issueDetail(selected)}
+        <header class="review-repairs-header"><div><h2 id="review-repairs-title">Что исправить</h2><p class="score-label${allIssues.length ? '' : ' success-note'}">${prompt}</p></div><div class="review-filters" role="toolbar" aria-label="Фильтр рекомендаций">${filters.map(([id, label]) => `<button type="button" data-review-filter="${id}" aria-pressed="${this.filter === id}">${label}<small data-review-filter-count="${id}">${id === 'all' ? allIssues.length : allIssues.filter(issue => matchesFilter(issue, id)).length}</small></button>`).join('')}</div></header>
+        <div class="review-body" data-review-body>
+          <ol class="review-issue-list" data-review-issue-list data-explanation-list>${issues.map(issue => issueRow(issue, issue.id === this.selectedViolationId)).join('')}</ol>
+          ${issueDetail(selected)}
+        </div>
+        ${feedbackMarkup}
       </section>
-      ${feedbackMarkup}
       <footer class="review-footer"><button type="button" class="review-continue" data-close>Вернуться к редактированию</button></footer>
     </section>`;
 

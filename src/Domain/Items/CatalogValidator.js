@@ -3,6 +3,7 @@ import { Item } from './Item.js';
 import InteractionProfile from './InteractionProfile.js';
 import SpatialBehavior from './SpatialBehavior.js';
 import ItemVariant from './ItemVariant.js';
+import { mergeDefaultItemVariants } from './DefaultItemVariants.js';
 
 export class CatalogValidator {
   validate(items) {
@@ -48,7 +49,7 @@ export class CatalogValidator {
       price: data.price,
       featureVector: new FeatureVector(data.featureVector),
       baseVariantId: data.baseVariantId ?? null,
-      variants: (data.variants ?? []).map(variant => new ItemVariant({
+      variants: mergeDefaultItemVariants(data.variants ?? []).map(variant => new ItemVariant({
         ...variant,
         featureVector: variant.featureVector ? new FeatureVector(variant.featureVector) : null
       })),
