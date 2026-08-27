@@ -3,7 +3,7 @@
 **Статус:** Active production reference
 **Обновлено:** 22 августа 2026 г.
 
-Этот документ — canonical guide для authored JSON Decorium. Content policy не должна копироваться в Presentation и не выводится из display label, visual mesh, asset family или UI category. `ClientBrief v3` — единственный источник style, functional и client-priority policy.[1]
+Этот документ — canonical guide для authored JSON Decorium. Content policy не должна копироваться в Presentation и не выводится из display label, visual mesh, asset family или UI category. `ClientBrief v3` — единственный источник client identity, authored client voice, style, functional и client-priority policy.[1]
 
 ## Runtime inventory
 
@@ -15,7 +15,7 @@
 | Surface finishes | `data/interior/surface-finishes.v1.json`, `surface-finish.v1.schema.json` | Floor/wall slots with visual data and `unlockId`. |
 | Progression rewards | `data/progression/rewards.v1.json`, `reward-catalog.v1.schema.json` | Idempotent grants after authored completion. |
 | Presentation environments | `data/presentation/environment-profiles.v3.json`, `environment-profile.v3.schema.json` | Shell, openings, camera, light, exterior and atmosphere only. |
-| Client briefs | `data/briefs/client-briefs.v3.json`, `client-brief.v3.schema.json` | Identity, style targets, priorities, spatial preferences and typed evaluation policy. |
+| Client briefs | `data/briefs/client-briefs.v3.json`, `client-brief.v3.schema.json` | Identity, authored client voice, style targets, priorities, spatial preferences and typed evaluation policy. |
 | Endless blueprints | `data/endless/endless-blueprints.v1.json`, `endless-blueprint.v1.schema.json` | Authoring envelopes for deterministic, catalog-only ephemeral orders. |
 | Style/scoring/feedback | `data/styles/style-constraint-catalog.v1.json`, `data/scoring/scoring-parameters.json`, `data/feedback` | Exact styles, validated `ScoringPolicy` V3 and authored remediation. |
 | Release | `public/release-manifest.json` | Generated/validated operational build identity. |
@@ -120,12 +120,13 @@ Every level resolves one V3 profile. It may define `openingsPreset`, `cameraPres
 
 The sole authoring path for initial TV, shelf, decor, rug or media item is a V5 catalog record in an interior recipe.
 
-## ClientBrief V3, function and scoring
+## ClientBrief V3, client voice, function and scoring
 
 `ClientBrief v3` is validated in Infrastructure, normalized by a Domain value object and owns a typed immutable `EvaluationPolicy` graph. The graph contains completion, composition, hydrated ergonomics rules and mandatory `functionalSatisfactionPolicy`; `LoadLevelUseCase` resolves exact style profiles without deriving nested policy from topology/UI.[1]
 
 | Field group | Active policy |
 |---|---|
+| Client voice | `introduction`, `accepted`, `incomplete` and `priorities` are authored per brief and rendered only on the final result screen. | The final feedback speaks as the client who authored the brief. |
 | Style targets | Unique weighted primary/secondary/accent profiles; each receives independent target fit. |
 | Client priorities | Stable label/weight plus explicit `functional-scenario` or `spatial-preferences` rule. |
 | Spatial preferences | Density, client clearance multiplier and directional empty-space policy. |

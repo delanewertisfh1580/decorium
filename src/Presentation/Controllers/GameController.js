@@ -79,6 +79,7 @@ export class GameController {
       onStatus: message => this._showStatus(message),
       onRequestDashboardRender: () => this._renderDashboard(),
       onRequestRoomRender: () => this._render(),
+      onSetDiagnosticMode: (mode, itemIds) => this.roomView?.setDiagnosticMode(mode, { zones: this._evaluationPassageZones ?? [], itemIds }),
       onFocusItem: instanceId => this.roomInteraction.focusExistingItem(instanceId)
     });
     this.dashboardView = null;
@@ -91,6 +92,7 @@ export class GameController {
     this.completionProfileListener = null;
     this.mainMenuListener = null;
     this.settingsListener = null;
+    this._evaluationPassageZones = [];
   }
 
   async init(canvas, catalogContainer, toolbarContainer, evaluationContainer, dashboardContainer = null, statusContainer = null, designInspectorContainer = null, briefContainer = null, workspaceShellContainer = null) {

@@ -103,6 +103,20 @@ function normalizePriorities(value) {
   }));
 }
 
+function normalizeClientVoice(value, clientName) {
+  if (value !== null && value !== undefined && (typeof value !== 'object' || Array.isArray(value))) {
+    throw new Error('ClientBrief clientVoice must be an object');
+  }
+  const voice = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  const fallback = `Спасибо за работу над пространством. Я — ${clientName}.`;
+  return Object.freeze({
+    introduction: requiredString(voice.introduction ?? fallback, 'clientVoice.introduction'),
+    accepted: requiredString(voice.accepted ?? 'Мне нравится результат — основные пожелания учтены.', 'clientVoice.accepted'),
+    incomplete: requiredString(voice.incomplete ?? 'В целом направление верное, но перед сдачей нужно исправить несколько моментов.', 'clientVoice.incomplete'),
+    priorities: Object.freeze(Array.isArray(voice.priorities) ? voice.priorities.map((item, index) => requiredString(item, `clientVoice.priorities[${index}]`)) : [])
+  });
+}
+
 function normalizeSpatialPreferences(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error('ClientBrief spatialPreferences must be an object');
@@ -125,12 +139,13 @@ function normalizeSpatialPreferences(value) {
 }
 
 export class ClientBrief {
-  constructor({ schemaVersion, id, levelId, client, title, summary, styleTargets, clientPriorities, spatialPreferences, evaluationPolicy } = {}) {
+  constructor({ schemaVersion, id, levelId, client, title, summary, styleTargets, clientPriorities, spatialPreferences, evaluationPolicy, clientVoice = null } = {}) {
     if (schemaVersion !== 3) throw new Error('ClientBrief schemaVersion must be 3');
     this._schemaVersion = schemaVersion;
     this._id = requiredString(id, 'id');
     this._levelId = requiredString(levelId, 'levelId');
     this._client = normalizeClient(client);
+    this._clientVoice = normalizeClientVoice(clientVoice, this._client.displayName);
     this._title = requiredString(title, 'title');
     this._summary = requiredString(summary, 'summary');
     this._styleTargets = normalizeStyleTargets(styleTargets);
@@ -146,6 +161,7 @@ export class ClientBrief {
   get id() { return this._id; }
   get levelId() { return this._levelId; }
   get client() { return this._client; }
+  get clientVoice() { return this._clientVoice; }
   get title() { return this._title; }
   get summary() { return this._summary; }
   get styleTargets() { return this._styleTargets; }
@@ -160,6 +176,12 @@ export class ClientBrief {
       id: this.id,
       levelId: this.levelId,
       client: { ...this.client },
+      clientVoice: {
+        introduction: this.clientVoice.introduction,
+        accepted: this.clientVoice.accepted,
+        incomplete: this.clientVoice.incomplete,
+        priorities: [...this.clientVoice.priorities]
+      },
       title: this.title,
       summary: this.summary,
       styleTargets: this.styleTargets.map(target => ({ ...target })),

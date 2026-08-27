@@ -10,6 +10,7 @@ export class EvaluationCoordinator {
     onStatus = () => {},
     onRequestDashboardRender = () => {},
     onRequestRoomRender = () => {},
+    onSetDiagnosticMode = () => {},
     onFocusItem = () => {}
   } = {}) {
     this.evaluateRoomUseCase = evaluateRoomUseCase;
@@ -20,6 +21,7 @@ export class EvaluationCoordinator {
     this.onStatus = onStatus;
     this.onRequestDashboardRender = onRequestDashboardRender;
     this.onRequestRoomRender = onRequestRoomRender;
+    this.onSetDiagnosticMode = onSetDiagnosticMode;
     this.onFocusItem = onFocusItem;
     this.viewModel = new EvaluationViewModel();
   }
@@ -59,9 +61,14 @@ export class EvaluationCoordinator {
       this.onStatus('Бесконечный заказ завершён. Запустите новый seed для следующего задания.');
     }
     this.viewModel.update(result.evaluationData);
-    this.getEvaluationView()?.render(result.evaluationData);
+    this.getEvaluationView()?.render(result.evaluationData, { clientBrief: level.clientBrief });
     this.onRequestDashboardRender();
     return result;
+  }
+
+  setDiagnosticMode(mode, options = {}) {
+    this.onSetDiagnosticMode(mode, options);
+    this.onRequestRoomRender();
   }
 
   invalidate() {

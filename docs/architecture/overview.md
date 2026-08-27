@@ -72,7 +72,7 @@ There is no arbitrary scale slider. The player selects only finite authored colo
 
 ## Evaluation and scene boundary
 
-`ClientBrief` owns an immutable typed EvaluationPolicy graph: completion, composition and hydrated ergonomics rules. `LoadLevelUseCase` resolves exact style profiles but never derives policy from topology or visuals. `ScoringPolicy` is an immutable explicit dependency created by `main.js`; no process-global scoring configuration exists. `CatalogValidator` rejects missing `InteractionProfile` or `SpatialBehavior`; no runtime infers gameplay behavior from type, name or mesh. `CompositionEvaluator`, occupancy, clearance, passages, functional rules and three-channel aggregation consume authored semantics/policy only.[9]
+`ClientBrief` owns an immutable typed graph containing client identity, authored client voice, completion, composition and hydrated ergonomics rules. `LoadLevelUseCase` resolves exact style profiles but never derives policy from topology or visuals. `ScoringPolicy` is an immutable explicit dependency created by `main.js`; no process-global scoring configuration exists. `CatalogValidator` rejects missing `InteractionProfile` or `SpatialBehavior`; no runtime infers gameplay behavior from type, name or mesh. `CompositionEvaluator`, occupancy, clearance, passages, functional rules and three-channel aggregation consume authored semantics/policy only.[9]
 
 ```text
 LevelDTO.presentationEnvironment V3 → EnvironmentProfilePlan
@@ -89,7 +89,7 @@ RoomState placements + surfaceConfiguration
 |---|---|---|
 | `LevelSessionCoordinator` | start, read and reset session. | Access repository or build baseline directly. |
 | `RoomInteractionCoordinator` | place/move/rotate/remove/configure commands. | Compute unlock, score, reward or persistence policy. |
-| `EvaluationCoordinator` | evaluate and completion record. | Infer eligibility from UI state. |
+| `EvaluationCoordinator` | evaluate, pass the active ClientBrief to the final review view and record completion. | Infer eligibility or client voice from UI state. |
 | `GameController` | Compose views/coordinators and route explicit campaign/endless session commands. | Own `RoomState`, schema, score/reward policy or fixture interaction. |
 | `MainMenuView` + bootstrap | Render navigation only; request campaign list or a seed-based run through callbacks/use cases. | Read repositories, derive unlock/reward policy or persist designs. |
 

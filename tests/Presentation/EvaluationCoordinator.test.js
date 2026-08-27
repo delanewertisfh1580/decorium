@@ -70,7 +70,10 @@ describe('EvaluationCoordinator', () => {
       completionEligible: true,
       profile
     });
-    expect(evaluationView.render).toHaveBeenCalledWith(expect.objectContaining({ score: 0.82, stars: 4 }));
+    expect(evaluationView.render).toHaveBeenCalledWith(
+      expect.objectContaining({ score: 0.82, stars: 4 }),
+      { clientBrief: level.clientBrief }
+    );
     expect(ports.onProfileUpdated).toHaveBeenCalledWith({ profileId: 'profile-001', completed: true });
     expect(ports.onCompleted).toHaveBeenCalledWith({ profileId: 'profile-001', completed: true });
     expect(ports.onRequestDashboardRender).toHaveBeenCalledTimes(1);
@@ -84,7 +87,10 @@ describe('EvaluationCoordinator', () => {
     await coordinator.evaluate({ level: endlessLevel, roomViewModel, profile });
 
     expect(recordLevelCompletionUseCase.execute).not.toHaveBeenCalled();
-    expect(evaluationView.render).toHaveBeenCalledWith(expect.objectContaining({ score: 0.82, stars: 4 }));
+    expect(evaluationView.render).toHaveBeenCalledWith(
+      expect.objectContaining({ score: 0.82, stars: 4 }),
+      { clientBrief: level.clientBrief }
+    );
     expect(ports.onProfileUpdated).not.toHaveBeenCalled();
     expect(ports.onCompleted).not.toHaveBeenCalled();
     expect(ports.onRequestDashboardRender).toHaveBeenCalledTimes(1);

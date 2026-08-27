@@ -2,6 +2,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { EvaluationView } from '../../src/Presentation/Views/EvaluationView.js';
 
+const clientBrief = {
+  client: { displayName: 'Денис' },
+  clientVoice: {
+    accepted: 'Теперь здесь удобно отдыхать.',
+    incomplete: 'Нужно ещё освободить проход.',
+    priorities: ['Комфортный просмотр']
+  }
+};
+
 const result = {
   score: 0.67,
   stars: 3,
@@ -33,9 +42,10 @@ describe('EvaluationView review workspace', () => {
     const container = document.createElement('div');
     const view = new EvaluationView(container);
 
-    view.render(result);
+    view.render(result, { clientBrief });
 
     expect(container.querySelector('[data-review-workspace]')).not.toBeNull();
+    expect(container.querySelector('[data-client-conclusion]').textContent).toContain('Денис');
     expect(container.querySelector('[data-review-hero]')).not.toBeNull();
     expect(container.querySelector('[data-review-issue-list]')).not.toBeNull();
     const issueRows = [...container.querySelectorAll('[data-review-issue]')];

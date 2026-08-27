@@ -45,8 +45,7 @@ function radarRing(level, center = 102, radius = 70) {
 function radarChart(result) {
   if (![result.styleScore, result.clientPriorityScore, result.ergonomicsScore].every(value => typeof value === 'number')) return '';
   const values = [result.styleScore, result.clientPriorityScore, result.ergonomicsScore];
-  const labels = ['Стиль', 'Клиент', 'Эргономика'];
-  const axes = [0, 1, 2].map(index => {
+    const axes = [0, 1, 2].map(index => {
     const angle = -Math.PI / 2 + (index * Math.PI * 2) / 3;
     const x = (102 + Math.cos(angle) * 70).toFixed(2);
     const y = (102 + Math.sin(angle) * 70).toFixed(2);
@@ -69,6 +68,17 @@ function radarChart(result) {
     </svg>
     <figcaption>Баланс каналов</figcaption>
   </figure>`;
+}
+
+function clientConclusionMarkup(clientBrief, result) {
+  if (!clientBrief) return '';
+  const voice = clientBrief.clientVoice ?? {};
+  const blocked = result.completionEligible === false || result.explanation?.scorecard?.completionEligible === false;
+  const text = blocked ? (voice.incomplete ?? 'Перед сдачей нужно исправить несколько моментов.') : (voice.accepted ?? 'Мне нравится результат — основные пожелания учтены.');
+  const priorities = Array.isArray(voice.priorities) && voice.priorities.length
+    ? `<ul class="review-client-priorities">${voice.priorities.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+    : '';
+  return `<section class="review-client-note" data-client-conclusion><div class="review-client-avatar" aria-hidden="true">${escapeHtml((clientBrief.client?.displayName ?? 'К').slice(0, 1))}</div><div><span class="eyebrow">Заключение клиента</span><h2>${escapeHtml(clientBrief.client?.displayName ?? 'Клиент')}</h2><p class="review-client-quote">«${escapeHtml(text)}»</p>${priorities}</div></section>`;
 }
 
 function completionMarkup(explanation, result) {
@@ -194,11 +204,13 @@ function matchesFilter(violation, filter) {
 }
 
 export class EvaluationView {
-  constructor(container, { onFocusInstance = null, onClose = null } = {}) {
+  constructor(container, { onFocusInstance = null, onDiagnosticMode = null, onClose = null } = {}) {
     this.container = container;
     if (onFocusInstance !== null && typeof onFocusInstance !== 'function') throw new Error('EvaluationView onFocusInstance must be a function or null');
+    if (onDiagnosticMode !== null && typeof onDiagnosticMode !== 'function') throw new Error('EvaluationView onDiagnosticMode must be a function or null');
     if (onClose !== null && typeof onClose !== 'function') throw new Error('EvaluationView onClose must be a function or null');
     this.onFocusInstance = onFocusInstance;
+    this.onDiagnosticMode = onDiagnosticMode;
     this.onClose = onClose;
     this.selectedViolationId = null;
     this.filter = 'all';
@@ -207,8 +219,9 @@ export class EvaluationView {
 
   async init() {}
 
-  render(result) {
+  render(result, { clientBrief = null } = {}) {
     this.result = result;
+    this.clientBrief = clientBrief;
     this.filter = 'all';
     this.selectedViolationId = null;
     this._render();
@@ -230,7 +243,11 @@ export class EvaluationView {
 
     this.container.innerHTML = `<section class="review-workspace" data-review-workspace aria-labelledby="evaluation-title">
       <header class="review-topbar"><div><span class="eyebrow">Результат расстановки</span><h1 id="evaluation-title">Проверка комнаты</h1></div><button class="close" type="button" data-close aria-label="Вернуться к редактированию">×</button></header>
+      ${clientConclusionMarkup(this.clientBrief, result)}
       ${completionMarkup(result.explanation, result)}
+      <nav class="review-diagnostic-modes" data-review-diagnostic-modes aria-label="Режим диагностики">
+        ${[['overview', 'Обзор'], ['passages', 'Проходы'], ['relations', 'Связи'], ['style', 'Стиль']].map(([id, label]) => `<button type="button" data-diagnostic-mode="${id}" aria-pressed="${id === 'overview'}">${label}</button>`).join('')}
+      </nav>
       <section class="review-repairs" aria-labelledby="review-repairs-title">
         <header class="review-repairs-header"><div><h2 id="review-repairs-title">Что исправить</h2><p class="score-label${allIssues.length ? '' : ' success-note'}">${prompt}</p></div><div class="review-filters" role="toolbar" aria-label="Фильтр рекомендаций">${filters.map(([id, label]) => `<button type="button" data-review-filter="${id}" aria-pressed="${this.filter === id}">${label}<small data-review-filter-count="${id}">${id === 'all' ? allIssues.length : allIssues.filter(issue => matchesFilter(issue, id)).length}</small></button>`).join('')}</div></header>
         <div class="review-body" data-review-body>
@@ -244,6 +261,12 @@ export class EvaluationView {
 
     this.container.querySelectorAll('[data-close]').forEach(button => { button.onclick = () => { this.hide(); this.onClose?.(); }; });
     this.container.querySelectorAll('[data-focus-instance]').forEach(button => { button.onclick = () => this.onFocusInstance?.(button.dataset.focusInstance); });
+    this.container.querySelectorAll('[data-diagnostic-mode]').forEach(button => {
+      button.onclick = () => {
+        this.container.querySelectorAll('[data-diagnostic-mode]').forEach(candidate => candidate.setAttribute('aria-pressed', String(candidate === button)));
+        this.onDiagnosticMode?.(button.dataset.diagnosticMode, selected?.instances?.map(instance => instance.instanceId) ?? []);
+      };
+    });
     this.container.querySelectorAll('[data-select-issue]').forEach(button => {
       button.onclick = () => { this.selectedViolationId = button.dataset.selectIssue; this._render(); };
     });
@@ -255,6 +278,7 @@ export class EvaluationView {
   hide() {
     this.container.replaceChildren();
     this.result = null;
+    this.clientBrief = null;
     this.selectedViolationId = null;
     this.filter = 'all';
   }

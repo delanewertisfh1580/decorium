@@ -118,6 +118,8 @@ export class RoomView {
     this.walls = [];
     this.objectsById = new Map();
     this.passageZones = [];
+    this._diagnosticMode = 'overview';
+    this._diagnosticItems = new Set();
     this._highlightedIds = new Set();
     this.animations = new Set();
     this.ghost = null;
@@ -178,6 +180,26 @@ export class RoomView {
   setPassageZones(zones = []) {
     this.passageZones = Array.isArray(zones) ? zones : [];
     this._rebuildPassageOverlay();
+  }
+
+  /** Switches the scene diagnostic layer without changing domain state. */
+  setDiagnosticMode(mode = 'overview', { zones = this.passageZones, itemIds = [] } = {}) {
+    const allowed = new Set(['overview', 'passages', 'relations', 'style']);
+    this._diagnosticMode = allowed.has(mode) ? mode : 'overview';
+    this._diagnosticItems = new Set(Array.isArray(itemIds) ? itemIds : []);
+    if (this._diagnosticMode === 'passages') this.setPassageZones(zones);
+    else if (this._diagnosticMode === 'overview') this.setPassageZones([]);
+    else this._rebuildPassageOverlay();
+    this._applyDiagnosticVisualState();
+  }
+
+  _applyDiagnosticVisualState() {
+    for (const [id, object] of this.objectsById) {
+      const diagnosticMatch = this._diagnosticItems.size === 0 || this._diagnosticItems.has(id);
+      const visible = this._diagnosticMode === 'overview' || diagnosticMatch;
+      object.visible = visible;
+      if (visible) ItemVisualFactory.setPreviewValidity(object, !this._highlightedIds.has(id));
+    }
   }
 
   _rebuildPassageOverlay() {
@@ -451,6 +473,7 @@ export class RoomView {
       ItemVisualFactory.setSelected(object, selectedItemId === placed.id);
       ItemVisualFactory.setPreviewValidity(object, !highlighted);
     }
+    this._applyDiagnosticVisualState();
 
     for (const [itemId, object] of this.objectsById) {
       if (!activeIds.has(itemId)) this._animateRemoval(itemId, object);
